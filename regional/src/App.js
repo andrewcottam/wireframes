@@ -9,7 +9,7 @@ import ContentAdd from 'material-ui/svg-icons/content/add';
 import RaisedButton from 'material-ui/RaisedButton';
 import { List, ListItem } from 'material-ui/List';
 import Subheader from 'material-ui/Subheader';
-import Badge from 'material-ui/Badge';
+// import Badge from 'material-ui/Badge';
 import Paper from 'material-ui/Paper';
 import mapboxgl from 'mapbox-gl';
 import logo_g1 from './logo-g1.png';
