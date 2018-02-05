@@ -7,7 +7,10 @@ import AppBar from 'material-ui/AppBar';
 import FloatingActionButton from 'material-ui/FloatingActionButton';
 import ContentAdd from 'material-ui/svg-icons/content/add';
 import RaisedButton from 'material-ui/RaisedButton';
+import FlatButton from 'material-ui/FlatButton';
+import Dialog from 'material-ui/Dialog';
 import { List, ListItem } from 'material-ui/List';
+import { Step, Stepper, StepLabel } from 'material-ui/Stepper';
 import Subheader from 'material-ui/Subheader';
 // import Badge from 'material-ui/Badge';
 import Paper from 'material-ui/Paper';
@@ -26,12 +29,12 @@ class PoliciesDrawer extends React.Component {
   }
 
   buttonClick() {
-    this.setState({ open: !this.state.open }); 
+    this.setState({ open: !this.state.open });
   }
 
   render() {
     return <Drawer open={this.state.open} onRequestChange={(open) => this.setState({open})} containerStyle={{'position': 'absolute', 'top': '64px','overflow':'none'}} width={360}>
-    <RaisedButton label="Indicators" secondary={true} style={{"transform":"rotate(270deg)",'left': '322px','top': '360px','position': 'absolute'}} onClick={this.buttonClick.bind(this)}/>
+    <RaisedButton label="Knowledge" secondary={true} style={{"transform":"rotate(270deg)",'left': '319px','top': '360px','position': 'absolute'}} onClick={this.buttonClick.bind(this)}/>
     <PoliciesPanel/>
     </Drawer>;
   }
@@ -56,7 +59,10 @@ function PoliciesPanel(props) {
       <PolicyListItem key="r1" primaryText="Framework for Nature Conservation and Protected Areas in the Pacific Islands Region" secondaryText="2014 - 2020" leftAvatarSrc={logo_r1} targets={[
         <div disabled={true} key="t1" primaryText="Objective 1" secondaryText="People are aware of the value of biodiversity and the steps they can take to use it sustainably"/>,
         <div disabled={true} key="t2" primaryText="Objective 2" secondaryText="Both economic development and biodiversity conservation recognise and support sustainable livelihoods, cultural heritage, knowledge and expressions, and community resilience and development aspirations"/>,
-        <div key="t2" primaryText="Objective 3" secondaryText="Identify, conserve, sustainably manage and restore priority sites, habitats and ecosystems, including cultural sites"/>
+        <div key="t2" primaryText="Objective 3" secondaryText="Identify, conserve, sustainably manage and restore priority sites, habitats and ecosystems, including cultural sites" indicators={[
+          <div key="i1" primaryText="Number of countries logging intact forests" secondaryText="Number of countries logging intact forests"/>
+          ]}/>
+
       ]}/>
     ]}
     />
@@ -94,8 +100,8 @@ class PolicyListItem extends React.Component {
     this.state = { targetsOpen: false };
   }
 
-  indicatorSelected(e){
-    this.setState({ targetsOpen: false});
+  indicatorSelected(e) {
+    this.setState({ targetsOpen: false });
   }
 
   handleClick() {
@@ -122,7 +128,7 @@ class TargetsDrawer extends React.Component {
       'overflow': 'none',
       'left': (this.props.open ? '60px' : '0px')
     };
-    const targets = this.props.targets && this.props.targets.map((target)=> {
+    const targets = this.props.targets && this.props.targets.map((target) => {
       return <TargetListItem primaryText={target.props.primaryText} key={target.props.primaryText} secondaryText={target.props.secondaryText} indicators={target.props.indicators} disabled={target.props.disabled} indicatorSelected={this.props.indicatorSelected.bind(this)}/>;
     });
     return (<React.Fragment>
@@ -139,11 +145,11 @@ class TargetListItem extends React.Component {
     this.state = { targetsOpen: false, indicatorsOpen: false };
   }
 
-  indicatorSelected(e){
-    this.setState({ indicatorsOpen: false});
+  indicatorSelected(e) {
+    this.setState({ indicatorsOpen: false });
     this.props.indicatorSelected(e);
   }
-  
+
   handleClick() {
     this.setState({ indicatorsOpen: !this.state.indicatorsOpen });
   }
@@ -172,7 +178,7 @@ class IndicatorsDrawer extends React.Component {
       'overflow': 'none',
       'left': (this.props.open ? '62px' : '-62px')
     };
-    const indicators = this.props.indicators && this.props.indicators.map((indicator)=> {
+    const indicators = this.props.indicators && this.props.indicators.map((indicator) => {
       return <IndicatorListItem primaryText={indicator.props.primaryText} key={indicator.props.primaryText} secondaryText={indicator.props.secondaryText} onClick={this.props.indicatorSelected}/>;
     });
     return (<React.Fragment>
@@ -210,18 +216,38 @@ class ActionsDrawer extends React.Component {
   }
 }
 
-function ActionsPanel() {
-  return <List>
+class ActionsPanel extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { digitisingFeatures: false };
+  }
+  handleClose() {
+    this.setState({ digitisingFeatures: false });
+  }
+  digitiseFeatures() {
+    this.setState({ open: true });
+  }
+  render() {
+    return <List>
     <ActionsHeader text="Analyse"/>
     <ActionsHeader text="Contribute"/>
-    <ActionListItem primaryText="Spatial Data"/>
-    <ActionListItem primaryText="Species Observations"/>
-    <ActionListItem primaryText="Photos"/>
-    <ActionListItem primaryText="Digitise features"/>
-    <ActionListItem primaryText="Protected Areas Information"/>
+    <ActionListItem primaryText="Spatial Data" onClick={this.log}/>
+    <ActionListItem primaryText="Species Observations" onClick={this.log}/>
+    <ActionListItem primaryText="Photos" onClick={this.log}/>
+    <ActionListItem primaryText="Digitise features" onClick={()=>this.setState({digitisingFeatures:true})}/>
+    <ActionListItem primaryText="Protected Areas Information" onClick={this.log}/>
     <ActionsHeader text="Networking"/>
     <ActionsHeader text="Training"/>
+    <Dialog title="Digitise Features"
+            open={this.state.digitisingFeatures}
+            actions={<HorizontalLinearStepper closeDialog={this.handleClose.bind(this)}/>}
+            overlayStyle={{backgroundColor: 'transparent'}}
+            modal={false}
+            onRequestClose={this.handleClose.bind(this)}
+            />
     </List>;
+
+  }
 }
 
 function ActionsHeader(props) {
@@ -229,7 +255,10 @@ function ActionsHeader(props) {
 }
 
 function ActionListItem(props) {
-  return <ListItem primaryText={props.primaryText} />;
+  return <ListItem 
+  primaryText={props.primaryText} 
+  onClick={props.onClick}
+  />;
 }
 
 function AddDrupalItem(props) {
@@ -271,6 +300,71 @@ class Map extends React.Component {
   }
 }
 
+class HorizontalLinearStepper extends React.Component {
+  constructor(props) {
+    super(props);
+  }
+  state = {
+    finished: false,
+    stepIndex: 0,
+  };
+  handleNext = () => {
+    const { stepIndex } = this.state;
+    this.setState({
+      stepIndex: stepIndex + 1,
+      finished: stepIndex >= 2,
+    });
+  };
+  handlePrev = () => {
+    const { stepIndex } = this.state;
+    if (stepIndex > 0) {
+      this.setState({ stepIndex: stepIndex - 1 });
+    }
+  };
+  render() {
+    const { finished, stepIndex } = this.state;
+    const contentStyle = { margin: '0 16px' };
+
+    return (
+      <div style={{width: '100%', maxWidth: 700, margin: 'auto',textAlign:'center'}}>
+        <Stepper activeStep={stepIndex}>
+          <Step>
+            <StepLabel>Select your protected area</StepLabel>
+          </Step>
+          <Step>
+            <StepLabel>Select your source imagery</StepLabel>
+          </Step>
+          <Step>
+            <StepLabel>Start digitising features</StepLabel>
+          </Step>
+        </Stepper>
+        <div style={contentStyle}>
+          {finished ? (
+            <p>
+              
+            </p>
+          ) : (
+            <div>
+              <div style={{marginTop: 12}}>
+                <FlatButton
+                  label="Back"
+                  disabled={stepIndex === 0}
+                  onClick={this.handlePrev}
+                />
+                <RaisedButton
+                  label={stepIndex === 2 ? 'Finish' : 'Next'}
+                  onClick={stepIndex === 2 ? this.props.closeDialog : this.handleNext}
+                  primary={true}
+                />
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+}
+
 class App extends Component {
   render() {
     return (
@@ -279,7 +373,7 @@ class App extends Component {
           <AppBar title="Biopama Regional Conservation Planning Tools" showMenuIconButton={false}/>
           <PoliciesDrawer />
           <Map/>
-          <ActionsDrawer />
+          <ActionsDrawer/>
         </div>
       </MuiThemeProvider>
     );
