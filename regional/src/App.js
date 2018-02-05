@@ -31,7 +31,7 @@ class PoliciesDrawer extends React.Component {
 
   render() {
     return <Drawer open={this.state.open} onRequestChange={(open) => this.setState({open})} containerStyle={{'position': 'absolute', 'top': '64px','overflow':'none'}} width={360}>
-    <RaisedButton label="Indicators" secondary={true} style={{"transform":"rotate(270deg)",'left': '320px','top': '360px','position': 'absolute'}} onClick={this.buttonClick.bind(this)}/>
+    <RaisedButton label="Indicators" secondary={true} style={{"transform":"rotate(270deg)",'left': '322px','top': '360px','position': 'absolute'}} onClick={this.buttonClick.bind(this)}/>
     <PoliciesPanel/>
     </Drawer>;
   }
