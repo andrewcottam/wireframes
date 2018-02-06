@@ -32,23 +32,31 @@ class PoliciesDrawer extends React.Component {
     this.setState({ open: !this.state.open });
   }
 
+  close() {
+    this.setState({ open: false });
+  }
+
   render() {
     return <Drawer open={this.state.open} onRequestChange={(open) => this.setState({open})} containerStyle={{'position': 'absolute', 'top': '64px','overflow':'none'}} width={360}>
     <RaisedButton label="Knowledge" secondary={true} style={{"transform":"rotate(270deg)",'left': '319px','top': '360px','position': 'absolute'}} onClick={this.buttonClick.bind(this)}/>
-    <PoliciesPanel/>
+    <PoliciesPanel onIndicatorSelected={this.close.bind(this)}/>
     </Drawer>;
   }
 }
 
-function PoliciesPanel(props) {
+class PoliciesPanel extends React.Component{
+  indicatorSelected(e){
+    this.props.onIndicatorSelected(e);
+  }
+  render(){
   return <div><List>
     <Subheader>Policies</Subheader>
     <PolicyGroupHeader primaryText="Global" nestedItems={[
-      <PolicyListItem key="g1" primaryText="Convention on Biological Diversity" secondaryText="Strategic Plan for Biodiversity 2011-2020" leftAvatarSrc={logo_g1} targets={[
+      <PolicyListItem key="g1" primaryText="Convention on Biological Diversity" secondaryText="Strategic Plan for Biodiversity 2011-2020" leftAvatarSrc={logo_g1} onIndicatorSelected={this.indicatorSelected.bind(this)} targets={[
         <div disabled={true} key="t1" primaryText="CBD Target 1" secondaryText="By 2020, at the latest, people are aware of the values of biodiversity and the steps they can take to conserve and use it sustainably."/>,
         <div disabled={true} key="t2" primaryText="CBD Target 2" secondaryText="By 2020, at the latest, biodiversity values have been integrated into national and local development and poverty reduction strategies and planning processes and are being incorporated into national accounting, as appropriate, and reporting systems."/>,
         <div key="t11" primaryText="CBD Target 11" secondaryText="By 2020, at least 17 per cent of terrestrial and inland water areas and 10 per cent of coastal and marine areas, especially areas of particular importance for biodiversity and ecosystem services, are conserved through effectively and equitably managed, ecologically representative and well-connected systems of protected areas and other effective area-based conservation measures, and integrated into the wider landscape and seascape." indicators={[
-          <div key="i1" primaryText="Terrestrial protected area coverage" secondaryText="The total non-overlapping area of terrestrial protected areas"/>,
+          <div key="i1" primaryText="Terrestrial protected area coverage" secondaryText="The total non-overlapping area of terrestrial protected areas" chartTitle="Number of countries"/>,
           <div key="i2" primaryText="Marine protected area coverage" secondaryText="The total non-overlapping area of marine protected areas"/>
           ]}/>
       ]}/>,
@@ -83,7 +91,7 @@ function PoliciesPanel(props) {
     />
   </List>
   <PanelLowerToolbar/>
-  </div>;
+  </div>}
 }
 
 function PolicyGroupHeader(props) {
@@ -102,6 +110,7 @@ class PolicyListItem extends React.Component {
 
   indicatorSelected(e) {
     this.setState({ targetsOpen: false });
+    this.props.onIndicatorSelected(e);
   }
 
   handleClick() {
@@ -121,7 +130,6 @@ class PolicyListItem extends React.Component {
 }
 
 class TargetsDrawer extends React.Component {
-
   render() {
     let containerStyle = {
       'position': 'absolute',
@@ -185,17 +193,41 @@ class IndicatorsDrawer extends React.Component {
     <Drawer containerStyle={containerStyle} width={360} open={this.props.open}>
     <Subheader>Indicators</Subheader>
     <div>{indicators}</div>
-    </Drawer></React.Fragment>);
+    </Drawer>
+    </React.Fragment>);
   }
 }
 
-function IndicatorListItem(props) {
-  return <ListItem 
-      primaryText={props.primaryText}
-      secondaryText = {props.secondaryText}
-      title={props.secondaryText}
-      onClick={props.onClick}
-    />;
+class IndicatorListItem extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { open: false };
+  }
+  indicatorSelected(e) {
+    this.props.onClick(e);
+    this.setState({ open: true });
+  }
+  handleClose(e){
+    this.setState({ open: false });
+    
+  }
+  render() {
+    return (<React.Fragment>
+    <ListItem 
+      primaryText={this.props.primaryText}
+      secondaryText = {this.props.secondaryText}
+      title={this.props.secondaryText}
+      onClick={this.indicatorSelected.bind(this)}
+    >
+    </ListItem>
+    <Dialog title={this.props.chartTitle}
+      open={this.state.open}
+      overlayStyle={{backgroundColor: 'transparent'}}
+      onRequestClose={this.handleClose.bind(this)}
+      modal={false}
+    />
+    </React.Fragment>);
+  }
 }
 
 class ActionsDrawer extends React.Component {
@@ -242,8 +274,8 @@ class ActionsPanel extends React.Component {
             open={this.state.digitisingFeatures}
             actions={<HorizontalLinearStepper closeDialog={this.handleClose.bind(this)}/>}
             overlayStyle={{backgroundColor: 'transparent'}}
-            modal={false}
             onRequestClose={this.handleClose.bind(this)}
+            modal={false}
             />
     </List>;
 
@@ -301,9 +333,6 @@ class Map extends React.Component {
 }
 
 class HorizontalLinearStepper extends React.Component {
-  constructor(props) {
-    super(props);
-  }
   state = {
     finished: false,
     stepIndex: 0,
@@ -311,8 +340,7 @@ class HorizontalLinearStepper extends React.Component {
   handleNext = () => {
     const { stepIndex } = this.state;
     this.setState({
-      stepIndex: stepIndex + 1,
-      finished: stepIndex >= 2,
+      stepIndex: stepIndex + 1
     });
   };
   handlePrev = () => {
@@ -322,7 +350,7 @@ class HorizontalLinearStepper extends React.Component {
     }
   };
   render() {
-    const { finished, stepIndex } = this.state;
+    const { stepIndex } = this.state;
     const contentStyle = { margin: '0 16px' };
 
     return (
@@ -339,12 +367,6 @@ class HorizontalLinearStepper extends React.Component {
           </Step>
         </Stepper>
         <div style={contentStyle}>
-          {finished ? (
-            <p>
-              
-            </p>
-          ) : (
-            <div>
               <div style={{marginTop: 12}}>
                 <FlatButton
                   label="Back"
@@ -356,9 +378,7 @@ class HorizontalLinearStepper extends React.Component {
                   onClick={stepIndex === 2 ? this.props.closeDialog : this.handleNext}
                   primary={true}
                 />
-              </div>
             </div>
-          )}
         </div>
       </div>
     );
