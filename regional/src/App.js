@@ -4,16 +4,18 @@ import MuiThemeProvider from 'material-ui/styles/MuiThemeProvider';
 import Avatar from 'material-ui/Avatar';
 import Drawer from 'material-ui/Drawer';
 import AppBar from 'material-ui/AppBar';
+import Divider from 'material-ui/Divider';
 import FloatingActionButton from 'material-ui/FloatingActionButton';
 import ContentAdd from 'material-ui/svg-icons/content/add';
 import RaisedButton from 'material-ui/RaisedButton';
 import FlatButton from 'material-ui/FlatButton';
 import Dialog from 'material-ui/Dialog';
+import Badge from 'material-ui/Badge';
 import { List, ListItem } from 'material-ui/List';
 import { Step, Stepper, StepLabel } from 'material-ui/Stepper';
 import { Card, CardActions, CardHeader, CardMedia, CardTitle, CardText } from 'material-ui/Card';
 import Subheader from 'material-ui/Subheader';
-// import Badge from 'material-ui/Badge';
+import { Tabs, Tab } from 'material-ui/Tabs';
 import Paper from 'material-ui/Paper';
 import mapboxgl from 'mapbox-gl';
 import logo_g1 from './logo-g1.png';
@@ -21,8 +23,12 @@ import logo_g2 from './logo-g2.png';
 import logo_r1 from './logo-r1.png';
 import logo_fji from './logo-fji.png';
 import logo_slb from './logo-slb.png';
+import logo_png from './logo-png.png';
+import logo_tls from './logo-tls.png';
+import logo_vut from './logo-vut.png';
 import logo_l1 from './logo-l1.png';
 import intactForest from './intactForest.png';
+import indicatorHistory from './indicatorHistory.png';
 
 class PoliciesDrawer extends React.Component {
   constructor(props) {
@@ -48,32 +54,163 @@ class PoliciesDrawer extends React.Component {
     <RaisedButton label="Knowledge" secondary={true} style={{"transform":"rotate(270deg)",'left': '319px','top': '360px','position': 'absolute'}} onClick={this.buttonClick.bind(this)}/>
     <PoliciesPanel onIndicatorSelected={this.showIndicator.bind(this)}/>
     </Drawer>;
-    <IndicatorChart isOpen={this.state.indicatorOpen} indicator={this.state.activeIndicator}/>
+    <IndicatorChart isOpen={this.state.indicatorOpen} indicator={this.state.activeIndicator} map={this.props.map}/>
     </React.Fragment>;
   }
 }
 
+function getCountries(map) {
+  var filter = ['in', 'name_en', "American Samoa", "Cook Islands", "Federated States of Micronesia", "Fiji", "French Polynesia", "Guam", "Kiribati", "Marshall Islands", "Nauru", "New Caledonia", "Niue", "Northern Mariana Islands", "Palau", "Papua New Guinea", "Samoa", "Solomon Islands", "Tokelau", "Tonga", "Tuvalu", "Vanuatu", "Wallis and Futuna"];
+  var countries_lg = map.queryRenderedFeatures({ layers: ['country-label-lg'], filter: filter });
+  var countries_md = map.queryRenderedFeatures({ layers: ['country-label-md'], filter: filter });
+  var countries_sm = map.queryRenderedFeatures({ layers: ['country-label-sm'], filter: filter });
+  var countries = countries_lg.concat(countries_md).concat(countries_sm);
+  for (var i = 0; i < countries.length; i++) {
+    console.log(countries[i].properties.name_en);
+  }
+  return countries;
+}
+
+class CountryListItem extends React.Component{
+  drillCountry(){
+    this.props.drillCountry({countryListItem:this});
+  }
+  render(){
+    return (
+      <React.Fragment>
+        <ListItem primaryText={this.props.primaryText} leftAvatar={this.props.leftAvatar} onClick={this.drillCountry.bind(this)}/> 
+      </React.Fragment>
+    );
+  }
+}
+
 class IndicatorChart extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { value: 'summary',selectedCountry: null };
+  }
+  handleChange = (value) => {
+    this.setState({
+      value: value,
+    });
+  };
+  drillCountries() {
+    this.setState({ value: 'countries' });
+    this.props.map.setCenter([161.76, -8.14]);
+    this.props.map.zoomTo(4);
+    this.props.map.on("moveend", function(e) {
+      // console.log("moveend");
+      // let countries = getCountries(this);
+    });
+    this.props.map.on("render", function(e) {
+      // console.log("render");
+      // let countries = getCountries(this);
+    });
+  }
+  drillCountry(e) {
+    this.setState({ value: 'country', selectedCountry: e.countryListItem });
+  }
   render() {
-    let s = { 'position': 'absolute', left: '45px', 'width': '400px' };
-    let containerStyle = {'boxShadow': "rgba(0, 0, 0, 0.25) 0px 14px 45px, rgba(0, 0, 0, 0.22) 0px 10px 18px"};
+    let s = { position: 'absolute', left: '45px', width: '440px' };
+    let containerStyle = { boxShadow: "rgba(0, 0, 0, 0.25) 0px 14px 45px, rgba(0, 0, 0, 0.22) 0px 10px 18px" };
+    let children =
+      <React.Fragment>
+        <Tabs        
+          value={this.state.value}
+          onChange={this.handleChange}
+          >
+          <Tab 
+            label="Summary" 
+            value="summary"
+            >
+            <React.Fragment>
+            <div style={{textAlign:'center'}}>    
+              <Badge
+                badgeContent={4}
+                primary={true}
+                title="Click to show the countries"
+                badgeStyle={{top: 25, right: 25, cursor :'pointer'}}
+                onClick={this.drillCountries.bind(this)}
+                >
+                <img 
+                  src={indicatorHistory}
+                />
+              </Badge>
+            </div>
+            </React.Fragment>
+          </Tab>
+          <Tab 
+            label="Countries" 
+            value="countries"
+            >
+            <List>
+              <CountryListItem 
+                primaryText="Papua New Guinea" 
+                leftAvatar={<Avatar src={logo_png} />}
+                drillCountry={this.drillCountry.bind(this)}
+              />
+              <CountryListItem
+                primaryText="Solomon Islands"
+                leftAvatar={<Avatar src={logo_slb} />}
+                drillCountry={this.drillCountry.bind(this)}
+              />
+              <CountryListItem
+                primaryText="Timor Leste"
+                leftAvatar={<Avatar src={logo_tls} />}
+                drillCountry={this.drillCountry.bind(this)}
+              />
+              <CountryListItem
+                primaryText="Vanuatu"
+                leftAvatar={<Avatar src={logo_vut}/>}
+                drillCountry={this.drillCountry.bind(this)}
+              />
+            </List>
+          </Tab>
+          <Tab 
+            label="Country"
+            value="country"
+            >
+              {this.state.selectedCountry ? 
+                <React.Fragment>
+                  <List>
+                    <ListItem primaryText={this.state.selectedCountry.props.primaryText} leftAvatar={this.state.selectedCountry.props.leftAvatar} />
+                  </List> 
+                  <Divider />
+                </React.Fragment>
+                : null}
+          </Tab>
+          <Tab 
+            label="Provinces"
+            value="provinces"
+            >
+          </Tab>
+        </Tabs>
+      </React.Fragment>;
+
     return (this.props.isOpen ?
       <Card style={s} containerStyle={containerStyle}>
           <CardHeader
             title={this.props.indicator.policyListItem.props.primaryText}
-            subtitle={this.props.indicator.policyListItem.props.secondaryText}
+            // subtitle={this.props.indicator.policyListItem.props.secondaryText}
             avatar={this.props.indicator.policyListItem.props.leftAvatarSrc}
           />
           <CardMedia
-            overlay={<CardTitle title={this.props.indicator.targetListItem.props.primaryText} subtitle={this.props.indicator.targetListItem.props.secondaryText.length>55 ? this.props.indicator.targetListItem.props.secondaryText.substring(0,55) + ".." : this.props.indicator.targetListItem.props.secondaryText}/>}
-            title={this.props.indicator.targetListItem.props.secondaryText.length>55 ? this.props.indicator.targetListItem.props.secondaryText : null}
-          >
+            overlay={
+              <CardTitle 
+                title={this.props.indicator.targetListItem.props.primaryText} 
+                subtitle={this.props.indicator.targetListItem.props.secondaryText.length>50 ? this.props.indicator.targetListItem.props.secondaryText.substring(0,50) + ".." : this.props.indicator.targetListItem.props.secondaryText}
+              />}
+            title={this.props.indicator.targetListItem.props.secondaryText.length>50 ? this.props.indicator.targetListItem.props.secondaryText : null}>
             <img src={intactForest} alt="" />
           </CardMedia>
-          <CardTitle subtitle={this.props.indicator.indicatorListItem.props.secondaryText}/>
-          <CardText>
-            Lorem ipsum dolor sit amet, consectetur adipiscing elit.
-            Donec mattis pretium massa. Aliquam erat vol
+          <CardTitle 
+            title={this.props.indicator.indicatorListItem.props.primaryText} 
+            style={{padding:'9px 16px 16px 16px'}}
+            titleStyle={{fontSize:'17px'}} 
+            children={children}
+          />
+          <CardText 
+            style={{padding:'0px 16px 16px 16px',fontSize:'13px'}}>{this.props.indicator.indicatorListItem.props.desc ? this.props.indicator.indicatorListItem.props.desc : "No description."}
           </CardText>
         </Card> : null
     );
@@ -101,10 +238,10 @@ class PoliciesPanel extends React.Component {
     />
     <PolicyGroupHeader primaryText="Regional" nestedItems={[
       <PolicyListItem key="r1" primaryText="Framework for Nature Conservation and Protected Areas in the Pacific Islands Region" secondaryText="2014 - 2020" leftAvatarSrc={logo_r1} onIndicatorSelected={this.indicatorSelected.bind(this)} targets={[
-        <div disabled={true} key="t1" primaryText="Objective 1" secondaryText="People are aware of the value of biodiversity and the steps they can take to use it sustainably"/>,
-        <div disabled={true} key="t2" primaryText="Objective 2" secondaryText="Both economic development and biodiversity conservation recognise and support sustainable livelihoods, cultural heritage, knowledge and expressions, and community resilience and development aspirations"/>,
+        // <div disabled={true} key="t1" primaryText="Objective 1" secondaryText="People are aware of the value of biodiversity and the steps they can take to use it sustainably"/>,
+        // <div disabled={true} key="t2" primaryText="Objective 2" secondaryText="Both economic development and biodiversity conservation recognise and support sustainable livelihoods, cultural heritage, knowledge and expressions, and community resilience and development aspirations"/>,
         <div key="t2" primaryText="Objective 3" secondaryText="Identify, conserve, sustainably manage and restore priority sites, habitats and ecosystems, including cultural sites" indicators={[
-          <div key="i1" primaryText="Number of countries logging intact forests" secondaryText="Number of countries logging intact forests"/>
+          <div key="i1" primaryText="Number of countries logging intact forests" secondaryText="Number of countries logging intact forests" desc="This indicator shows the number of countries that have logged Intact Forest Areas during the last 25 years."/>
           ]}/>
 
       ]}/>
@@ -225,7 +362,7 @@ class IndicatorsDrawer extends React.Component {
       'left': (this.props.open ? '62px' : '-62px')
     };
     const indicators = this.props.indicators && this.props.indicators.map((indicator) => {
-      return <IndicatorListItem primaryText={indicator.props.primaryText} key={indicator.props.primaryText} secondaryText={indicator.props.secondaryText} onClick={this.props.indicatorSelected}/>;
+      return <IndicatorListItem desc={indicator.props.desc} primaryText={indicator.props.primaryText} key={indicator.props.primaryText} secondaryText={indicator.props.secondaryText} onClick={this.props.indicatorSelected}/>;
     });
     return (<React.Fragment>
     <Drawer containerStyle={containerStyle} width={360} open={this.props.open}>
@@ -335,8 +472,9 @@ class Map extends React.Component {
       container: this.mapContainer,
       center: [21, -2], //salonga
       zoom: 3,
-      style: 'mapbox://styles/blishten/cj6q75jcd39gq2rqm1d7yv5rc'
+      style: 'mapbox://styles/blishten/cj6f4n2j026qf2rnunkauikjm'
     });
+    this.map.on("load", (e) => this.props.onLoad(e));
   }
 
   componentWillUnmount() {
@@ -350,7 +488,6 @@ class Map extends React.Component {
       bottom: 0,
       width: '100%'
     };
-
     return <div style={style} ref={el => this.mapContainer = el} />;
   }
 }
@@ -409,13 +546,20 @@ class HorizontalLinearStepper extends React.Component {
 }
 
 class App extends Component {
+  constructor(props) {
+    super(props);
+    this.state = { map: null };
+  }
+  mapLoaded(e) {
+    this.setState({ map: e.target });
+  }
   render() {
     return (
       <MuiThemeProvider>
         <div className="App">
           <AppBar title="Biopama Regional Conservation Planning Tools" showMenuIconButton={false}/>
-          <PoliciesDrawer />
-          <Map/>
+          <PoliciesDrawer map={this.state.map}/>
+          <Map onLoad={this.mapLoaded.bind(this)}/>
           <ActionsDrawer/>
         </div>
       </MuiThemeProvider>
