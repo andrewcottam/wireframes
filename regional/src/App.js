@@ -13,9 +13,10 @@ import Dialog from 'material-ui/Dialog';
 import Badge from 'material-ui/Badge';
 import { List, ListItem } from 'material-ui/List';
 import { Step, Stepper, StepLabel } from 'material-ui/Stepper';
-import { Card, CardActions, CardHeader, CardMedia, CardTitle, CardText } from 'material-ui/Card';
+import { Card, CardHeader, CardMedia, CardTitle, CardText } from 'material-ui/Card';
 import Subheader from 'material-ui/Subheader';
 import { Tabs, Tab } from 'material-ui/Tabs';
+import MapToolbar from './MapToolbar.js';
 import Paper from 'material-ui/Paper';
 import mapboxgl from 'mapbox-gl';
 import logo_g1 from './logo-g1.png';
@@ -78,7 +79,7 @@ class CountryListItem extends React.Component {
   render() {
     return (
       <React.Fragment>
-        <ListItem primaryText={this.props.primaryText} leftAvatar={this.props.leftAvatar} onClick={this.drillCountry.bind(this)} innerDivStyle={{padding:'16px 16px 16px 72px'}}/> 
+        <ListItem primaryText={this.props.primaryText} secondaryText={this.props.secondaryText} leftAvatar={this.props.leftAvatar} onClick={this.drillCountry.bind(this)} innerDivStyle={{padding:'16px 16px 16px 67px'}}/> 
       </React.Fragment>
     );
   }
@@ -91,7 +92,7 @@ class ProvinceListItem extends React.Component {
   render() {
     return (
       <React.Fragment>
-        <ListItem primaryText={this.props.primaryText} onClick={this.drillProvince.bind(this)} innerDivStyle={{padding:'2px 10px 2px 10px'}}/> 
+        <ListItem primaryText={this.props.primaryText} onClick={this.drillProvince.bind(this)} innerDivStyle={{padding:'3px 10px 3px 20px'}}/> 
       </React.Fragment>
     );
   }
@@ -100,7 +101,7 @@ class ProvinceListItem extends React.Component {
 class IndicatorChart extends React.Component {
   constructor(props) {
     super(props);
-    this.state = { value: 'summary', selectedCountry: null, selectedProvince: null };
+    this.state = { value: 'Indicator', selectedCountry: null, selectedProvince: null };
   }
   handleChange = (value) => {
     this.setState({
@@ -108,17 +109,21 @@ class IndicatorChart extends React.Component {
     });
   };
   drillCountries() {
-    this.setState({ value: 'countries' });
+    this.setState({ value: 'Region' });
     this.props.map.setCenter([161.76, -8.14]);
     this.props.map.zoomTo(4);
   }
   drillCountry(e) {
     this.setState({ value: 'country', selectedCountry: e.countryListItem });
-    this.props.map.fitBounds(e.countryListItem.props.bounds);
+    this.props.map.fitBounds(e.countryListItem.props.bounds, {
+      padding: { top: 50, bottom: 50, left: 600, right: 50 }
+    });
   }
   drillProvince(e) {
     this.setState({ value: 'province', selectedProvince: e.provinceListItem });
-    this.props.map.fitBounds(e.provinceListItem.props.bounds);
+    this.props.map.fitBounds(e.provinceListItem.props.bounds, {
+      padding: { top: 50, bottom: 50, left: 600, right: 50 }
+    });
   }
   render() {
     let s = { position: 'absolute', left: '45px', width: '440px' };
@@ -130,15 +135,22 @@ class IndicatorChart extends React.Component {
           onChange={this.handleChange}
           >
           <Tab 
-            label="Summary" 
-            value="summary"
+            label="Indicator" 
+            value="Indicator"
+            buttonStyle={{height:'25px',padding:'3px 0px 3px 0px'}}
+            style={{fontSize:'11px'}}
             >
+            {this.props.indicator ? 
+            <div
+              style={{padding:'12px 0px 13px 1px',fontSize:'19px'}}>
+              {this.props.indicator.indicatorListItem.props.primaryText}
+            </div> : null }
             <React.Fragment>
             <div style={{textAlign:'center'}}>    
               <Badge
                 badgeContent={4}
                 primary={true}
-                title="Click to show the countries"
+                title="Click to show the countries in the region"
                 badgeStyle={{top: 25, right: 25, cursor :'pointer'}}
                 onClick={this.drillCountries.bind(this)}
                 >
@@ -147,47 +159,71 @@ class IndicatorChart extends React.Component {
                 />
               </Badge>
             </div>
+            {this.props.indicator ?
+            <CardText 
+              style={{padding:'5px 0px 5px 0px',fontSize:'13px'}}>{this.props.indicator.indicatorListItem.props.desc ? this.props.indicator.indicatorListItem.props.desc : "No description."}
+            </CardText>
+            : null}
             </React.Fragment>
           </Tab>
           <Tab 
-            label="Countries" 
-            value="countries"
+            label="Region" 
+            value="Region"
+            buttonStyle={{height:'25px',padding:'3px 0px 3px 0px'}}
+            style={{fontSize:'11px'}}
             >
             <List>
               <CountryListItem 
                 primaryText="Papua New Guinea" 
+                secondaryText={
+                    <span style={{fontSize: '11px'}}>1,647Km<span style={{verticalAlign: 'super',fontSize: '7px'}}>2</span></span>
+                }
                 leftAvatar={<Avatar src={logo_png} size={30} style={{top:"9px"}}/>}
                 drillCountry={this.drillCountry.bind(this)}
                 bounds={[140.8343505859375,-11.655380249023438,157.03778076171886,-0.7558330297469293]}
               />
               <CountryListItem
                 primaryText="Solomon Islands"
+                secondaryText={
+                    <span style={{fontSize: '11px'}}>775Km<span style={{verticalAlign: 'super',fontSize: '7px'}}>2</span></span>
+                }
                 leftAvatar={<Avatar src={logo_slb} size={30} style={{top:"9px"}}/>}
                 drillCountry={this.drillCountry.bind(this)}
                 bounds={[155.3925018310548,-12.308334350585824,170.19250488281273,-4.44521999359124]}
               />
               <CountryListItem
                 primaryText="Timor Leste"
+                secondaryText={
+                    <span style={{fontSize: '11px'}}>346Km<span style={{verticalAlign: 'super',fontSize: '7px'}}>2</span></span>
+                }
                 leftAvatar={<Avatar src={logo_tls} size={30} style={{top:"9px"}}/>}
                 drillCountry={this.drillCountry.bind(this)}
                 bounds={[124.04465484619152,-9.50465297698969,127.34249877929703,-8.126944541931156]}
               />
               <CountryListItem
                 primaryText="Vanuatu"
+                secondaryText={
+                    <span style={{fontSize: '11px'}}>91Km<span style={{verticalAlign: 'super',fontSize: '7px'}}>2</span></span>
+                }
                 leftAvatar={<Avatar src={logo_vut} size={30} style={{top:"9px"}}/>}
                 drillCountry={this.drillCountry.bind(this)}
                 bounds={[166.54139709472656,-22.400554656982422,172.09008789062503,-13.072476387023903]}
               />
             </List>
+            <CardText 
+              style={{padding:'10px 0px 0px 11px',fontSize:'13px'}}>Area of Intact Forest logged in the last 25 years.
+            </CardText>
           </Tab>
           <Tab 
             label="Country"
             value="country"
+            buttonStyle={{height:'25px',padding:'3px 0px 3px 0px'}}
+            style={{fontSize:'11px'}}
             >
               {this.state.selectedCountry ? 
                 <React.Fragment>
                   <List>
-                    <ListItem primaryText={this.state.selectedCountry.props.primaryText} leftAvatar={this.state.selectedCountry.props.leftAvatar} innerDivStyle={{padding:'16px 16px 16px 72px'}}/>
+                    <ListItem primaryText={this.state.selectedCountry.props.primaryText} secondaryText={this.state.selectedCountry.props.secondaryText} leftAvatar={this.state.selectedCountry.props.leftAvatar} innerDivStyle={{padding:'16px 16px 16px 67px'}}/>
                   </List> 
                   <Divider />
                   <List>
@@ -211,12 +247,17 @@ class IndicatorChart extends React.Component {
                     <ProvinceListItem primaryText="Western" bounds={[140.8343505859375,-9.524073600769043,143.92416381835966,-4.987235069274884]} drillProvince={this.drillProvince.bind(this)}/>
                     <ProvinceListItem primaryText="Western Highlands" bounds={[143.7709197998047,-6.389835834503117,145.02641296386744,-5.218733787536607]} drillProvince={this.drillProvince.bind(this)}/>
                   </List>
+                  <CardText 
+                    style={{padding:'10px 0px 0px 11px',fontSize:'13px'}}>Area of Intact Forest logged in the last 25 years.
+                  </CardText>
                 </React.Fragment>
                 : null}
           </Tab>
           <Tab 
             label="Province"
             value="province"
+            buttonStyle={{height:'25px',padding:'3px 0px 3px 0px'}}
+            style={{fontSize:'11px'}}
             >
               {this.state.selectedProvince ? 
                 <React.Fragment>
@@ -246,16 +287,8 @@ class IndicatorChart extends React.Component {
             <img src={intactForest} alt="" />
           </CardMedia>
           <CardTitle 
-            title={this.props.indicator.indicatorListItem.props.primaryText} 
-            style={{padding:'9px 16px 16px 16px'}}
-            titleStyle={{fontSize:'17px'}} 
             children={children}
           />
-          {this.state.value == "summary" ?
-          <CardText 
-            style={{padding:'0px 16px 16px 16px',fontSize:'13px'}}>{this.props.indicator.indicatorListItem.props.desc ? this.props.indicator.indicatorListItem.props.desc : "No description."}
-          </CardText>
-          : null}
         </Card> : null
     );
   }
@@ -268,6 +301,7 @@ class PoliciesPanel extends React.Component {
   render() {
     return <div><List>
     <Subheader>Policies</Subheader>
+    <Divider/>
     <PolicyGroupHeader primaryText="Global" nestedItems={[
       <PolicyListItem key="g1" primaryText="Convention on Biological Diversity" secondaryText="Strategic Plan for Biodiversity 2011-2020" leftAvatarSrc={logo_g1} onIndicatorSelected={this.indicatorSelected.bind(this)} targets={[
         <div disabled={true} key="t1" primaryText="CBD Target 1" secondaryText="By 2020, at the latest, people are aware of the values of biodiversity and the steps they can take to conserve and use it sustainably."/>,
@@ -361,6 +395,7 @@ class TargetsDrawer extends React.Component {
     return (<React.Fragment>
     <Drawer containerStyle={containerStyle} width={360} open={this.props.open}>
     <Subheader>Targets</Subheader>
+    <Divider/>
     <div>{targets}</div>
     </Drawer></React.Fragment>);
   }
@@ -411,6 +446,7 @@ class IndicatorsDrawer extends React.Component {
     return (<React.Fragment>
     <Drawer containerStyle={containerStyle} width={360} open={this.props.open}>
     <Subheader>Indicators</Subheader>
+    <Divider/>
     <div>{indicators}</div>
     </Drawer>
     </React.Fragment>);
@@ -590,26 +626,26 @@ class HorizontalLinearStepper extends React.Component {
 }
 
 function addGlobalForestWatch(map) {
-    map.addLayer({
-        'id': 'GlobalForestWatch',
-        'type': 'raster',
-        'source': {
-            'type': 'raster',
-            // "attribution":"Potapov P. et al. 2008. Mapping the World's Intact Forest Landscapes by Remote Sensing. Ecology and Society, 13 (2)",
-            'tiles': [
-                // 'https://globalforestwatch-624153201.us-west-1.elb.amazonaws.com/arcgis/services/ForestCover_lossyear/ImageServer/WMSServer?bbox={bbox-epsg-3857}&format=image/png&service=WMS&version=1.1.1&request=GetMap&srs=EPSG:3857&width=256&height=256&layers=0'
-                // 'https://50.18.182.188:6080/arcgis/services/ForestCover_lossyear/ImageServer/WMSServer?bbox={bbox-epsg-3857}&format=image/png&service=WMS&version=1.1.1&request=GetMap&srs=EPSG:3857&width=256&height=256&layers=0'
-                'http://gis-treecover.wri.org/arcgis/services/ForestCover_lossyear/ImageServer/WMSServer?bbox={bbox-epsg-3857}&format=image/png&service=WMS&version=1.1.1&request=GetMap&srs=EPSG:3857&width=256&height=256&layers=0'
-            ],
-            'tileSize': 256
-        },
-        "layout": {
-            "visibility": "visible"
-        },
-        'maxzoom': 14,
-        'minzoom': 7,
-        'paint': {}
-    }, 'Intact Forest 2013');
+  map.addLayer({
+    'id': 'GlobalForestWatch',
+    'type': 'raster',
+    'source': {
+      'type': 'raster',
+      // "attribution":"Potapov P. et al. 2008. Mapping the World's Intact Forest Landscapes by Remote Sensing. Ecology and Society, 13 (2)",
+      'tiles': [
+        // 'https://globalforestwatch-624153201.us-west-1.elb.amazonaws.com/arcgis/services/ForestCover_lossyear/ImageServer/WMSServer?bbox={bbox-epsg-3857}&format=image/png&service=WMS&version=1.1.1&request=GetMap&srs=EPSG:3857&width=256&height=256&layers=0'
+        // 'https://50.18.182.188:6080/arcgis/services/ForestCover_lossyear/ImageServer/WMSServer?bbox={bbox-epsg-3857}&format=image/png&service=WMS&version=1.1.1&request=GetMap&srs=EPSG:3857&width=256&height=256&layers=0'
+        'http://gis-treecover.wri.org/arcgis/services/ForestCover_lossyear/ImageServer/WMSServer?bbox={bbox-epsg-3857}&format=image/png&service=WMS&version=1.1.1&request=GetMap&srs=EPSG:3857&width=256&height=256&layers=0'
+      ],
+      'tileSize': 256
+    },
+    "layout": {
+      "visibility": "visible"
+    },
+    'maxzoom': 14,
+    'minzoom': 7,
+    'paint': {}
+  }, 'Intact Forest 2013');
 }
 
 class App extends Component {
@@ -628,6 +664,7 @@ class App extends Component {
           <AppBar title="Biopama Regional Conservation Planning Tools" showMenuIconButton={false}/>
           <PoliciesDrawer map={this.state.map}/>
           <Map onLoad={this.mapLoaded.bind(this)}/>
+          <MapToolbar/>
           <ActionsDrawer/>
         </div>
       </MuiThemeProvider>

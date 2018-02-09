@@ -5,9 +5,10 @@ body {
   overflow: hidden;
 }
 
-div{
+div {
   font-family: 'Open Sans', sans-serif !important;
 }
+
 .addDrupalItem {
   left: 10px;
   position: absolute;
@@ -21,15 +22,3 @@ div{
   height: 42px;
 }
 
-#indicatorBox {
-    background: #fff;
-    position: absolute;
-    z-index: 10000000000;
-    top: 12px;
-    max-width: 400px;
-    left: 0px;
-    border-radius: 3px;
-    box-shadow: 3px 3px 3px 2px rgba(0, 0, 0, 0.1);
-    font-family: 'Open Sans', sans-serif;
-    padding: 10px 10px 10px 15px;
-}
