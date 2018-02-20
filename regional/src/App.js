@@ -183,7 +183,7 @@ class IndicatorChart extends React.Component {
                 }
                 leftAvatar={<Avatar src={logo_png} size={30} style={{top:"16px"}}/>}
                 drillCountry={this.drillCountry.bind(this)}
-                bounds={[140.8343505859375,-11.655380249023438,157.03778076171886,-0.7558330297469293]}
+                bounds={[140.8343505859375,-11.655380249023438,157.03778076171885,-0.7558330297469293]}
               />
               <CountryListItem
                 primaryText="Solomon Islands"
