@@ -30,6 +30,7 @@ import logo_vut from './logo-vut.png';
 import logo_l1 from './logo-l1.png';
 import intactForest from './intactForest.png';
 import indicatorHistory from './indicatorHistory.png';
+import greenListLogo from './Green-List-logo-1.png';
 
 class PoliciesDrawer extends React.Component {
   constructor(props) {
@@ -128,7 +129,9 @@ class IndicatorChart extends React.Component {
   render() {
     let s = { position: 'absolute', left: '45px', width: '440px' };
     let containerStyle = { boxShadow: "rgba(0, 0, 0, 0.25) 0px 14px 45px, rgba(0, 0, 0, 0.22) 0px 10px 18px" };
-    let children =
+    let v1 = this.props.indicator && this.props.indicator.indicatorListItem.props.primaryText == 'Number of countries logging intact forests';
+    var children;
+    {v1 ? children =
       <React.Fragment>
         <Tabs        
           value={this.state.value}
@@ -138,11 +141,11 @@ class IndicatorChart extends React.Component {
             label="Indicator" 
             value="Indicator"
             buttonStyle={{height:'25px',padding:'3px 0px 3px 0px'}}
-            style={{fontSize:'11px'}}
+            style={{fontSize:'12px'}}
             >
             {this.props.indicator ? 
             <div
-              style={{padding:'12px 0px 13px 1px',fontSize:'19px'}}>
+              style={{padding:'12px',fontSize:'19px'}}>
               {this.props.indicator.indicatorListItem.props.primaryText}
             </div> : null }
             <React.Fragment>
@@ -161,7 +164,7 @@ class IndicatorChart extends React.Component {
             </div>
             {this.props.indicator ?
             <CardText 
-              style={{padding:'5px 0px 5px 0px',fontSize:'13px'}}>{this.props.indicator.indicatorListItem.props.desc ? this.props.indicator.indicatorListItem.props.desc : "No description."}
+              style={{padding:'12px',fontSize:'13px'}}>{this.props.indicator.indicatorListItem.props.desc ? this.props.indicator.indicatorListItem.props.desc : "No description."}
             </CardText>
             : null}
             </React.Fragment>
@@ -170,15 +173,15 @@ class IndicatorChart extends React.Component {
             label="Region" 
             value="Region"
             buttonStyle={{height:'25px',padding:'3px 0px 3px 0px'}}
-            style={{fontSize:'11px'}}
+            style={{fontSize:'12px'}}
             >
-            <List>
+            <List style={{padding:'0px'}}>
               <CountryListItem 
                 primaryText="Papua New Guinea" 
                 secondaryText={
                     <span style={{fontSize: '11px'}}>1,647Km<span style={{verticalAlign: 'super',fontSize: '7px'}}>2</span></span>
                 }
-                leftAvatar={<Avatar src={logo_png} size={30} style={{top:"9px"}}/>}
+                leftAvatar={<Avatar src={logo_png} size={30} style={{top:"16px"}}/>}
                 drillCountry={this.drillCountry.bind(this)}
                 bounds={[140.8343505859375,-11.655380249023438,157.03778076171886,-0.7558330297469293]}
               />
@@ -187,7 +190,7 @@ class IndicatorChart extends React.Component {
                 secondaryText={
                     <span style={{fontSize: '11px'}}>775Km<span style={{verticalAlign: 'super',fontSize: '7px'}}>2</span></span>
                 }
-                leftAvatar={<Avatar src={logo_slb} size={30} style={{top:"9px"}}/>}
+                leftAvatar={<Avatar src={logo_slb} size={30} style={{top:"16px"}}/>}
                 drillCountry={this.drillCountry.bind(this)}
                 bounds={[155.3925018310548,-12.308334350585824,170.19250488281273,-4.44521999359124]}
               />
@@ -196,7 +199,7 @@ class IndicatorChart extends React.Component {
                 secondaryText={
                     <span style={{fontSize: '11px'}}>346Km<span style={{verticalAlign: 'super',fontSize: '7px'}}>2</span></span>
                 }
-                leftAvatar={<Avatar src={logo_tls} size={30} style={{top:"9px"}}/>}
+                leftAvatar={<Avatar src={logo_tls} size={30} style={{top:"16px"}}/>}
                 drillCountry={this.drillCountry.bind(this)}
                 bounds={[124.04465484619152,-9.50465297698969,127.34249877929703,-8.126944541931156]}
               />
@@ -205,25 +208,25 @@ class IndicatorChart extends React.Component {
                 secondaryText={
                     <span style={{fontSize: '11px'}}>91Km<span style={{verticalAlign: 'super',fontSize: '7px'}}>2</span></span>
                 }
-                leftAvatar={<Avatar src={logo_vut} size={30} style={{top:"9px"}}/>}
+                leftAvatar={<Avatar src={logo_vut} size={30} style={{top:"16px"}}/>}
                 drillCountry={this.drillCountry.bind(this)}
                 bounds={[166.54139709472656,-22.400554656982422,172.09008789062503,-13.072476387023903]}
               />
             </List>
             <CardText 
-              style={{padding:'10px 0px 0px 11px',fontSize:'13px'}}>Area of Intact Forest logged in the last 25 years.
+              style={{padding:'12px',fontSize:'13px'}}>Area of Intact Forest logged in the last 25 years.
             </CardText>
           </Tab>
           <Tab 
             label="Country"
             value="country"
             buttonStyle={{height:'25px',padding:'3px 0px 3px 0px'}}
-            style={{fontSize:'11px'}}
+            style={{fontSize:'12px'}}
             >
               {this.state.selectedCountry ? 
                 <React.Fragment>
-                  <List>
-                    <ListItem primaryText={this.state.selectedCountry.props.primaryText} secondaryText={this.state.selectedCountry.props.secondaryText} leftAvatar={this.state.selectedCountry.props.leftAvatar} innerDivStyle={{padding:'16px 16px 16px 67px'}}/>
+                  <List style={{padding:'0px'}}>
+                    <ListItem primaryText={this.state.selectedCountry.props.primaryText} secondaryText={this.state.selectedCountry.props.secondaryText} leftAvatar={this.state.selectedCountry.props.leftAvatar}  innerDivStyle={{padding:'16px 16px 16px 67px'}}/>
                   </List> 
                   <Divider />
                   <List>
@@ -257,18 +260,22 @@ class IndicatorChart extends React.Component {
             label="Province"
             value="province"
             buttonStyle={{height:'25px',padding:'3px 0px 3px 0px'}}
-            style={{fontSize:'11px'}}
+            style={{fontSize:'12px'}}
             >
               {this.state.selectedProvince ? 
                 <React.Fragment>
+                  <List style={{padding:'0px'}}>
+                    <ListItem primaryText={this.state.selectedCountry.props.primaryText} secondaryText={this.state.selectedCountry.props.secondaryText} leftAvatar={this.state.selectedCountry.props.leftAvatar}  innerDivStyle={{padding:'16px 16px 16px 67px'}}/>
+                  </List> 
+                  <Divider />
                   <List>
-                    <ListItem primaryText={this.state.selectedProvince.props.primaryText} />
+                    <ProvinceListItem primaryText={this.state.selectedProvince.props.primaryText} />
                   </List> 
                 </React.Fragment>
                 : null}
           </Tab>
         </Tabs>
-      </React.Fragment>;
+      </React.Fragment> : null};
 
     return (this.props.isOpen ?
       <Card style={s} containerStyle={containerStyle}>
@@ -287,6 +294,7 @@ class IndicatorChart extends React.Component {
             <img src={intactForest} alt="" />
           </CardMedia>
           <CardTitle 
+            style={{padding:'0px'}}
             children={children}
           />
         </Card> : null
@@ -331,13 +339,26 @@ class PoliciesPanel extends React.Component {
     ]}
     />
     <PolicyGroupHeader primaryText="Local" nestedItems={[
-      <PolicyListItem key="l1" primaryText="O Le Pupū Puē National Park" secondaryText="Management Plan" leftAvatarSrc={logo_l1} onIndicatorSelected={this.indicatorSelected.bind(this)} targets={[
+      <PolicyListItem key="l1" primaryText="O Le Pupū Puē National Park" secondaryText="IUCN Green List Candidate" leftAvatarSrc={greenListLogo} onIndicatorSelected={this.indicatorSelected.bind(this)} targets={[
+        <div key="t1" primaryText="Good governance" secondaryText="" indicators={[
+          <div key="i3" primaryText="IMET Species Indicator" secondaryText="The total number of bunnies"/>,
+          <div key="i4" primaryText="IMET Threat Assessment" secondaryText="The level of bad things happening"/>
+          ]}/>,
+        <div key="t1" primaryText="Sound design and planning" secondaryText="" indicators={[
+          <div key="i3" primaryText="IMET Species Indicator" secondaryText="The total number of bunnies"/>,
+          <div key="i4" primaryText="IMET Threat Assessment" secondaryText="The level of bad things happening"/>
+          ]}/>,
+        <div key="t1" primaryText="Good governance" secondaryText="" indicators={[
+          <div key="i3" primaryText="IMET Species Indicator" secondaryText="The total number of bunnies"/>,
+          <div key="i4" primaryText="IMET Threat Assessment" secondaryText="The level of bad things happening"/>
+          ]}/>          
+      ]}/>,
+      <PolicyListItem key="l2" primaryText="Ngiri-Tumba-Maindombe NP" secondaryText="Management Plan" leftAvatarSrc={logo_l1} onIndicatorSelected={this.indicatorSelected.bind(this)} targets={[
         <div key="t1" primaryText="Objective 1" secondaryText="Increase management effectiveness" indicators={[
           <div key="i3" primaryText="IMET Species Indicator" secondaryText="The total number of bunnies"/>,
           <div key="i4" primaryText="IMET Threat Assessment" secondaryText="The level of bad things happening"/>
           ]}/>
-      ]}/>,
-      <PolicyListItem key="l2" primaryText="Ngiri-Tumba-Maindombe NP" secondaryText="Management Plan" leftAvatarSrc={logo_l1} onIndicatorSelected={this.indicatorSelected.bind(this)}/>
+      ]}/>
     ]}
     />
   </List>
@@ -664,7 +685,7 @@ class App extends Component {
           <AppBar title="Biopama Regional Conservation Planning Tools" showMenuIconButton={false}/>
           <PoliciesDrawer map={this.state.map}/>
           <Map onLoad={this.mapLoaded.bind(this)}/>
-          <MapToolbar/>
+          <MapToolbar map={this.state.map}/>
           <ActionsDrawer/>
         </div>
       </MuiThemeProvider>
