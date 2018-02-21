@@ -536,13 +536,16 @@ class ActionsPanel extends React.Component {
     return <List>
     <ActionsHeader text="Analyse"/>
     <ActionsHeader text="Contribute"/>
-    <ActionListItem primaryText="Spatial Data" onClick={this.log}/>
-    <ActionListItem primaryText="Species Observations" onClick={this.log}/>
+    <ActionListItem primaryText="Spatial data" onClick={this.log}/>
+    <ActionListItem primaryText="Species observations" onClick={this.log}/>
     <ActionListItem primaryText="Photos" onClick={this.log}/>
     <ActionListItem primaryText="Digitise features" onClick={()=>this.setState({digitisingFeatures:true})}/>
-    <ActionListItem primaryText="Protected Areas Information" onClick={this.log}/>
-    <ActionsHeader text="Networking"/>
-    <ActionsHeader text="Training"/>
+    <ActionListItem primaryText="Protected area boundaries" onClick={this.log}/>
+    <ActionListItem primaryText="Management effectiveness data" onClick={this.log}/>
+    <ActionsHeader text="Fund"/>
+    <ActionListItem primaryText="View Action Fund proposals" onClick={this.log}/>
+    <ActionsHeader text="Network"/>
+    <ActionsHeader text="Reports"/>
     <Dialog title="Digitise Features"
             open={this.state.digitisingFeatures}
             actions={<HorizontalLinearStepper closeDialog={this.handleClose.bind(this)}/>}
