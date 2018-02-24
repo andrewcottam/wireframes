@@ -5,10 +5,12 @@
   "dependencies": {
     "mapbox-gl": "^0.44.0",
     "material-ui": "^0.20.0",
+    "prop-types": "^15.6.0",
     "react": "^16.2.0",
     "react-dom": "^16.2.0",
     "react-scripts": "1.1.0",
     "react-sparklines": "^1.7.0",
+    "recharts": "^1.0.0-beta.10",
     "typeface-roboto": "0.0.54"
   },
   "scripts": {

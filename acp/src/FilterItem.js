@@ -13,7 +13,7 @@ class FilterItem extends React.Component {
 
 
     handleChange = (event, index, values) => {
-        this.props.onChange(event, index, values);
+        this.props.onChange(this.props.title, values);
     };
 
     menuItems(values) {
@@ -31,14 +31,14 @@ class FilterItem extends React.Component {
         const { values } = this.state;
         return (
             <SelectField
-        floatingLabelText={this.props.title}
-        multiple={true}
-        hintText="Select an item"
-        value={this.props.value}
-        onChange={this.handleChange}
-        style={{width:'200px',padding:'10px'}}
-        autoWidth={true}
-      >
+                floatingLabelText={this.props.title}
+                multiple={true}
+                hintText="Select an item"
+                value={this.props.value}
+                onChange={this.handleChange}
+                style={{width:'200px',padding:'10px'}}
+                autoWidth={true}
+              >
         {this.menuItems(values)}
       </SelectField>
         );

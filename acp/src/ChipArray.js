@@ -18,6 +18,7 @@ export default class ChipArray extends React.Component {
 
   renderChip(data) {
     return (
+      (data ?
       <Chip
         key={data.key}
         onRequestDelete={() => this.props.deleteChip(data)}
@@ -25,6 +26,7 @@ export default class ChipArray extends React.Component {
       >
         {data.label}
       </Chip>
+      : null)
     );
   }
 
