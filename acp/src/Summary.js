@@ -10,7 +10,7 @@ const colors = ['#8D228C', '#00B172', '#2B65A5', '#FAB800', '#FF006A', '#5EC461'
 class Summary extends React.Component {
     onClickMetChart(e) {
         this.props.history.push({
-            pathname: "Region/"+ e.props.title
+            pathname: window.basepath + "Region/"+ e.props.title
         });
     }
     render() {

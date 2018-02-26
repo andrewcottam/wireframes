@@ -17,6 +17,7 @@ class App extends Component {
   constructor(props) {
     super(props);
     this.state = { filter: 'Summary', chipData: [], selectedItems: [] };
+    window.basepath = (process.env.NODE_ENV==='production') ? "/wireframes/acp/build/" : "/wireframes/acp/";
   }
   mapLoaded(e) {
     this.setState({ map: e.target });
@@ -38,12 +39,12 @@ class App extends Component {
   }
   filterChange(filterName, values) {
     this.chipData = this.state.chipData;
-    let itemToAdd = values.map((item) => {
-      let existingValues = this.state.chipData.filter(existing => existing.label === item);
-      return (existingValues.length === 0) && { key: this.state.chipData.length, label: item };
-    });
-    this.chipData.push(itemToAdd.filter(Boolean)[0]);
-    this.setSelectedItems(filterName);
+  let itemToAdd = values.map((item) => {
+    let existingValues = this.state.chipData.filter(existing => existing.label === item);
+    return (existingValues.length === 0) && { key: this.state.chipData.length, label: item };
+  });
+  this.chipData.push(itemToAdd.filter(Boolean)[0]);
+  this.setSelectedItems(filterName);
   }
   onMetChartClick(metChart) {
     this.chipData = this.state.chipData;
@@ -71,11 +72,11 @@ class App extends Component {
               <div className="rightPaneInner">
                 <Router>
                   <div>
-                    <Route exact path={process.env.PUBLIC_URL} component={Summary}/>
-                    <Route path={process.env.PUBLIC_URL + "Region/:region"} component={Region}/>
-                    <Route path={process.env.PUBLIC_URL + "Country/:country"} component={Country}/>
-                    <Route path={process.env.PUBLIC_URL + "PA/:pa"} component={PA}/>
-                    <Route path={process.env.PUBLIC_URL + "Indicator/:indicator"} component={Indicator}/>
+                    <Route exact path={window.basepath} component={Summary}/>
+                    <Route path={window.basepath + "Region/:region"} component={Region}/>
+                    <Route path={window.basepath + "Country/:country"} component={Country}/>
+                    <Route path={window.basepath + "PA/:pa"} component={PA}/>
+                    <Route path={window.basepath + "Indicator/:indicator"} component={Indicator}/>
                   </div>
                 </Router>
               </div>
