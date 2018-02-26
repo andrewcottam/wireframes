@@ -22,11 +22,10 @@ class MetChart extends React.Component {
                                 {data.map((entry, index) => <Cell fill={colors[index % colors.length]} key={index} strokeWidth={2}/>)}
                             </Pie>
                         </PieChart>
-                        <div className="MetChartDiv" style={this.props.clickable!==false ? {cursor: 'pointer'} : null}title={this.props.clickable!==false ? "Click for more detail" : null} onClick={this.onClick.bind(this)}>
-                            <div style={{color:colors[1]}} className="MetChartPercentLabel">
-                                {this.props.percentMet}%
-                            </div>
+                        <div style={{color:colors[1]}} className="MetChartPercentLabel">
+                            {this.props.percentMet}%
                         </div>
+                        <div className="MetChartDiv" style={this.props.clickable!==false ? {cursor: 'pointer'} : null}title={this.props.clickable!==false ? "Click for more detail" : null} onClick={this.onClick.bind(this)}/>
                     </div>
                 </div>
             </React.Fragment>
