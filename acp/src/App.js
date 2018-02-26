@@ -57,7 +57,7 @@ class App extends Component {
     return (
       <MuiThemeProvider>
           <div className="App">
-            <AppBar title={process.env.NODE_ENV + " Biopama ACP Conservation Knowledge Centre"} showMenuIconButton={false}/>
+            <AppBar title="Biopama ACP Conservation Knowledge Centre" showMenuIconButton={false}/>
             <Drawer open={true} containerStyle={{'position': 'absolute', 'top': '64px','overflow':'none'}} width={260}>
               <div>
                 <FilterItem title='Region' names={['Caribbean','Pacific','C and W Africa','E and S Africa']} value={this.state.selectedItems} onChange={this.filterChange.bind(this)}></FilterItem>
