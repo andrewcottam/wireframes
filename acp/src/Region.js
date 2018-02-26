@@ -14,7 +14,7 @@ const colors = ['#8D228C', '#00B172', '#2B65A5', '#FAB800', '#FF006A', '#5EC461'
 class Region extends React.Component {
     onClickMetChart(e) {
         this.props.history.push({
-            pathname: "/wireframes/acp/Country/"  + e.props.title
+            pathname: "../Country/"  + e.props.title  
         });
     }
     render() {

@@ -2,7 +2,6 @@ import React, { Component } from 'react';
 import './App.css';
 import MuiThemeProvider from 'material-ui/styles/MuiThemeProvider';
 import AppBar from 'material-ui/AppBar';
-import Header from './Header.js';
 import Summary from './Summary.js';
 import Region from './Region.js';
 import Country from './Country.js';
@@ -57,7 +56,7 @@ class App extends Component {
     return (
       <MuiThemeProvider>
           <div className="App">
-            <AppBar title="Biopama ACP Conservation Knowledge Centre" showMenuIconButton={false}/>
+            <AppBar title={process.env.NODE_ENV + " Biopama ACP Conservation Knowledge Centre"} showMenuIconButton={false}/>
             <Drawer open={true} containerStyle={{'position': 'absolute', 'top': '64px','overflow':'none'}} width={260}>
               <div>
                 <FilterItem title='Region' names={['Caribbean','Pacific','C and W Africa','E and S Africa']} value={this.state.selectedItems} onChange={this.filterChange.bind(this)}></FilterItem>
@@ -72,11 +71,11 @@ class App extends Component {
               <div className="rightPaneInner">
                 <Router>
                   <div>
-                    <Route path="/wireframes/acp/Summary" component={Summary}/>
-                    <Route path="/wireframes/acp/Region/:region" component={Region}/>
-                    <Route path="/wireframes/acp/Country/:country" component={Country}/>
-                    <Route path="/wireframes/acp/PA/:pa" component={PA}/>
-                    <Route path="/wireframes/acp/Indicator/:indicator" component={Indicator}/>
+                    <Route exact path={process.env.PUBLIC_URL} component={Summary}/>
+                    <Route path={process.env.PUBLIC_URL + "Region/:region"} component={Region}/>
+                    <Route path={process.env.PUBLIC_URL + "Country/:country"} component={Country}/>
+                    <Route path={process.env.PUBLIC_URL + "PA/:pa"} component={PA}/>
+                    <Route path={process.env.PUBLIC_URL + "Indicator/:indicator"} component={Indicator}/>
                   </div>
                 </Router>
               </div>
