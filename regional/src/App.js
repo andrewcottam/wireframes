@@ -66,17 +66,17 @@ class PoliciesDrawer extends React.Component {
   }
 }
 
-function getCountries(map) {
-  var filter = ['in', 'name_en', "American Samoa", "Cook Islands", "Federated States of Micronesia", "Fiji", "French Polynesia", "Guam", "Kiribati", "Marshall Islands", "Nauru", "New Caledonia", "Niue", "Northern Mariana Islands", "Palau", "Papua New Guinea", "Samoa", "Solomon Islands", "Tokelau", "Tonga", "Tuvalu", "Vanuatu", "Wallis and Futuna"];
-  var countries_lg = map.queryRenderedFeatures({ layers: ['country-label-lg'], filter: filter });
-  var countries_md = map.queryRenderedFeatures({ layers: ['country-label-md'], filter: filter });
-  var countries_sm = map.queryRenderedFeatures({ layers: ['country-label-sm'], filter: filter });
-  var countries = countries_lg.concat(countries_md).concat(countries_sm);
-  for (var i = 0; i < countries.length; i++) {
-    console.log(countries[i].properties.name_en);
-  }
-  return countries;
-}
+// function getCountries(map) {
+//   var filter = ['in', 'name_en', "American Samoa", "Cook Islands", "Federated States of Micronesia", "Fiji", "French Polynesia", "Guam", "Kiribati", "Marshall Islands", "Nauru", "New Caledonia", "Niue", "Northern Mariana Islands", "Palau", "Papua New Guinea", "Samoa", "Solomon Islands", "Tokelau", "Tonga", "Tuvalu", "Vanuatu", "Wallis and Futuna"];
+//   var countries_lg = map.queryRenderedFeatures({ layers: ['country-label-lg'], filter: filter });
+//   var countries_md = map.queryRenderedFeatures({ layers: ['country-label-md'], filter: filter });
+//   var countries_sm = map.queryRenderedFeatures({ layers: ['country-label-sm'], filter: filter });
+//   var countries = countries_lg.concat(countries_md).concat(countries_sm);
+//   for (var i = 0; i < countries.length; i++) {
+//     console.log(countries[i].properties.name_en);
+//   }
+//   return countries;
+// }
 
 class CountryListItem extends React.Component {
   drillCountry() {
@@ -109,6 +109,9 @@ class IndicatorChart extends React.Component {
     super(props);
     this.state = { value: 'Indicator', selectedCountry: null, selectedProvince: null, lastYear: null };
   }
+  shouldComponentUpdate(nextProps, nextState) {
+    return this.props.map && this.props.map.style.stylesheet.id !== 'cjckavkjc9xui2snvo09hqpfs';
+  }
   handleChange = (value) => {
     this.setState({
       value: value,
@@ -132,12 +135,13 @@ class IndicatorChart extends React.Component {
     });
   }
   mouseMove(e) {
-    if (e && e.activeLabel && e.activeLabel != lastYear) {
+    if (e && e.activeLabel && e.activeLabel !== lastYear) {
       this.filterMap(e.activeLabel);
+      this.setState({lastYear:e.activeLabel});
     }
   }
   changeYear(e) {
-    //console.log("wibble"); not currently implemented
+    console.log("wibble"); //not currently implemented
   }
   filterMap(yr) {
     // this.props.map.on('render', this.onSourceData.bind(this, yr));
@@ -206,6 +210,7 @@ class IndicatorChart extends React.Component {
                       >
                       <img 
                         src={indicatorHistory}
+                        alt="Indicator history"
                       />
                     </Badge>
                   </div>
@@ -329,38 +334,24 @@ class IndicatorChart extends React.Component {
           this.props.map.setCenter([35.607, -6.273]);
           this.props.map.zoomTo(6);
           var allyears = TZA_DATA.map((item) => {
-            if (item.yr > 0)
+            if (item.yr > 0) {
               return { x: item.yr, cum_area: item.cum_area, percent: (item.cum_area / 9450.87), threshold: 17 };
+            }
+            return null;
           });
           children =
             <div onKeyDown={this.changeYear} tabIndex="0">
               <Tabs        
-                value="Indicator"
+                value="Country"
                 onChange={this.handleChange}
                 >
                 <Tab 
                   label="Indicator" 
                   value="Indicator"
-                  buttonStyle={{height:'25px',padding:'3px 0px 3px 0px'}}
+                  disabled={true}
+                  buttonStyle={{height:'25px',padding:'3px 0px 3px 0px',backgroundColor:'#d0d0d0'}}
                   style={{fontSize:'12px'}}
                   >
-                  {this.props.indicator ? 
-                  <div
-                    style={{padding:'12px',fontSize:'19px'}}>
-                    {this.props.indicator.indicatorListItem.props.primaryText}
-                  </div> : null }
-                  <React.Fragment>
-                    <LineChart width={400} height={200} data={allyears} onMouseMove={this.mouseMove.bind(this)} margin={{ top: 25, right: 15, bottom: 25, left: 15 }} isToolTipActive={true}>
-                      <XAxis scale="linear" dataKey="x" domain={[1905, 2010]} label={{value:"Year", position:"insideBottom",style:{fontSize:'11px'},offset:-1}} style={{fontSize:'11px',paddingTop:'20px'}} ticks={[1905,1925,1945,1965,1985,2005]}  padding={{ left: 10, right: 10 }}/>
-                      <YAxis label={{ value: '% protected', angle: -90, position: 'inside', style:{fontSize:'11px'}}} style={{fontSize:'11px'}}/>
-                      <Tooltip isAnimationActive={false} content={<CBD11Tooltip/>}/>
-                      <Line type="monotone" dataKey="threshold" stroke="#d0d0d0" isAnimationActive={false} dot={false} connectNulls={true}/>
-                      <Line type="monotone" dataKey="percent" stroke="#00BCD4" isAnimationActive={false} dot={{ stroke: '#00BCD4', strokeWidth: 1,r:2 }} connectNulls={true}/>
-                    </LineChart>
-                    <CardText 
-                      style={{padding:'12px',fontSize:'13px'}}>{this.props.indicator.indicatorListItem.props.desc ? this.props.indicator.indicatorListItem.props.desc : "Move the mouse over the chart to see the change in protection through time."}
-                    </CardText>
-                  </React.Fragment>
                 </Tab>
                 <Tab 
                   label="Region" 
@@ -372,10 +363,27 @@ class IndicatorChart extends React.Component {
                 <Tab 
                   label="Country" 
                   value="Country"
-                  disabled={true}
-                  buttonStyle={{height:'25px',padding:'3px 0px 3px 0px',backgroundColor:'#d0d0d0'}}
+                  buttonStyle={{height:'25px',padding:'3px 0px 3px 0px'}}
                   style={{fontSize:'12px'}}
-                  />
+                  >
+                  {this.props.indicator ? 
+                  <div
+                    style={{padding:'12px',fontSize:'19px'}}>
+                    Tanzania {this.props.indicator.indicatorListItem.props.primaryText}
+                  </div> : null }
+                  <React.Fragment>
+                    <LineChart width={400} height={200} data={allyears} onMouseMove={this.mouseMove.bind(this)} margin={{ top: 25, right: 15, bottom: 25, left: 15 }}>
+                      <XAxis scale="linear" dataKey="x" domain={[1905, 2010]} label={{value:"Year", position:"insideBottom",style:{fontSize:'11px'},offset:-1}} style={{fontSize:'11px',paddingTop:'20px'}} ticks={[1905,1925,1945,1965,1985,2005]}  padding={{ left: 10, right: 10 }}/>
+                      <YAxis label={{ value: '% protected', angle: -90, position: 'inside', style:{fontSize:'11px'}}} style={{fontSize:'11px'}}/>
+                      <Tooltip isAnimationActive={false} content={<CBD11Tooltip/>}/>
+                      <Line type="monotone" dataKey="threshold" stroke="#d0d0d0" isAnimationActive={false} dot={false} connectNulls={true}/>
+                      <Line type="monotone" dataKey="percent" stroke="#00BCD4" isAnimationActive={false} dot={{ stroke: '#00BCD4', strokeWidth: 1,r:2 }} connectNulls={true}/>
+                    </LineChart>
+                    <CardText 
+                      style={{padding:'12px',fontSize:'13px'}}>{this.props.indicator.indicatorListItem.props.desc ? this.props.indicator.indicatorListItem.props.desc : "Move the mouse over the chart to see the change in protection through time."}
+                    </CardText>
+                  </React.Fragment>
+                </Tab>                  
                 <Tab 
                   label="Province" 
                   value="Province"
