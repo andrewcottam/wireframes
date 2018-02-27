@@ -22,6 +22,7 @@ class Region extends React.Component {
             <React.Fragment>
                 <Header title={this.props.match.params.region + " Region Summary"}/>
                 <Header2 title="Proportion of regional targets met"/>
+                
                 <Header2 title="Regional targets"/>
                 <PolicyItem primaryText="Framework for Nature Conservation and Protected Areas in the Pacfic Islands Region" secondaryText="2014-2020" avatar={logo_r1}/>
                 <div style={{paddingLeft:'57px'}}>
