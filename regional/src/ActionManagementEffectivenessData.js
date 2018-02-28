@@ -3,7 +3,7 @@ import { Step, Stepper, StepLabel } from 'material-ui/Stepper';
 import RaisedButton from 'material-ui/RaisedButton';
 import FlatButton from 'material-ui/FlatButton';
 
-class HorizontalLinearStepper extends React.Component {
+class ActionSpatialData extends React.Component {
   state = {
     finished: false,
     stepIndex: 0,
@@ -28,13 +28,13 @@ class HorizontalLinearStepper extends React.Component {
       <div style={{width: '100%', maxWidth: 700, margin: 'auto',textAlign:'center'}}>
         <Stepper activeStep={stepIndex}>
           <Step>
-            <StepLabel>Select your protected area</StepLabel>
+            <StepLabel>Select your shapefile</StepLabel>
           </Step>
           <Step>
-            <StepLabel>Select your source imagery</StepLabel>
+            <StepLabel>Select your indicator</StepLabel>
           </Step>
           <Step>
-            <StepLabel>Start digitising features</StepLabel>
+            <StepLabel>Describe the data:</StepLabel>
           </Step>
         </Stepper>
         <div style={contentStyle}>
@@ -48,4 +48,4 @@ class HorizontalLinearStepper extends React.Component {
   }
 }
 
-export default HorizontalLinearStepper;
+export default ActionSpatialData;

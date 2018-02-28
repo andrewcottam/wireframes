@@ -40,7 +40,7 @@ class IntactForestIndicator extends React.Component {
             <React.Fragment>
               <Tabs        
                 value={this.state.value}
-                onChange={this.handleChange}
+                onChange={(value)=>this.setState({value:value})}
                 >
                 <Tab 
                   label="Indicator" 
