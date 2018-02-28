@@ -17,7 +17,7 @@ import { Card, CardHeader, CardMedia, CardTitle, CardText } from 'material-ui/Ca
 import Subheader from 'material-ui/Subheader';
 import { Tabs, Tab } from 'material-ui/Tabs';
 import MapToolbar from './MapToolbar.js';
-import CBD11Tooltip from './CBD11Tooltip.js';
+import TimeSeriesChart from './TimeSeriesChart.js';
 import Paper from 'material-ui/Paper';
 import mapboxgl from 'mapbox-gl';
 import logo_g1 from './logo-g1.png';
@@ -32,10 +32,8 @@ import logo_l1 from './logo-l1.png';
 import intactForest from './intactForest.png';
 import indicatorHistory from './indicatorHistory.png';
 import greenListLogo from './Green-List-logo-1.png';
-import { Tooltip, LineChart, Line, XAxis, YAxis } from 'recharts';
 
 const TZA_DATA = [{ "iso3": "TZA", "yr": 1905, "new_area": 41306.61, "cum_area": 226275.93 }, { "iso3": "TZA", "yr": 1931, "new_area": 4.42, "cum_area": 226280.35 }, { "iso3": "TZA", "yr": 1935, "new_area": 9.47, "cum_area": 226289.81 }, { "iso3": "TZA", "yr": 1937, "new_area": 120.9, "cum_area": 226410.72 }, { "iso3": "TZA", "yr": 1940, "new_area": 155.14, "cum_area": 226565.86 }, { "iso3": "TZA", "yr": 1941, "new_area": 20.45, "cum_area": 226586.3 }, { "iso3": "TZA", "yr": 1947, "new_area": 86.4, "cum_area": 226672.7 }, { "iso3": "TZA", "yr": 1949, "new_area": 41.58, "cum_area": 226714.29 }, { "iso3": "TZA", "yr": 1950, "new_area": 42.34, "cum_area": 226756.63 }, { "iso3": "TZA", "yr": 1951, "new_area": 16602.08, "cum_area": 243358.71 }, { "iso3": "TZA", "yr": 1952, "new_area": 28.49, "cum_area": 243387.19 }, { "iso3": "TZA", "yr": 1953, "new_area": 655.83, "cum_area": 244043.02 }, { "iso3": "TZA", "yr": 1954, "new_area": 1434.97, "cum_area": 245477.98 }, { "iso3": "TZA", "yr": 1955, "new_area": 5713.38, "cum_area": 251191.37 }, { "iso3": "TZA", "yr": 1956, "new_area": 1958.83, "cum_area": 253150.19 }, { "iso3": "TZA", "yr": 1957, "new_area": 2769.41, "cum_area": 255919.61 }, { "iso3": "TZA", "yr": 1958, "new_area": 7706.86, "cum_area": 263626.46 }, { "iso3": "TZA", "yr": 1959, "new_area": 8.42, "cum_area": 263634.88 }, { "iso3": "TZA", "yr": 1960, "new_area": 408.22, "cum_area": 264043.1 }, { "iso3": "TZA", "yr": 1961, "new_area": 118.23, "cum_area": 264161.33 }, { "iso3": "TZA", "yr": 1962, "new_area": 999.73, "cum_area": 265161.06 }, { "iso3": "TZA", "yr": 1963, "new_area": 375.93, "cum_area": 265536.98 }, { "iso3": "TZA", "yr": 1964, "new_area": 17881.33, "cum_area": 283418.31 }, { "iso3": "TZA", "yr": 1965, "new_area": 1117.04, "cum_area": 284535.35 }, { "iso3": "TZA", "yr": 1966, "new_area": 46.28, "cum_area": 284581.63 }, { "iso3": "TZA", "yr": 1967, "new_area": 31.89, "cum_area": 284613.52 }, { "iso3": "TZA", "yr": 1968, "new_area": 34.54, "cum_area": 284648.06 }, { "iso3": "TZA", "yr": 1969, "new_area": 14696.28, "cum_area": 299344.34 }, { "iso3": "TZA", "yr": 1970, "new_area": 2607.12, "cum_area": 301951.46 }, { "iso3": "TZA", "yr": 1972, "new_area": 5099.41, "cum_area": 307050.86 }, { "iso3": "TZA", "yr": 1973, "new_area": 1712.62, "cum_area": 308763.48 }, { "iso3": "TZA", "yr": 1974, "new_area": 7505.8, "cum_area": 316269.29 }, { "iso3": "TZA", "yr": 1975, "new_area": 2.42, "cum_area": 316271.71 }, { "iso3": "TZA", "yr": 1977, "new_area": 212.31, "cum_area": 316484.02 }, { "iso3": "TZA", "yr": 1979, "new_area": 69.29, "cum_area": 316553.31 }, { "iso3": "TZA", "yr": 1980, "new_area": 1471.51, "cum_area": 318024.81 }, { "iso3": "TZA", "yr": 1981, "new_area": 0.53, "cum_area": 318025.34 }, { "iso3": "TZA", "yr": 1982, "new_area": 6167.37, "cum_area": 324192.71 }, { "iso3": "TZA", "yr": 1987, "new_area": 0, "cum_area": 324192.71 }, { "iso3": "TZA", "yr": 1988, "new_area": 28.73, "cum_area": 324221.45 }, { "iso3": "TZA", "yr": 1992, "new_area": 1965.63, "cum_area": 326187.08 }, { "iso3": "TZA", "yr": 1993, "new_area": 1027.06, "cum_area": 327214.14 }, { "iso3": "TZA", "yr": 1994, "new_area": 9.86, "cum_area": 327224 }, { "iso3": "TZA", "yr": 1995, "new_area": 245.73, "cum_area": 327469.73 }, { "iso3": "TZA", "yr": 1997, "new_area": 96.37, "cum_area": 327566.1 }, { "iso3": "TZA", "yr": 1998, "new_area": 0, "cum_area": 327566.1 }, { "iso3": "TZA", "yr": 2000, "new_area": 12068.25, "cum_area": 339634.36 }, { "iso3": "TZA", "yr": 2001, "new_area": 43.84, "cum_area": 339678.2 }, { "iso3": "TZA", "yr": 2002, "new_area": 1692.29, "cum_area": 341370.49 }, { "iso3": "TZA", "yr": 2004, "new_area": 716.48, "cum_area": 342086.97 }, { "iso3": "TZA", "yr": 2005, "new_area": 180.21, "cum_area": 342267.18 }, { "iso3": "TZA", "yr": 2006, "new_area": 2653.98, "cum_area": 344921.16 }, { "iso3": "TZA", "yr": 2007, "new_area": 6371.5, "cum_area": 351292.66 }, { "iso3": "TZA", "yr": 2009, "new_area": 4902.87, "cum_area": 356195.53 }, { "iso3": "TZA", "yr": 2010, "new_area": 4193.68, "cum_area": 360389.21 }];
-var lastYear = null;
 
 class PoliciesDrawer extends React.Component {
   constructor(props) {
@@ -107,10 +105,7 @@ class ProvinceListItem extends React.Component {
 class IndicatorChart extends React.Component {
   constructor(props) {
     super(props);
-    this.state = { value: 'Indicator', selectedCountry: null, selectedProvince: null, lastYear: null };
-  }
-  shouldComponentUpdate(nextProps, nextState) {
-    return this.props.map && this.props.map.style.stylesheet.id !== 'cjckavkjc9xui2snvo09hqpfs';
+    this.state = { value: 'Indicator', selectedCountry: null, selectedProvince: null };
   }
   handleChange = (value) => {
     this.setState({
@@ -133,47 +128,6 @@ class IndicatorChart extends React.Component {
     this.props.map.fitBounds(e.provinceListItem.props.bounds, {
       padding: { top: 50, bottom: 50, left: 600, right: 50 }
     });
-  }
-  mouseMove(e) {
-    if (e && e.activeLabel && e.activeLabel !== lastYear) {
-      this.filterMap(e.activeLabel);
-      this.setState({lastYear:e.activeLabel});
-    }
-  }
-  changeYear(e) {
-    console.log("wibble"); //not currently implemented
-  }
-  filterMap(yr) {
-    // this.props.map.on('render', this.onSourceData.bind(this, yr));
-    this.props.map.setFilter("terrestrial-pas", ["all", ["<", "STATUS_YR", yr],
-      ["==", "PARENT_ISO", 'TZA']
-    ]);
-    this.props.map.setFilter("terrestrial-pas-active", ["all", ["==", "STATUS_YR", yr],
-      ["==", "PARENT_ISO", 'TZA']
-    ]);
-    this.props.map.setFilter("terrestrial-pas-labels", ["all", ["==", "STATUS_YR", yr],
-      ["==", "PARENT_ISO", 'TZA']
-    ]);
-    lastYear = yr;
-  }
-  onSourceData(yr, e) {
-    if (!this.props.map.loaded()) {
-      return; // still not loaded; bail out.
-    }
-    this.props.map.off('render', this.onSourceData);
-    var activePAs = this.props.map.queryRenderedFeatures(undefined, {
-      layers: ["terrestrial-pas-labels"]
-    });
-    if (activePAs.length > 0) {
-      var activePANames = activePAs.map((item) => item.properties.NAME);
-      var uniquePAs = activePANames.filter(function(item, i, ar) {
-        return ar.indexOf(item) === i;
-      });
-      console.log(uniquePAs.join(","));
-    }
-    else {
-      console.log("No activePAs");
-    }
   }
   render() {
     let s = { position: 'absolute', left: '45px', width: '440px' };
@@ -340,8 +294,7 @@ class IndicatorChart extends React.Component {
             return null;
           });
           children =
-            <div onKeyDown={this.changeYear} tabIndex="0">
-              <Tabs        
+            <Tabs        
                 value="Country"
                 onChange={this.handleChange}
                 >
@@ -372,13 +325,7 @@ class IndicatorChart extends React.Component {
                     Tanzania {this.props.indicator.indicatorListItem.props.primaryText}
                   </div> : null }
                   <React.Fragment>
-                    <LineChart width={400} height={200} data={allyears} onMouseMove={this.mouseMove.bind(this)} margin={{ top: 25, right: 15, bottom: 25, left: 15 }}>
-                      <XAxis scale="linear" dataKey="x" domain={[1905, 2010]} label={{value:"Year", position:"insideBottom",style:{fontSize:'11px'},offset:-1}} style={{fontSize:'11px',paddingTop:'20px'}} ticks={[1905,1925,1945,1965,1985,2005]}  padding={{ left: 10, right: 10 }}/>
-                      <YAxis label={{ value: '% protected', angle: -90, position: 'inside', style:{fontSize:'11px'}}} style={{fontSize:'11px'}}/>
-                      <Tooltip isAnimationActive={false} content={<CBD11Tooltip/>}/>
-                      <Line type="monotone" dataKey="threshold" stroke="#d0d0d0" isAnimationActive={false} dot={false} connectNulls={true}/>
-                      <Line type="monotone" dataKey="percent" stroke="#00BCD4" isAnimationActive={false} dot={{ stroke: '#00BCD4', strokeWidth: 1,r:2 }} connectNulls={true}/>
-                    </LineChart>
+                    <TimeSeriesChart width={400} height={200} data={allyears} margin={{ top: 25, right: 15, bottom: 25, left: 15 }} map={this.props.map}/>
                     <CardText 
                       style={{padding:'12px',fontSize:'13px'}}>{this.props.indicator.indicatorListItem.props.desc ? this.props.indicator.indicatorListItem.props.desc : "Move the mouse over the chart to see the change in protection through time."}
                     </CardText>
@@ -391,8 +338,7 @@ class IndicatorChart extends React.Component {
                   buttonStyle={{height:'25px',padding:'3px 0px 3px 0px',backgroundColor:'#d0d0d0'}}
                   style={{fontSize:'12px'}}
                   />
-             </Tabs>
-            </div>;
+             </Tabs>;
 
           break;
         case 'Marine protected area coverage':
