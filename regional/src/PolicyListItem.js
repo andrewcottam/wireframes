@@ -12,7 +12,8 @@ class PolicyListItem extends React.Component {
     indicatorSelected(e) {
         this.setState({ targetsOpen: false });
         let hierarchy = Object.assign({}, e.hierarchy, { policyListItem: this });
-        this.props.onIndicatorSelected(hierarchy);
+        // this.props.onIndicatorSelected(hierarchy);
+        window.location = window.basepath + "i/1";
     }
 
     handleClick() {

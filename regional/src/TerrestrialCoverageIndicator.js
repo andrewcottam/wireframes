@@ -39,15 +39,15 @@ class TerrestrialCoverageIndicator extends React.Component {
                   buttonStyle={{height:'25px',padding:'3px 0px 3px 0px'}}
                   style={{fontSize:'12px'}}
                   >
-                  {this.props.indicator ? 
+                  {this.props.indicatorTitle ? 
                   <div
                     style={{padding:'12px',fontSize:'19px'}}>
-                    Tanzania {this.props.indicator.indicatorListItem.props.primaryText}
+                    {this.props.indicatorTitle}
                   </div> : null }
                   <React.Fragment>
                     <TimeSeriesChart width={400} height={200} data={allyears} margin={{ top: 25, right: 15, bottom: 25, left: 15 }} map={this.props.map}/>
                     <CardText 
-                      style={{padding:'12px',fontSize:'13px'}}>{this.props.indicator.indicatorListItem.props.desc ? this.props.indicator.indicatorListItem.props.desc : "Move the mouse over the chart to see the change in protection through time."}
+                      style={{padding:'12px',fontSize:'13px'}}>{this.props.desc ? this.props.desc : "Move the mouse over the chart to see the change in protection through time."}
                     </CardText>
                   </React.Fragment>
                 </Tab>                  

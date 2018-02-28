@@ -5,7 +5,9 @@ import AppBar from 'material-ui/AppBar';
 import MapToolbar from './MapToolbar.js';
 import PoliciesDrawer from './PoliciesDrawer.js';
 import ActionsDrawer from './ActionsDrawer.js';
+import IndicatorCard from './IndicatorCard.js';
 import mapboxgl from 'mapbox-gl';
+import { BrowserRouter as Router, Route } from "react-router-dom";
 
 class Map extends React.Component {
   componentDidMount() {
@@ -37,6 +39,7 @@ class Map extends React.Component {
 class App extends Component {
   constructor(props) {
     super(props);
+    window.basepath = (process.env.NODE_ENV==='production') ? "/wireframes/regional/build/" : "/wireframes/regional/";
     this.state = { map: null };
   }
   mapLoaded(e) {
@@ -48,6 +51,11 @@ class App extends Component {
         <div className="App">
           <AppBar title="Biopama Regional Conservation Planning Tools" showMenuIconButton={false}/>
           <PoliciesDrawer map={this.state.map}/>
+          <Router>
+            <div>
+              <Route path={window.basepath + "i/:id"} render={props => <IndicatorCard {...props} map={this.state.map}/>}/>
+            </div>
+              </Router>
           <Map onLoad={this.mapLoaded.bind(this)}/>
           <MapToolbar map={this.state.map}/>
           <ActionsDrawer/>

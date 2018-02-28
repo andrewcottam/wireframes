@@ -48,10 +48,10 @@ class IntactForestIndicator extends React.Component {
                   buttonStyle={{height:'25px',padding:'3px 0px 3px 0px'}}
                   style={{fontSize:'12px'}}
                   >
-                  {this.props.indicator ? 
+                  {this.props.indicatorTitle ? 
                   <div
                     style={{padding:'12px',fontSize:'19px'}}>
-                    {this.props.indicator.indicatorListItem.props.primaryText}
+                    {this.props.indicatorTitle}
                   </div> : null }
                   <React.Fragment>
                   <div style={{textAlign:'center'}}>    
@@ -68,11 +68,9 @@ class IntactForestIndicator extends React.Component {
                       />
                     </Badge>
                   </div>
-                  {this.props.indicator ?
                   <CardText 
-                    style={{padding:'12px',fontSize:'13px'}}>{this.props.indicator.indicatorListItem.props.desc ? this.props.indicator.indicatorListItem.props.desc : "No description."}
+                    style={{padding:'12px',fontSize:'13px'}}>{this.props.desc ? this.props.desc : "No description."}
                   </CardText>
-                  : null}
                   </React.Fragment>
                 </Tab>
                 <Tab 
