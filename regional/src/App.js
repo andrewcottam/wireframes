@@ -58,7 +58,7 @@ class App extends Component {
                 <IndicatorCard map={this.state.map}/>
                 <Map onLoad={this.mapLoaded.bind(this)}/>
                 <MapToolbar map={this.state.map}/>
-                <ActionsDrawer/>
+                <ActionsDrawer map={this.state.map}/>
               </React.Fragment>
               }/>
             </div>
