@@ -25,9 +25,8 @@ class Region extends React.Component {
                 <Header2 title="Regional targets"/>
                 <PolicyItem primaryText="Framework for Nature Conservation and Protected Areas in the Pacfic Islands Region" secondaryText="2014-2020" avatar={logo_r1}/>
                 <div style={{paddingLeft:'57px'}}>
-                    <TargetItem primaryText="Target 11: By 2020, at least 17 per cent of terrestrial and inland water areas and 10 per cent of coastal and marine areas, especially areas of particular importance for biodiversity and ecosystem services, are conserved through effectively and equitably managed, ecologically representative and well-connected systems of protected areas and other effective area-based conservation measures, and integrated into the wider landscape and seascape."/>
-                    <IndicatorSummary title="Terrestrial protected area coverage" data={[5, 10, 11, 12,12,13,16, 17, 17, 19, 22,21]} line={"mean"}/>
-                    <IndicatorSummary title="Marine protected area coverage" data={[5, 5, 5, 4,8,8,9, 10, 11, 12, 12,11]} line={"mean"}/>
+                    <TargetItem primaryText="Objective 3: Identify, conserve, sustainably manage and restore priority sites, habitats and ecosystems, including cultural sites"/>
+                    <IndicatorSummary title="Number of countries logging intact forests" data={[25,20,21,22,22,21,18,14,13,6,5,5,4,4]} line={"mean"} id="2"/>
                 </div>
                 <Header2 title="Proportion of National targets met"/>
                 <div style={{margin:'20px'}}>
