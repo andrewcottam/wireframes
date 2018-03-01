@@ -12,35 +12,102 @@ import indicatorHistory from './indicatorHistory.png';
 import { CardText } from 'material-ui/Card';
 import CountryListItem from './CountryListItem.js';
 import ProvinceListItem from './ProvinceListItem.js';
+import mapboxgl from 'mapbox-gl';
+
+let countryPopups = [];
 
 class IntactForestIndicator extends React.Component {
-    constructor(props) {
-        super(props);
-        this.state = { value: "Indicator" };
+  constructor(props) {
+    super(props);
+    this.state = { value: "Indicator" };
+  }
+  drillCountries() {
+    this.setState({ value: 'Region' });
+    this.props.map.setCenter([161.76, -8.14]);
+    this.props.map.zoomTo(4);
+  }
+  drillCountry(e) {
+    this.setState({ value: 'country', selectedCountry: e.countryListItem });
+    this.props.map.fitBounds(e.countryListItem.props.bounds, {
+      padding: { top: 50, bottom: 50, left: 600, right: 50 }
+    });
+  }
+  drillProvince(e) {
+    this.setState({ value: 'province', selectedProvince: e.provinceListItem });
+    this.props.map.fitBounds(e.provinceListItem.props.bounds, {
+      padding: { top: 50, bottom: 50, left: 600, right: 50 }
+    });
+  }
+  addCountryPopups() {
+    this.removeCountryPopups();
+    if ((this.props.map.getZoom() < 3) || (this.props.map.getZoom() >= 6)) {
+      return;
     }
-    drillCountries() {
-        this.setState({ value: 'Region' });
-        this.props.map.setCenter([161.76, -8.14]);
-        this.props.map.zoomTo(4);
+    var countryFeatures = this.getCountries(true);
+    var countriesDone = [];
+    countryFeatures.map(feature => {
+      if (countriesDone.indexOf(feature.properties.name_en)===-1) {
+        countriesDone.push(feature.properties.name_en);
+        var num = this.getArea(feature.properties.name_en);
+        var color = ['Papua New Guinea', 'Solomon Islands', 'Fiji', 'New Caledonia'].indexOf(feature.properties.name_en) > -1 ? "#D0583B" : "#3974B1";
+        // var yOffset = (feature.properties.name_en.length > 17) ? 50 : 40;
+        var popup = new mapboxgl.Popup({ closeButton: false, closeOnClick: false })
+          .setLngLat(feature.geometry.coordinates)
+          .setHTML("<div class='indicatorPopup'><span className='fa fa-circle-o-notch' aria-hidden='true' style='font-size:19px;padding-right:10px;color:" + color + "'></span><span>" + num + " Km<span style='font-size:9px;vertical-align: super; padding: 2px;'>2</span></span></div>")
+          .addTo(this.props.map);
+        countryPopups.push(popup);
+      }
+    });
+  }
+  getCountries(renderedOnly) {
+    var countries;
+    if (renderedOnly) {
+      var filter = ['in', 'name_en', "American Samoa", "Cook Islands", "Federated States of Micronesia", "Fiji", "French Polynesia", "Guam", "Kiribati", "Marshall Islands", "Nauru", "New Caledonia", "Niue", "Northern Mariana Islands", "Palau", "Papua New Guinea", "Samoa", "Solomon Islands", "Tokelau", "Tonga", "Tuvalu", "Vanuatu", "Wallis and Futuna"];
+      countries = this.props.map.queryRenderedFeatures({ layers: ['Country label'], filter: filter });
     }
-    drillCountry(e) {
-        this.setState({ value: 'country', selectedCountry: e.countryListItem });
-        this.props.map.fitBounds(e.countryListItem.props.bounds, {
-            padding: { top: 50, bottom: 50, left: 600, right: 50 }
-        });
+    else {
+      countries = this.props.map.querySourceFeatures("composite", { sourceLayer: 'country_label' });
     }
-    drillProvince(e) {
-        this.setState({ value: 'province', selectedProvince: e.provinceListItem });
-        this.props.map.fitBounds(e.provinceListItem.props.bounds, {
-            padding: { top: 50, bottom: 50, left: 600, right: 50 }
-        });
+    return countries;
+  }
+
+  removeCountryPopups() {
+    countryPopups.map((countryPopup) => countryPopup.remove());
+    countryPopups = [];
+  }
+
+  getArea(name) {
+    var num;
+    switch (name) {
+      case "Papua New Guinea":
+        num = 187645;
+        break;
+      case "Solomon Islands":
+        num = 3857;
+        break;
+      case "Fiji":
+        num = 3249;
+        break;
+      case "New Caledonia":
+        num = 8331;
+        break;
+      default:
+        num = 0;
+        break;
     }
-    render() {
-        return (
-            <React.Fragment>
+    return num;
+  }
+  onChange(value) {
+    this.setState({ value: value });
+    // if (value === "Region") { this.addCountryPopups(); }
+
+  }
+  render() {
+    return (
+      <React.Fragment>
               <Tabs        
                 value={this.state.value}
-                onChange={(value)=>this.setState({value:value})}
+                onChange={this.onChange.bind(this)}
                 >
                 <Tab 
                   label="Indicator" 
@@ -180,7 +247,7 @@ class IntactForestIndicator extends React.Component {
                 </Tab>
               </Tabs>
             </React.Fragment>
-        );
-    }
+    );
+  }
 }
 export default IntactForestIndicator;

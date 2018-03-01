@@ -5,7 +5,7 @@ class IndicatorListItem extends React.Component {
     indicatorSelected(e) {
         this.props.onClick(this);
         this.props.history.push({
-            pathname: window.basepath + "i/" + this.props.id
+            pathname: window.basepath + "indicator/" + this.props.id
         });
     }
     render() {
