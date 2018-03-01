@@ -31,32 +31,6 @@ class ActionsPanel extends React.Component {
     handleClose() {
         this.setState({ action: '' });
     }
-    addImagery() {
-        if (this.props.map.getLayer('Imagery')) {
-            var newProp = (this.props.map.getLayoutProperty("Imagery", 'visibility')==='visible') ? 'none' : 'visible';
-            this.props.map.setLayoutProperty("Imagery", 'visibility', newProp); //toggle the imagery
-        }
-        else {
-            this.props.map.addLayer({
-                'id': 'Imagery',
-                'type': 'raster',
-                'source': {
-                    'type': 'raster',
-                    'tiles': [
-                        'https://a.tiles.mapbox.com/v4/digitalglobe.n6nhclo2/{z}/{x}/{y}.png?access_token=pk.eyJ1IjoiZGlnaXRhbGdsb2JlIiwiYSI6ImIzMWY3NDA3NjlhYThlNjdiMTA2MGMxNzU0ZDE2YzY4In0.8jtWjgDsAwqFouTWzSnkJw',
-                    ],
-                    'tileSize': 256
-                },
-                'maxzoom': 19,
-                'layout': {
-                    'visibility': 'visible'
-                },
-                'paint': {}
-            }, 'Landuse -National park');
-        }
-    }
-
-
     render() {
         return (
             <List>

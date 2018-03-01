@@ -28,7 +28,7 @@ class ActionShowRecentImagery extends React.Component {
                     'visibility': 'visible'
                 },
                 'paint': {}
-            }, 'Landuse -National park');
+            }, this.props.map.style.stylesheet.layers[1].id); //used to be Landuse -National park
             this.setState({ visibility: 'visible' });
         }
     }
