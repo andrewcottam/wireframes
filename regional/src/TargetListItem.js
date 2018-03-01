@@ -21,7 +21,7 @@ class TargetListItem extends React.Component {
         return (
             <React.Fragment>
                 <ListItem primaryText={this.props.primaryText} secondaryText = {this.props.secondaryText} title={this.props.secondaryText} onClick={this.handleClick.bind(this)} disabled={this.props.disabled} style={{'fontStyle': this.props.disabled ? 'italic' : 'normal'}} />
-                <IndicatorsDrawer indicators={this.props.indicators} open={this.state.indicatorsOpen} indicatorSelected={this.indicatorSelected.bind(this)}/>
+                <IndicatorsDrawer {...this.props} indicators={this.props.indicators} open={this.state.indicatorsOpen} indicatorSelected={this.indicatorSelected.bind(this)}/>
             </React.Fragment>
         );
     }

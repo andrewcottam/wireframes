@@ -4,12 +4,13 @@ import { ListItem } from 'material-ui/List';
 class IndicatorListItem extends React.Component {
     indicatorSelected(e) {
         this.props.onClick(this);
+        this.props.history.push({
+            pathname: window.basepath + "i/" + this.props.id
+        });
     }
     render() {
         return (
-            <React.Fragment>
-                <ListItem primaryText={this.props.primaryText} secondaryText = {this.props.secondaryText} title={this.props.secondaryText} onClick={this.indicatorSelected.bind(this)}/>
-            </React.Fragment>
+            <ListItem primaryText={this.props.primaryText} secondaryText = {this.props.secondaryText} title={this.props.secondaryText} onClick={this.indicatorSelected.bind(this)}/>
         );
     }
 }

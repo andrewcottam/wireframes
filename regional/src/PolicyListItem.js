@@ -13,7 +13,6 @@ class PolicyListItem extends React.Component {
         this.setState({ targetsOpen: false });
         let hierarchy = Object.assign({}, e.hierarchy, { policyListItem: this });
         // this.props.onIndicatorSelected(hierarchy);
-        window.location = window.basepath + "i/1";
     }
 
     handleClick() {
@@ -24,7 +23,7 @@ class PolicyListItem extends React.Component {
         return (
             <React.Fragment>
                 <ListItem primaryText={this.props.primaryText} secondaryText={this.props.secondaryText} leftAvatar={<Avatar src={this.props.leftAvatarSrc}/>} onClick={this.handleClick.bind(this)}/>
-                <TargetsDrawer targets={this.props.targets} open={this.state.targetsOpen} indicatorSelected={this.indicatorSelected.bind(this)}/>
+                <TargetsDrawer {...this.props} targets={this.props.targets} open={this.state.targetsOpen} indicatorSelected={this.indicatorSelected.bind(this)}/>
             </React.Fragment>
         );
     }

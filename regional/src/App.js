@@ -39,7 +39,7 @@ class Map extends React.Component {
 class App extends Component {
   constructor(props) {
     super(props);
-    window.basepath = (process.env.NODE_ENV==='production') ? "/wireframes/regional/build/" : "/wireframes/regional/";
+    window.basepath = (process.env.NODE_ENV === 'production') ? "/wireframes/regional/build/" : "/wireframes/regional/";
     this.state = { map: null };
   }
   mapLoaded(e) {
@@ -50,15 +50,19 @@ class App extends Component {
       <MuiThemeProvider>
         <div className="App">
           <AppBar title="Biopama Regional Conservation Planning Tools" showMenuIconButton={false}/>
-          <PoliciesDrawer map={this.state.map}/>
           <Router>
             <div>
-              <Route path={window.basepath + "i/:id"} render={props => <IndicatorCard {...props} map={this.state.map}/>}/>
+              <Route path={window.basepath} render={props=>
+              <React.Fragment>
+                <PoliciesDrawer map={this.state.map} {...props}/>
+                <IndicatorCard map={this.state.map}/>
+                <Map onLoad={this.mapLoaded.bind(this)}/>
+                <MapToolbar map={this.state.map}/>
+                <ActionsDrawer/>
+              </React.Fragment>
+              }/>
             </div>
           </Router>
-          <Map onLoad={this.mapLoaded.bind(this)}/>
-          <MapToolbar map={this.state.map}/>
-          <ActionsDrawer/>
         </div>
       </MuiThemeProvider>
     );

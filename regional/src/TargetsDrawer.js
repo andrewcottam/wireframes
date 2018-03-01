@@ -12,7 +12,7 @@ class TargetsDrawer extends React.Component {
             'left': (this.props.open ? '60px' : '0px')
         };
         const targets = this.props.targets && this.props.targets.map((target) => {
-            return <TargetListItem primaryText={target.props.primaryText} key={target.props.primaryText} secondaryText={target.props.secondaryText} indicators={target.props.indicators} disabled={target.props.disabled} indicatorSelected={this.props.indicatorSelected.bind(this)}/>;
+            return <TargetListItem {...this.props} primaryText={target.props.primaryText} key={target.props.primaryText} secondaryText={target.props.secondaryText} indicators={target.props.indicators} disabled={target.props.disabled} indicatorSelected={this.props.indicatorSelected.bind(this)}/>;
         });
         return (
             <React.Fragment>

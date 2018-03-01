@@ -8,7 +8,7 @@ class IndicatorsDrawer extends React.Component {
     render() {
         let containerStyle = { 'position': 'absolute', 'overflow': 'none', 'left': (this.props.open ? '62px' : '-62px') };
         const indicators = this.props.indicators && this.props.indicators.map((indicator) => {
-            return <IndicatorListItem desc={indicator.props.desc} primaryText={indicator.props.primaryText} key={indicator.props.primaryText} secondaryText={indicator.props.secondaryText} onClick={this.props.indicatorSelected}/>;
+            return <IndicatorListItem {...this.props} desc={indicator.props.desc} primaryText={indicator.props.primaryText} id={indicator.props.id} key={indicator.props.primaryText} secondaryText={indicator.props.secondaryText} onClick={this.props.indicatorSelected}/>;
         });
         return (
             <React.Fragment>
