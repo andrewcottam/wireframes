@@ -3,6 +3,7 @@ import { Step, Stepper, StepLabel } from 'material-ui/Stepper';
 import RaisedButton from 'material-ui/RaisedButton';
 import FlatButton from 'material-ui/FlatButton';
 import TextField from 'material-ui/TextField';
+import IconButton from 'material-ui/IconButton';
 
 class ActionSpatialData extends React.Component {
   state = {
@@ -39,7 +40,8 @@ class ActionSpatialData extends React.Component {
           </Step>
         </Stepper>
         <div style={contentStyle}>
-          {stepIndex === 0 ? <div style={{textAlign:'left'}}><i class="fas fa-upload"></i></div> : null}
+          {stepIndex === 0 ? <div style={{textAlign:'left'}}><i className="fas fa-upload"></i>
+          </div> : null}
           {stepIndex === 2 ? <TextField hintText="Please!"/> : null}
           <div style={{marginTop: 12}}>
             <FlatButton label="Back" disabled={stepIndex === 0} onClick={this.handlePrev} />

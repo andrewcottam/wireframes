@@ -55,7 +55,7 @@ class App extends Component {
             <div>
               <Route path={window.basepath + "i/:id"} render={props => <IndicatorCard {...props} map={this.state.map}/>}/>
             </div>
-              </Router>
+          </Router>
           <Map onLoad={this.mapLoaded.bind(this)}/>
           <MapToolbar map={this.state.map}/>
           <ActionsDrawer/>
