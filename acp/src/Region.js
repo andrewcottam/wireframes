@@ -7,11 +7,6 @@ import Header from './Header.js';
 import Header2 from './Header2.js';
 import MetChart from './MetChart.js';
 
-const pacific = ['Cook Islands', 'Federated States of Micronesia', 'Fiji', 'Kiribati', 'Marshall Islands', 'Nauru', 'Niue', 'Palau', 'Papua New Guinea', 'Samoa', 'Solomon Islands', 'Timor-Leste', 'Tonga', 'Tuvalu', 'Vanuatu'];
-const caribbean = ["Antigua and Barbuda", "Bahamas", "Barbados", "Belize", "Cuba", "Dominica", "Dominican Republic", "Grenada", "Guyana", "Haiti", "Jamaica", "Saint Kitts and Nevis", "Saint Lucia", "Saint Vincent and the Grenadines", "Suriname", "Trinidad and Tobago"];
-const esafrica = ["Botswana", "Comoros", "Djibouti", "Eritrea", "Ethiopia", "Kenya", "Lesotho", "Madagascar", "Malawi", "Mauritius", "Mozambique", "Namibia", "Rwanda", "Seychelles", "Somalia", "South Africa", "South Sudan", "Sudan", "Swaziland", "Tanzania, United Republic of", "Uganda", "Zambia", "Zimbabwe"];
-const cwafrica = ["Angola", "Benin", "Burkina Faso", "Côte d'Ivoire", "Cameroon", "Cape Verde", "Central African Republic", "Chad", "Congo", "Congo, the Democratic Republic of the", "Equatorial Guinea", "Gabon", "Gambia", "Ghana", "Guinea", "Guinea-Bissau", "Liberia", "Mali", "Mauritania", "Niger", "Nigeria", "São Tomé and Príncipe", "Senegal", "Sierra Leone", "Togo"];
-
 class Region extends React.Component {
     onClickMetChart(e) {
         this.props.history.push({
@@ -22,19 +17,19 @@ class Region extends React.Component {
         let countries, index;
         switch (this.props.match.params.region) {
             case "Caribbean":
-                countries = caribbean;
+                countries = window.caribbean;
                 index = 0;
                 break;
             case "C and W Africa":
-                countries = cwafrica;
+                countries = window.cwafrica;
                 index = 1;
                 break;
             case "E and S Africa":
-                countries = esafrica;
+                countries = window.esafrica;
                 index = 2;
                 break;
             case "Pacific":
-                countries = pacific;
+                countries = window.pacific;
                 index = 3;
                 break;
         }

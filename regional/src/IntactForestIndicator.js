@@ -8,8 +8,8 @@ import logo_slb from './logo-slb.png';
 import logo_png from './logo-png.png';
 import logo_tls from './logo-tls.png';
 import logo_vut from './logo-vut.png';
-import indicatorHistory from './indicatorHistory.png';
 import { CardText } from 'material-ui/Card';
+import TimeSeriesChart2 from './TimeSeriesChart2.js';
 import CountryListItem from './CountryListItem.js';
 import ProvinceListItem from './ProvinceListItem.js';
 import mapboxgl from 'mapbox-gl';
@@ -46,7 +46,7 @@ class IntactForestIndicator extends React.Component {
     var countryFeatures = this.getCountries(true);
     var countriesDone = [];
     countryFeatures.map(feature => {
-      if (countriesDone.indexOf(feature.properties.name_en)===-1) {
+      if (countriesDone.indexOf(feature.properties.name_en) === -1) {
         countriesDone.push(feature.properties.name_en);
         var num = this.getArea(feature.properties.name_en);
         var color = ['Papua New Guinea', 'Solomon Islands', 'Fiji', 'New Caledonia'].indexOf(feature.properties.name_en) > -1 ? "#D0583B" : "#3974B1";
@@ -129,10 +129,7 @@ class IntactForestIndicator extends React.Component {
                       badgeStyle={{top: 25, right: 25, cursor :'pointer'}}
                       onClick={this.drillCountries.bind(this)}
                       >
-                      <img 
-                        src={indicatorHistory}
-                        alt="Indicator history"
-                      />
+                      <TimeSeriesChart2 width={400} height={200} data={[{x:1995,y:25},{x:1996,y:24},{x:1997,y:24},{x:1998,y:23},{x:1999,y:23},{x:2000,y:21},{x:2001,y:22},{x:2002,y:21},{x:2003,y:21},{x:2004,y:18},{x:2005,y:18},{x:2006,y:16},{x:2007,y:15},{x:2008,y:11},{x:2009,y:10},{x:2010,y:11},{x:2011,y:9},{x:2012,y:7},{x:2013,y:6},{x:2014,y:4},{x:2015,y:4}]} margin={{ top: 25, right: 15, bottom: 25, left: 15 }} map={this.props.map}/>
                     </Badge>
                   </div>
                   <CardText 

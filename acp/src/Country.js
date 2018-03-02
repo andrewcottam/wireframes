@@ -8,9 +8,10 @@ import TargetItem from './TargetItem.js';
 import Header from './Header.js';
 
 class Country extends React.Component {
-    render() {
-        return (
-            <React.Fragment>
+  render() {
+    //(window.caribbean.indexOf(this.props.match.params.country) !== -1)
+    return (
+      <React.Fragment>
               <Header title={this.props.match.params.country + " Country Summary"}/>
               <PolicyItem primaryText="Convention on Biological Diversity" avatar={logo_g1} secondaryText="Strategic Plan for Biodiversity 2011-2020"/>
               <div style={{paddingLeft:'57px'}}>
@@ -33,8 +34,8 @@ class Country extends React.Component {
                 <IndicatorSummary title="Coral area removed for constuction" data={[40,10,3,3,3,2,1,3]}/>
               </div>
             </React.Fragment>
-        );
-    }
+    );
+  }
 }
 
 export default Country;

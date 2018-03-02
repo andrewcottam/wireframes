@@ -20,6 +20,10 @@ class App extends Component {
     window.basepath = (process.env.NODE_ENV==='production') ? "/wireframes/acp/build/" : "/wireframes/acp/";
     window.colors = ['#8D228C', '#00B172', '#2B65A5', '#FAB800', '#FF006A', '#5EC461', '#F57E00', '#00899B', '#EA008E', '#FF6A5F', '#504098', '#A2AE9A', '#8D228C', '#00B172', '#2B65A5', '#FAB800', '#FF006A', '#5EC461', '#F57E00', '#00899B', '#EA008E', '#FF6A5F', '#504098', '#A2AE9A', '#8D228C'];
     window.percentages = [35, 25, 12, 23, 4, 6, 19, 5, 25, 16, 28, 20, 12, 6, 11, 5, 32, 25, 33, 39, 13,3,2,23,2];
+    window.pacific = ['Cook Islands', 'Federated States of Micronesia', 'Fiji', 'Kiribati', 'Marshall Islands', 'Nauru', 'Niue', 'Palau', 'Papua New Guinea', 'Samoa', 'Solomon Islands', 'Timor-Leste', 'Tonga', 'Tuvalu', 'Vanuatu'];
+    window.caribbean = ["Antigua and Barbuda", "Bahamas", "Barbados", "Belize", "Cuba", "Dominica", "Dominican Republic", "Grenada", "Guyana", "Haiti", "Jamaica", "Saint Kitts and Nevis", "Saint Lucia", "Saint Vincent and the Grenadines", "Suriname", "Trinidad and Tobago"];
+    window.esafrica = ["Botswana", "Comoros", "Djibouti", "Eritrea", "Ethiopia", "Kenya", "Lesotho", "Madagascar", "Malawi", "Mauritius", "Mozambique", "Namibia", "Rwanda", "Seychelles", "Somalia", "South Africa", "South Sudan", "Sudan", "Swaziland", "Tanzania, United Republic of", "Uganda", "Zambia", "Zimbabwe"];
+    window.cwafrica = ["Angola", "Benin", "Burkina Faso", "Côte d'Ivoire", "Cameroon", "Cape Verde", "Central African Republic", "Chad", "Congo", "Congo, the Democratic Republic of the", "Equatorial Guinea", "Gabon", "Gambia", "Ghana", "Guinea", "Guinea-Bissau", "Liberia", "Mali", "Mauritania", "Niger", "Nigeria", "São Tomé and Príncipe", "Senegal", "Sierra Leone", "Togo"];
   }
   mapLoaded(e) {
     this.setState({ map: e.target });
