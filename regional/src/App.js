@@ -49,7 +49,7 @@ class App extends Component {
     return (
       <MuiThemeProvider>
         <div className="App">
-          <AppBar title="Biopama Regional Conservation Planning Tools" showMenuIconButton={false}/>
+          <AppBar title="BIOPAMA Regional Conservation Planning Tools" showMenuIconButton={false}/>
           <Router>
             <div>
               <Route path={window.basepath} render={props=>

@@ -18,6 +18,8 @@ class App extends Component {
     super(props);
     this.state = { filter: 'Summary', chipData: [], selectedItems: [] };
     window.basepath = (process.env.NODE_ENV==='production') ? "/wireframes/acp/build/" : "/wireframes/acp/";
+    window.colors = ['#8D228C', '#00B172', '#2B65A5', '#FAB800', '#FF006A', '#5EC461', '#F57E00', '#00899B', '#EA008E', '#FF6A5F', '#504098', '#A2AE9A', '#8D228C', '#00B172', '#2B65A5', '#FAB800', '#FF006A', '#5EC461', '#F57E00', '#00899B', '#EA008E', '#FF6A5F', '#504098', '#A2AE9A', '#8D228C'];
+    window.percentages = [35, 25, 12, 23, 4, 6, 19, 5, 25, 16, 28, 20, 12, 6, 11, 5, 32, 25, 33, 39, 13,3,2,23,2];
   }
   mapLoaded(e) {
     this.setState({ map: e.target });
