@@ -46,6 +46,9 @@ class ActionsPanel extends React.Component {
                 <ActionsHeader text="Fund"/>
                 <ActionListItem primaryText="View Action Fund proposals" onClick={()=>this.setState({action:'viewActionFundProposals'})}/>
                 <ActionsHeader text="Network"/>
+                <ActionListItem primaryText="Report incident" onClick={()=>this.setState({action:'viewActionFundProposals'})}/>
+                <ActionListItem primaryText="Contact provincial body" onClick={()=>this.setState({action:'viewActionFundProposals'})}/>
+                <ActionListItem primaryText="Contact enforcement agencies" onClick={()=>this.setState({action:'viewActionFundProposals'})}/>
                 <ActionsHeader text="Reports"/>
                 <Dialog title="Spatial data" open={this.state.action==='spatialData'} actions={<ActionSpatialData closeDialog={this.handleClose.bind(this)}/>} overlayStyle={{backgroundColor: 'transparent'}} onRequestClose={this.handleClose.bind(this)} modal={false} />
                 <Dialog title="Species observations" open={this.state.action==='speciesObservations'} actions={<ActionSpeciesObservations closeDialog={this.handleClose.bind(this)}/>} overlayStyle={{backgroundColor: 'transparent'}} onRequestClose={this.handleClose.bind(this)} modal={false} />
@@ -58,5 +61,4 @@ class ActionsPanel extends React.Component {
         );
     }
 }
-
 export default ActionsPanel;
