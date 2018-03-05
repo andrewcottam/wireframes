@@ -76,7 +76,6 @@ class App extends Component {
             </Drawer>
             <div className="rightPane" ref="rightPane">
               <div className="rightPaneInner">
-                <div>Matched route: {window.basepath}</div>
                 <Router>
                   <div>
                     <Route exact path={window.basepath} component={Summary}/>
