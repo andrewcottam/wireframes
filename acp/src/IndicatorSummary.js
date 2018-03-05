@@ -1,6 +1,8 @@
 import * as React from 'react';
 import Divider from 'material-ui/Divider';
 import { Sparklines, SparklinesLine, SparklinesSpots, SparklinesReferenceLine } from 'react-sparklines';
+var FontAwesome = require('react-fontawesome');
+
 class IndicatorSummary extends React.Component {
     constructor(props) {
         super(props);
@@ -34,7 +36,7 @@ class IndicatorSummary extends React.Component {
                     {sparkline}
                 </div>
                 <div className="favorite" title={"Click to " + ((this.state.favorited) ? 'remove from ' : 'add to ') + "Favorites"} onClick={this.favorite.bind(this)}>
-                    {(this.state.favorited) ? <i className="fas fa-star"></i> : <i className="far fa-star"></i>}
+                    {(this.state.favorited) ?  <FontAwesome name='star' style={{ color:'#FAB800' }}/> : <FontAwesome name='star' />}
                 </div>
             </div>
         );

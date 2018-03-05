@@ -32,6 +32,7 @@ class Region extends React.Component {
                 countries = window.pacific;
                 index = 3;
                 break;
+            default:
         }
         return (
             <React.Fragment>
