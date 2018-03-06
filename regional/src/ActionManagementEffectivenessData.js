@@ -2,8 +2,10 @@ import * as React from 'react';
 import { Step, Stepper, StepLabel } from 'material-ui/Stepper';
 import RaisedButton from 'material-ui/RaisedButton';
 import FlatButton from 'material-ui/FlatButton';
+import TextField from 'material-ui/TextField';
+import FontAwesome from 'react-fontawesome';
 
-class ActionSpatialData extends React.Component {
+class ActionManagementEffectivenessData extends React.Component {
   state = {
     finished: false,
     stepIndex: 0,
@@ -28,17 +30,24 @@ class ActionSpatialData extends React.Component {
       <div style={{width: '100%', maxWidth: 700, margin: 'auto',textAlign:'center'}}>
         <Stepper activeStep={stepIndex}>
           <Step>
-            <StepLabel>Select your shapefile</StepLabel>
+            <StepLabel>Upload your IMET assessment</StepLabel>
           </Step>
           <Step>
-            <StepLabel>Select your indicator</StepLabel>
+            <StepLabel>Enter your details</StepLabel>
           </Step>
           <Step>
-            <StepLabel>Describe the data:</StepLabel>
+            <StepLabel>Publish</StepLabel>
           </Step>
         </Stepper>
         <div style={contentStyle}>
-              <div style={{marginTop: 12}}>
+          {stepIndex === 0 ? <div style={{textAlign:'left'}}>
+            <FontAwesome name='upload' size='2x'/>
+          </div> : null}
+        {stepIndex === 1 ? 
+        <React.Fragment>
+            <TextField hintText="Enter your name here"/>
+            <TextField hintText="Enter a description here"/>
+        </React.Fragment>: null}              <div style={{marginTop: 12}}>
                 <FlatButton label="Back" disabled={stepIndex === 0} onClick={this.handlePrev} />
                 <RaisedButton label={stepIndex === 2 ? 'Finish' : 'Next'} onClick={stepIndex === 2 ? this.props.closeDialog : this.handleNext} primary={true} />
             </div>
@@ -48,4 +57,4 @@ class ActionSpatialData extends React.Component {
   }
 }
 
-export default ActionSpatialData;
+export default ActionManagementEffectivenessData;

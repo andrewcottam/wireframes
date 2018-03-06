@@ -34,7 +34,7 @@ class ActionDigitiseFeatures extends React.Component {
             <StepLabel>Select your source imagery</StepLabel>
           </Step>
           <Step>
-            <StepLabel>Start digitising features</StepLabel>
+            <StepLabel>Digitise features</StepLabel>
           </Step>
         </Stepper>
         <div style={contentStyle}>

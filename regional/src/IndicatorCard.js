@@ -1,7 +1,7 @@
 import * as React from 'react';
 import Card from 'material-ui/Card';
 import IndicatorContent from './IndicatorContent.js';
-import { BrowserRouter as Router, Route } from "react-router-dom";
+import {Route } from "react-router-dom";
 
 class IndicatorCard extends React.Component {
     render() {

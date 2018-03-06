@@ -23,8 +23,6 @@ class IntactForestIndicator extends React.Component {
   }
   drillCountries() {
     this.setState({ value: 'Region' });
-    this.props.map.setCenter([161.76, -8.14]);
-    this.props.map.zoomTo(4);
   }
   drillCountry(e) {
     this.setState({ value: 'country', selectedCountry: e.countryListItem });
@@ -57,6 +55,7 @@ class IntactForestIndicator extends React.Component {
           .addTo(this.props.map);
         countryPopups.push(popup);
       }
+      return null;
     });
   }
   getCountries(renderedOnly) {
@@ -99,8 +98,10 @@ class IntactForestIndicator extends React.Component {
   }
   onChange(value) {
     this.setState({ value: value });
-    // if (value === "Region") { this.addCountryPopups(); }
-
+    if (value === "Region") {
+      this.props.map.setCenter([162,-13]);
+      this.props.map.zoomTo(4);
+    }
   }
   render() {
     return (

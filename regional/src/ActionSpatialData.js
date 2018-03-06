@@ -4,6 +4,8 @@ import RaisedButton from 'material-ui/RaisedButton';
 import FlatButton from 'material-ui/FlatButton';
 import TextField from 'material-ui/TextField';
 import FontAwesome from 'react-fontawesome';
+import DropDownMenu from 'material-ui/DropDownMenu';
+import MenuItem from 'material-ui/MenuItem';
 
 class ActionSpatialData extends React.Component {
   state = {
@@ -41,8 +43,12 @@ class ActionSpatialData extends React.Component {
         </Stepper>
         <div style={contentStyle}>
           {stepIndex === 0 ? <div style={{textAlign:'left'}}>
-            <FontAwesome name='upload' />
+            <FontAwesome name='upload' size='2x'/>
           </div> : null}
+          {stepIndex === 1 ? <DropDownMenu value={1}>
+          <MenuItem value={1} primaryText="Terrestrial Protected Area Coverage" />
+          <MenuItem value={2} primaryText="Marine Protected Area Coverage" />
+        </DropDownMenu> : null}
           {stepIndex === 2 ? <TextField hintText="Please!"/> : null}
           <div style={{marginTop: 12}}>
             <FlatButton label="Back" disabled={stepIndex === 0} onClick={this.handlePrev} />

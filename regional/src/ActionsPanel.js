@@ -3,17 +3,21 @@ import Dialog from 'material-ui/Dialog';
 import { List, ListItem } from 'material-ui/List';
 import Subheader from 'material-ui/Subheader';
 import ActionShowRecentImagery from './ActionShowRecentImagery.js';
+import ActionViewActionFundProposals from './ActionViewActionFundProposals.js';
 import ActionSpatialData from './ActionSpatialData.js';
 import ActionSpeciesObservations from './ActionSpeciesObservations.js';
 import ActionPhotos from './ActionPhotos.js';
 import ActionDigitiseFeatures from './ActionDigitiseFeatures.js';
 import ActionProtectedAreaBoundaries from './ActionProtectedAreaBoundaries.js';
 import ActionManagementEffectivenessData from './ActionManagementEffectivenessData.js';
-import ActionViewActionFundProposals from './ActionViewActionFundProposals.js';
+import Divider from 'material-ui/Divider';
 
 function ActionsHeader(props) {
     return (
-        <Subheader>{props.text}</Subheader>
+        <React.Fragment>
+            <Subheader>{props.text}</Subheader>
+            <Divider/>
+        </React.Fragment>
     );
 }
 
@@ -40,11 +44,11 @@ class ActionsPanel extends React.Component {
                 <ActionListItem primaryText="Spatial data" onClick={()=>this.setState({action:'spatialData'})}/>
                 <ActionListItem primaryText="Species observations" onClick={()=>this.setState({action:'speciesObservations'})}/>
                 <ActionListItem primaryText="Photos" onClick={()=>this.setState({action:'photos'})}/>
-                <ActionListItem primaryText="Digitise features" onClick={()=>this.setState({action:'digitiseFeatures'})}/>
+                <ActionListItem primaryText="Digitise features (OpenStreetMap)" onClick={()=>this.setState({action:'digitiseFeatures'})}/>
                 <ActionListItem primaryText="Protected area boundaries" onClick={()=>this.setState({action:'protectedAreaBoundaries'})}/>
                 <ActionListItem primaryText="Management effectiveness data" onClick={()=>this.setState({action:'managementEffectivenessData'})}/>
                 <ActionsHeader text="Fund"/>
-                <ActionListItem primaryText="View Action Fund proposals" onClick={()=>this.setState({action:'viewActionFundProposals'})}/>
+                <ActionViewActionFundProposals map={this.props.map}/>
                 <ActionsHeader text="Network"/>
                 <ActionListItem primaryText="Report incident" onClick={()=>this.setState({action:'viewActionFundProposals'})}/>
                 <ActionListItem primaryText="Contact provincial body" onClick={()=>this.setState({action:'viewActionFundProposals'})}/>

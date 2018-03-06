@@ -15,8 +15,7 @@ class IndicatorContent extends React.Component {
     }
     configureMap(style, center, zoom) {
         this.props.map.setStyle(style);
-        this.props.map.setCenter(center);
-        this.props.map.zoomTo(zoom);
+        this.props.map.flyTo({center: center,zoom: zoom});
     }
     render() {
         var children, policyTitle, avatar, targetTitle, targetSubtitle, backgroundImage;
@@ -40,6 +39,7 @@ class IndicatorContent extends React.Component {
                     backgroundImage = intactForest;
                     break;
                 case 2:
+                    this.configureMap('mapbox://styles/blishten/cj6f4n2j026qf2rnunkauikjm', [162,-13], 4);
                     this.props.map.once("styledata", function() {
                         this.addLayer({
                             'id': 'GlobalForestWatch',
@@ -62,7 +62,6 @@ class IndicatorContent extends React.Component {
                             'paint': {}
                         }, 'Intact Forest 2013');
                     });
-                    this.props.map.setStyle('mapbox://styles/blishten/cj6f4n2j026qf2rnunkauikjm'); //png style
                     policyTitle = "Framework for Nature Conservation and Protected Areas in the Pacific Islands Region";
                     avatar = <Avatar src={logo_r1}/>;
                     targetTitle = "Objective 3";

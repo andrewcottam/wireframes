@@ -10,39 +10,48 @@ import logo_l1 from './logo-l1.png';
 import greenListLogo from './Green-List-logo-1.png';
 import { List, ListItem } from 'material-ui/List';
 import PolicyListItem from './PolicyListItem.js';
+import AddIndicator from './AddIndicator.js';
 import Paper from 'material-ui/Paper';
 import FloatingActionButton from 'material-ui/FloatingActionButton';
 import ContentAdd from 'material-ui/svg-icons/content/add';
+import Dialog from 'material-ui/Dialog';
 
 function PolicyGroupHeader(props) {
-    return (
-        <ListItem primaryText={props.primaryText} primaryTogglesNestedList={true} nestedItems={props.nestedItems}/>
-    );
+  return (
+    <ListItem primaryText={props.primaryText} primaryTogglesNestedList={true} nestedItems={props.nestedItems}/>
+  );
 }
 
-function PanelLowerToolbar(props) {
+class PanelLowerToolbar extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { open: false };
+  }
+  onClick(e){
+    this.setState({ open: true });
+  }
+  requestClose(e) {
+    this.setState({ open: false });
+  }
+  render() {
     return (
-        <Paper className="panelLowerPaper" zDepth={1}>
-            <AddDrupalItem title="Add Indicator"/>
-        </Paper>
+      <Paper className="panelLowerPaper" zDepth={1}>
+          <FloatingActionButton mini={true} secondary={true} className="addDrupalItem" title="Add indicator">
+            <ContentAdd onClick={this.onClick.bind(this)}/>
+          </FloatingActionButton>
+          <Dialog title="Add indicator" overlayStyle={{backgroundColor: 'transparent'}} open={this.state.open} modal={false} onRequestClose={this.requestClose.bind(this)} actions={<AddIndicator closeDialog={this.requestClose.bind(this)}/>}/>
+      </Paper>
     );
-}
-
-function AddDrupalItem(props) {
-    return (
-        <FloatingActionButton mini={true} secondary={true} className="addDrupalItem" title={props.title}>
-            <ContentAdd />
-        </FloatingActionButton>
-    );
+  }
 }
 
 class PoliciesPanel extends React.Component {
-    indicatorSelected(e) {
-        this.props.onIndicatorSelected(e);
-    }
-    render() {
-        return (
-            <React.Fragment>
+  indicatorSelected(e) {
+    this.props.onIndicatorSelected(e);
+  }
+  render() {
+    return (
+      <React.Fragment>
                 <List>
                     <Subheader>Policies</Subheader>
                     <Divider/>
@@ -98,8 +107,8 @@ class PoliciesPanel extends React.Component {
                 </List>
                 <PanelLowerToolbar/>
             </React.Fragment>
-        );
-    }
+    );
+  }
 }
 
 export default PoliciesPanel;
