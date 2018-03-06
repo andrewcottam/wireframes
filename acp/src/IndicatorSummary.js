@@ -1,7 +1,7 @@
 import * as React from 'react';
 import Divider from 'material-ui/Divider';
 import { Sparklines, SparklinesLine, SparklinesSpots, SparklinesReferenceLine } from 'react-sparklines';
-var FontAwesome = require('react-fontawesome');
+import FontAwesome from 'react-fontawesome';
 
 class IndicatorSummary extends React.Component {
     constructor(props) {
