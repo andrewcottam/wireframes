@@ -3,7 +3,7 @@ import Dialog from 'material-ui/Dialog';
 import { List, ListItem } from 'material-ui/List';
 import Subheader from 'material-ui/Subheader';
 import ActionShowRecentImagery from './ActionShowRecentImagery.js';
-import ActionViewActionFundProposals from './ActionViewActionFundProposals.js';
+import ActionShowActionFundProposals from './ActionShowActionFundProposals.js';
 import ActionSpatialData from './ActionSpatialData.js';
 import ActionSpeciesObservations from './ActionSpeciesObservations.js';
 import ActionPhotos from './ActionPhotos.js';
@@ -48,7 +48,7 @@ class ActionsPanel extends React.Component {
                 <ActionListItem primaryText="Protected area boundaries" onClick={()=>this.setState({action:'protectedAreaBoundaries'})}/>
                 <ActionListItem primaryText="Management effectiveness data" onClick={()=>this.setState({action:'managementEffectivenessData'})}/>
                 <ActionsHeader text="Fund"/>
-                <ActionViewActionFundProposals map={this.props.map}/>
+                <ActionShowActionFundProposals {...this.props}/>
                 <ActionsHeader text="Network"/>
                 <ActionListItem primaryText="Report incident" onClick={()=>this.setState({action:'viewActionFundProposals'})}/>
                 <ActionListItem primaryText="Contact provincial body" onClick={()=>this.setState({action:'viewActionFundProposals'})}/>
@@ -60,7 +60,7 @@ class ActionsPanel extends React.Component {
                 <Dialog title="Digitise Features" open={this.state.action==='digitiseFeatures'} actions={<ActionDigitiseFeatures closeDialog={this.handleClose.bind(this)}/>} overlayStyle={{backgroundColor: 'transparent'}} onRequestClose={this.handleClose.bind(this)} modal={false} />
                 <Dialog title="Protected area boundaries" open={this.state.action==='protectedAreaBoundaries'} actions={<ActionProtectedAreaBoundaries closeDialog={this.handleClose.bind(this)}/>} overlayStyle={{backgroundColor: 'transparent'}} onRequestClose={this.handleClose.bind(this)} modal={false} />
                 <Dialog title="Management effectiveness data" open={this.state.action==='managementEffectivenessData'} actions={<ActionManagementEffectivenessData closeDialog={this.handleClose.bind(this)}/>} overlayStyle={{backgroundColor: 'transparent'}} onRequestClose={this.handleClose.bind(this)} modal={false} />
-                <Dialog title="View Action Fund proposals" open={this.state.action==='viewActionFundProposals'} actions={<ActionViewActionFundProposals closeDialog={this.handleClose.bind(this)}/>} overlayStyle={{backgroundColor: 'transparent'}} onRequestClose={this.handleClose.bind(this)} modal={false} />
+                <Dialog title="View Action Fund proposals" open={this.state.action==='viewActionFundProposals'} actions={<ActionShowActionFundProposals closeDialog={this.handleClose.bind(this)}/>} overlayStyle={{backgroundColor: 'transparent'}} onRequestClose={this.handleClose.bind(this)} modal={false} />
             </List>
         );
     }

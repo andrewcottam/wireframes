@@ -1,30 +1,25 @@
 import * as React from 'react';
-import mapboxgl from 'mapbox-gl';
+import ReactMapboxGl from "react-mapbox-gl";
+import FeatureLayer from './FeatureLayer.js';
+
+const ReactMap = ReactMapboxGl({
+  accessToken: "pk.eyJ1IjoiYmxpc2h0ZW4iLCJhIjoiMEZrNzFqRSJ9.0QBRA2HxTb8YHErUFRMPZg"
+});
 
 class Map extends React.Component {
-  componentDidMount() {
-    mapboxgl.accessToken = 'pk.eyJ1IjoiYmxpc2h0ZW4iLCJhIjoiMEZrNzFqRSJ9.0QBRA2HxTb8YHErUFRMPZg'; //this is my access token
-    this.map = new mapboxgl.Map({
-      container: this.mapContainer,
-      center: [21, -2], //salonga
-      zoom: 3,
-      style: 'mapbox://styles/blishten/cj6f4n2j026qf2rnunkauikjm'
-    });
-    this.map.on("load", (e) => this.props.onLoad(e));
+  constructor(props){
+    super(props);
+    this.state = {showActions: false};
   }
-
-  componentWillUnmount() {
-    this.map.remove();
+  componentWillMount() {
+    this.setState({ mapCenter: [21, -2], style: "mapbox://styles/blishten/cj6f4n2j026qf2rnunkauikjm", zoom: [3] });
   }
-
   render() {
-    const style = {
-      position: 'absolute',
-      top: 0,
-      bottom: 0,
-      width: '100%'
-    };
-    return <div style={style} ref={el => this.mapContainer = el} />;
+    return (
+      <ReactMap {...this.props} center={this.state.mapCenter} style={this.state.style} zoom={this.state.zoom}>
+        <FeatureLayer visible={this.props.showActions}/>
+      </ReactMap>
+    );
   }
 }
 
