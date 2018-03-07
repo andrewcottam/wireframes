@@ -13,7 +13,7 @@ class App extends Component {
   constructor(props) {
     super(props);
     window.basepath = (process.env.NODE_ENV === 'production') ? "/wireframes/regional/build/" : "/wireframes/regional/";
-    this.state = { map: null };
+    this.state = { map: null, showActions: false };
   }
   mapLoaded(e) {
     this.setState({ map: e });

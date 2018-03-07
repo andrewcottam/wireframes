@@ -12,7 +12,7 @@ class Map extends React.Component {
     this.state = {showActions: false};
   }
   componentWillMount() {
-    this.setState({ mapCenter: [21, -2], style: "mapbox://styles/blishten/cj6f4n2j026qf2rnunkauikjm", zoom: [3] });
+    this.setState({ mapCenter: [21, -2], style: "mapbox://styles/blishten/cj6f4n2j026qf2rnunkauikjm", zoom: [3] }); //initialise the center, style and zoom
   }
   render() {
     return (
