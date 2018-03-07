@@ -31,7 +31,6 @@ class Country extends React.Component {
                 <IndicatorSummary title="Incidence of dynamite fishing"  data={[19,15,12,12,11,13,10,9,5,5,5,4]} id="2"/>
                 <IndicatorSummary title="Coral area removed for constuction"  data={[40,10,3,3,3,2,1,3]} id="2"/>
                 <IndicatorSummary title="Total area of coral bleached per annum" data={[]} id="2"/>
-                <IndicatorSummary title="Coral area removed for constuction" data={[40,10,3,3,3,2,1,3]} id="2"/>
               </div>
             </React.Fragment>
     );
