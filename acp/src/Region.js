@@ -37,7 +37,7 @@ class Region extends React.Component {
         return (
             <React.Fragment>
                 <Header title={this.props.match.params.region + " Region Summary"}/>
-                <Header2 title="Proportion of regional targets met"/>
+                <Header2 title="Proportion of Regional targets met"/>
                 <div style={{margin:'20px'}}>                
                     <MetChart title={this.props.match.params.region} percentMet={window.percentages[index]} color={window.colors[index]} key={3} clickable={false} />
                 </div>
@@ -47,7 +47,7 @@ class Region extends React.Component {
                     <TargetItem primaryText="Objective 3: Identify, conserve, sustainably manage and restore priority sites, habitats and ecosystems, including cultural sites"/>
                     <IndicatorSummary title="Number of countries logging intact forests" data={[25,20,21,22,22,21,18,14,13,6,5,5,4,4]} line={"mean"} id="2"/>
                 </div>
-                <Header2 title="Proportion of National targets met"/>
+                <Header2 title="Proportion of Country targets met"/>
                 <div style={{margin:'20px'}}>
                     {countries.map((item,index)=><MetChart percentMet={window.percentages[index]} color={window.colors[index]} title={item} onClick={this.onClickMetChart.bind(this)} key={index} drillTo={'Country'}/>)}
                 </div>

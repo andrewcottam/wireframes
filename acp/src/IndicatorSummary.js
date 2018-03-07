@@ -23,11 +23,10 @@ class IndicatorSummary extends React.Component {
         let data = this.props.data;
         let sparkline = (data.length ?
             <Sparklines data={data}>
-                <SparklinesLine />
+                <SparklinesLine /> 
                 <SparklinesSpots />
-                <SparklinesReferenceLine type={this.props.line} />
             </Sparklines> :
-            <div style={{fontSize:'12px'}}><i className="fas fa-exclamation-circle" style={{color:'red',padding:'0px 5px'}}></i>No trend data available</div>);
+                <div style={{fontSize:'12px'}}><i className="fas fa-exclamation-circle" style={{color:'red',padding:'0px 5px'}}></i>No trend data available</div>);
         return (
             <div className="IndicatorSummary" onClick={this.onClick.bind(this)} title="Click to view the indicator">
                 <div className="IndicatorSummaryTitle">{this.props.title}</div>

@@ -7,7 +7,7 @@ class Header2 extends React.Component {
         return (
             <React.Fragment>
             <List style={{padding:0}}>
-                <ListItem>{this.props.title}</ListItem>
+                <ListItem style={{backgroundColor:'rgba(0, 0, 0, 0.05)'}}>{this.props.title}</ListItem>
               </List>
               <Divider/>
             </React.Fragment>);
