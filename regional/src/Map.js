@@ -14,25 +14,16 @@ const CONTAINER_STYLE = { height: "100vh", width: "100vw" };
 class Map extends React.Component {
   constructor(props) {
     super(props);
-    this.state = { text: "", center: INITIAL_CENTER };
+    this.state = { mouseCentre: [], mouseFeatures: [] };
   }
   onMouseMove(e) {
     var features = e.target.queryRenderedFeatures(e.point);
-    if (features && features.length) {
-      if (features[0].layer.id === 'terrestrial-pas'){
-        const yr = (features[0].properties.STATUS_YR !== 0) ? " (" + features[0].properties.STATUS_YR + ")" : "";
-        this.setState({ text: features[0].properties.NAME + yr });
-        this.setState({ center: [e.lngLat.lng, e.lngLat.lat] });
-      }
-    }
-    else {
-      this.setState({ text: "" });
-    }
+    this.setState({ mouseFeatures: features, mouseCentre: [e.lngLat.lng, e.lngLat.lat] });
   }
   render() {
     return (
       <ReactMap {...this.props} style= {INITIAL_STYLE} center={INITIAL_CENTER} zoom={INITIAL_ZOOM} containerStyle={CONTAINER_STYLE} onMouseMove={(map,e)=>this.onMouseMove(e)} >              
-        <MapPopup text={this.state.text} center={this.state.center}/>
+        <MapPopup mouseFeatures={this.state.mouseFeatures} mouseCentre={this.state.mouseCentre}/>
       </ReactMap>
     );
   }
