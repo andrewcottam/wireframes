@@ -1,11 +1,12 @@
 import * as React from 'react';
+import Header from './Header.js';
 
 class PA extends React.Component {
     render() {
         return (
-            <React.Fragment>
-            <div>PA</div>
-            </React.Fragment>
+          <React.Fragment>
+            <Header title={this.props.match.params.pa + " Summary"}/>
+          </React.Fragment>
         );
     }
 }

@@ -45,7 +45,7 @@ class App extends Component {
   }
   filterChange(filterName, values) {
     this.chipData = this.state.chipData;
-  let itemToAdd = values.map((item) => {
+    let itemToAdd = values.map((item) => {
     let existingValues = this.state.chipData.filter(existing => existing.label === item);
     return (existingValues.length === 0) && { key: this.state.chipData.length, label: item };
   });
@@ -68,7 +68,7 @@ class App extends Component {
               <div>
                 <FilterItem title='Region' names={['Caribbean','Pacific','C and W Africa','E and S Africa']} value={this.state.selectedItems} onChange={this.filterChange.bind(this)}></FilterItem>
                 <FilterItem title='Country' names={['Tanzania','Uganda']} value={this.state.selectedItems} onChange={this.filterChange.bind(this)}></FilterItem>
-                <FilterItem title='Protected area' names={['Salonga National Park','Virunga National Park']} value={this.state.selectedItems} onChange={this.filterChange.bind(this)}></FilterItem>
+                <FilterItem title='Protected area' names={['Crater Mountain','Salonga National Park','Virunga National Park']} value={this.state.selectedItems} onChange={this.filterChange.bind(this)}></FilterItem>
                 <FilterItem title='Indicator' names={['Marine protected area coverage','Terrestrial protected area coverage']} value={this.state.selectedItems} onChange={this.filterChange.bind(this)}></FilterItem>
               </div>
               <ChipArray chipData={this.state.chipData} deleteChip={this.deleteChip.bind(this)}></ChipArray>  

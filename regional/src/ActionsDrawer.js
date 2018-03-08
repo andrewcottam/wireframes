@@ -16,7 +16,7 @@ class ActionsDrawer extends React.Component {
     render() {
         return (
             <Drawer open={this.state.open} containerStyle={{'position': 'absolute', 'top': '64px','overflow':'none'}} width={460} openSecondary={true}>
-                <RaisedButton label="Actions" secondary={true} style={{"transform":"rotate(270deg)",'left': '-65px','top': '348px','position': 'absolute'}} onClick={this.buttonClick.bind(this)}/>
+                <RaisedButton label="Actions" secondary={true} style={{"transform":"rotate(270deg)",'left': '-63px','top': '348px','position': 'absolute'}} onClick={this.buttonClick.bind(this)}/>
                 <ActionsPanel {...this.props}/>
             </Drawer>
         );
