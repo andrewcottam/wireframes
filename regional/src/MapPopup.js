@@ -3,13 +3,11 @@ import { Popup } from "react-mapbox-gl";
 
 class MapPopup extends React.Component {
   getText() {
-    const txt = this.props.mouseFeatures.filter((feature) => feature.layer.id === 'terrestrial-pas').map((feature) => {
-      if (feature.layer.id === 'terrestrial-pas') {
-        const yr = (feature.properties.STATUS_YR !== 0) ? " (" + feature.properties.STATUS_YR + ")" : "";
-        return (
-          <div key={feature.properties.WDPAID}>{feature.properties.NAME + yr}</div>
-        );
-      }
+    const txt = this.props.mouseFeatures.filter((f) => ['terrestrial-pas', 'terrestrial-pas-active'].indexOf(f.layer.id) > -1).map((f) => {
+      const yr = (f.properties.STATUS_YR !== 0) ? " (" + f.properties.STATUS_YR + ")" : "";
+      return (
+        <div key={f.properties.WDPAID}>{f.properties.NAME + yr}</div>
+      );
     });
     return txt;
   }
@@ -17,7 +15,7 @@ class MapPopup extends React.Component {
     const text = this.getText();
     return (
       this.props.mouseCentre.length && text.length &&
-      <Popup style={text==="" ? {display:'none'} : {display:'flex'}} coordinates={this.props.mouseCentre}>
+      <Popup coordinates={this.props.mouseCentre}>
         <div>{text}</div>
       </Popup>
     );
