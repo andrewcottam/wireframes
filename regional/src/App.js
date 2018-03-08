@@ -6,58 +6,38 @@ import MapToolbar from './MapToolbar.js';
 import PoliciesDrawer from './PoliciesDrawer.js';
 import ActionsDrawer from './ActionsDrawer.js';
 import IndicatorCard from './IndicatorCard.js';
-import mapboxgl from 'mapbox-gl';
+import ReactMapboxGl from "react-mapbox-gl";
+import MapPopup from './MapPopup.js';
 import { BrowserRouter as Router, Route } from "react-router-dom";
 
-class Map extends React.Component {
-  componentDidMount() {
-    mapboxgl.accessToken = 'pk.eyJ1IjoiYmxpc2h0ZW4iLCJhIjoiMEZrNzFqRSJ9.0QBRA2HxTb8YHErUFRMPZg'; //this is my access token
-    this.map = new mapboxgl.Map({
-      container: this.mapContainer,
-      center: [21, -2], //salonga
-      zoom: 3,
-      style: 'mapbox://styles/blishten/cj6f4n2j026qf2rnunkauikjm'
-    });
-    this.map.on("load", (e) => this.props.onLoad(e));
-  }
-
-  componentWillUnmount() {
-    this.map.remove();
-  }
-
-  render() {
-    const style = {
-      position: 'absolute',
-      top: 0,
-      bottom: 0,
-      width: '100%'
-    };
-    return <div style={style} ref={el => this.mapContainer = el} />;
-  }
-}
+const Map = ReactMapboxGl({
+  accessToken: "pk.eyJ1IjoiYmxpc2h0ZW4iLCJhIjoiMEZrNzFqRSJ9.0QBRA2HxTb8YHErUFRMPZg"
+});
+const INITIAL_CENTER = [20, -2];
+const INITIAL_ZOOM = [3];
+const INITIAL_STYLE = "mapbox://styles/blishten/cj6f4n2j026qf2rnunkauikjm";
+const CONTAINER_STYLE = { height: "100vh", width: "100vw" };
 
 class App extends Component {
   constructor(props) {
     super(props);
     window.basepath = (process.env.NODE_ENV === 'production') ? "/wireframes/regional/build/" : "/wireframes/regional/";
-    this.state = { map: null, showActions: false, popupVisible: false };
+    this.state = { map: null, hoverPA: null, center: [0.5375194, 50.8437787], zoom: [11] };
   }
   mapLoaded(e) {
-    this.setState({ map: e.target });
+    // this.setState({ map: e });
   }
   showActionFundProposalsClicked(e) {
     this.setState({ showActions: !this.state.showActions });
   }
   onMouseMove(e) {
-    var features = this.state.map && this.state.map.queryRenderedFeatures(e.point);
+    var features = e.target.queryRenderedFeatures(e.point);
     if (features && features.length && features[0].layer.id === 'terrestrial-pas') {
       const yr = (features[0].properties.STATUS_YR !== 0) ? " (" + features[0].properties.STATUS_YR + ")" : "";
       console.log(features[0].properties.NAME + yr);
-      this.setState({ popupVisible: true });
+      this.setState({ text: features[0].properties.NAME + yr });
     }
-    else {
-      this.setState({ popupVisible: false });
-    }
+    this.setState({text:features["0"].properties.class});
   }
   render() {
     return (
@@ -70,7 +50,9 @@ class App extends Component {
                 <PoliciesDrawer map={this.state.map} {...props}/>
               }/>
               <IndicatorCard map={this.state.map}/>
-              <Map onLoad={this.mapLoaded.bind(this)}/>
+              <Map style= {INITIAL_STYLE} containerStyle={CONTAINER_STYLE} onStyleLoad={this.mapLoaded.bind(this)} onMouseMove={(map,e)=>this.onMouseMove(e)}>              
+                <MapPopup text={this.state.text}/>
+              </Map>
               <MapToolbar map={this.state.map}/>
               <ActionsDrawer map={this.state.map} showActionFundProposalsClicked={this.showActionFundProposalsClicked.bind(this)}/>
             </div>
