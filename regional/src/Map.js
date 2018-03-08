@@ -14,21 +14,24 @@ const CONTAINER_STYLE = { height: "100vh", width: "100vw" };
 class Map extends React.Component {
   constructor(props) {
     super(props);
-    this.state = { text: "wibble", center: INITIAL_CENTER };
+    this.state = { text: "", center: INITIAL_CENTER };
   }
   onMouseMove(e) {
     var features = e.target.queryRenderedFeatures(e.point);
-    features && features.length && this.setState({ text: features["0"].properties.class });
-    this.setState({ center: [e.lngLat.lng, e.lngLat.lat] });
-    // var features = e.target.queryRenderedFeatures(e.point);
-    // if (features && features.length && features[0].layer.id === 'terrestrial-pas') {
-    //   const yr = (features[0].properties.STATUS_YR !== 0) ? " (" + features[0].properties.STATUS_YR + ")" : "";
-    //   this.setState({ text: features[0].properties.NAME + yr });
-    // }
+    if (features && features.length) {
+      if (features[0].layer.id === 'terrestrial-pas'){
+        const yr = (features[0].properties.STATUS_YR !== 0) ? " (" + features[0].properties.STATUS_YR + ")" : "";
+        this.setState({ text: features[0].properties.NAME + yr });
+        this.setState({ center: [e.lngLat.lng, e.lngLat.lat] });
+      }
+    }
+    else {
+      this.setState({ text: "" });
+    }
   }
   render() {
     return (
-      <ReactMap style= {INITIAL_STYLE} center={INITIAL_CENTER} zoom={INITIAL_ZOOM} containerStyle={CONTAINER_STYLE} onMouseMove={(map,e)=>this.onMouseMove(e)}>              
+      <ReactMap {...this.props} style= {INITIAL_STYLE} center={INITIAL_CENTER} zoom={INITIAL_ZOOM} containerStyle={CONTAINER_STYLE} onMouseMove={(map,e)=>this.onMouseMove(e)} >              
         <MapPopup text={this.state.text} center={this.state.center}/>
       </ReactMap>
     );

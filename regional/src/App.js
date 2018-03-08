@@ -13,10 +13,13 @@ class App extends Component {
   constructor(props) {
     super(props);
     window.basepath = (process.env.NODE_ENV === 'production') ? "/wireframes/regional/build/" : "/wireframes/regional/";
-    this.state = { map: null};
+    this.state = { map: null };
   }
   showActionFundProposalsClicked(e) {
     this.setState({ showActions: !this.state.showActions });
+  }
+  mapLoaded(e) {
+    this.setState({ map: e });
   }
   render() {
     return (
@@ -26,12 +29,12 @@ class App extends Component {
           <Router>
             <div>
               <Route path={window.basepath} render={props=>
-                <PoliciesDrawer map={this.map} {...props}/>
+                <PoliciesDrawer map={this.state.map} {...props}/>
               }/>
-              <IndicatorCard map={this.map}/>
-              <Map/>
-              <MapToolbar map={this.map}/>
-              <ActionsDrawer map={this.map} showActionFundProposalsClicked={this.showActionFundProposalsClicked.bind(this)}/>
+              <IndicatorCard map={this.state.map}/>
+              <Map onStyleLoad={this.mapLoaded.bind(this)}/>
+              <MapToolbar map={this.state.map}/>
+              <ActionsDrawer map={this.state.map} showActionFundProposalsClicked={this.showActionFundProposalsClicked.bind(this)}/>
             </div>
           </Router>
         </div>

@@ -4,11 +4,12 @@ import { Popup } from "react-mapbox-gl";
 class MapPopup extends React.Component {
   render() {
     return (
-      <Popup coordinates={this.props.center} offset={{'bottom-left': [12, -38],  'bottom': [0, -38], 'bottom-right': [-12, -38]}}>
-        <h1>{this.props.text}</h1>
+      <Popup style={this.props.text==="" ? {display:'none'} : {display:'flex'}} coordinates={this.props.center}>
+        <div>{this.props.text}</div>
       </Popup>
     );
   }
 }
 
 export default MapPopup;
+
