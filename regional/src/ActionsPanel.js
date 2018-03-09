@@ -10,6 +10,9 @@ import ActionPhotos from './ActionPhotos.js';
 import ActionDigitiseFeatures from './ActionDigitiseFeatures.js';
 import ActionProtectedAreaBoundaries from './ActionProtectedAreaBoundaries.js';
 import ActionManagementEffectivenessData from './ActionManagementEffectivenessData.js';
+import ActionIncident from './ActionIncident.js';
+import ActionProvincial from './ActionProvincial.js';
+import ActionEnforcement from './ActionEnforcement.js';
 import Divider from 'material-ui/Divider';
 
 function ActionsHeader(props) {
@@ -50,9 +53,9 @@ class ActionsPanel extends React.Component {
                 <ActionsHeader text="Fund"/>
                 <ActionShowActionFundProposals {...this.props}/>
                 <ActionsHeader text="Network"/>
-                <ActionListItem primaryText="Report incident" onClick={()=>this.setState({action:'viewActionFundProposals'})}/>
-                <ActionListItem primaryText="Contact provincial body" onClick={()=>this.setState({action:'viewActionFundProposals'})}/>
-                <ActionListItem primaryText="Contact enforcement agencies" onClick={()=>this.setState({action:'viewActionFundProposals'})}/>
+                <ActionListItem primaryText="Report incident" onClick={()=>this.setState({action:'reportIncident'})}/>
+                <ActionListItem primaryText="Contact provincial body" onClick={()=>this.setState({action:'contactProvincialBody'})}/>
+                <ActionListItem primaryText="Contact enforcement agencies" onClick={()=>this.setState({action:'contactEnforcementAgencies'})}/>
                 <ActionsHeader text="Reports"/>
                 <Dialog title="Spatial data" open={this.state.action==='spatialData'} actions={<ActionSpatialData closeDialog={this.handleClose.bind(this)}/>} overlayStyle={{backgroundColor: 'transparent'}} onRequestClose={this.handleClose.bind(this)} modal={false} />
                 <Dialog title="Species observations" open={this.state.action==='speciesObservations'} actions={<ActionSpeciesObservations closeDialog={this.handleClose.bind(this)}/>} overlayStyle={{backgroundColor: 'transparent'}} onRequestClose={this.handleClose.bind(this)} modal={false} />
@@ -61,6 +64,9 @@ class ActionsPanel extends React.Component {
                 <Dialog title="Protected area boundaries" open={this.state.action==='protectedAreaBoundaries'} actions={<ActionProtectedAreaBoundaries closeDialog={this.handleClose.bind(this)}/>} overlayStyle={{backgroundColor: 'transparent'}} onRequestClose={this.handleClose.bind(this)} modal={false} />
                 <Dialog title="Management effectiveness data" open={this.state.action==='managementEffectivenessData'} actions={<ActionManagementEffectivenessData closeDialog={this.handleClose.bind(this)}/>} overlayStyle={{backgroundColor: 'transparent'}} onRequestClose={this.handleClose.bind(this)} modal={false} />
                 <Dialog title="View Action Fund proposals" open={this.state.action==='viewActionFundProposals'} actions={<ActionShowActionFundProposals closeDialog={this.handleClose.bind(this)}/>} overlayStyle={{backgroundColor: 'transparent'}} onRequestClose={this.handleClose.bind(this)} modal={false} />
+                <Dialog title="Report incident" open={this.state.action==='reportIncident'} actions={<ActionIncident closeDialog={this.handleClose.bind(this)}/>} overlayStyle={{backgroundColor: 'transparent'}} onRequestClose={this.handleClose.bind(this)} modal={false} />
+                <Dialog title="Contact provincial body" open={this.state.action==='contactProvincialBody'} actions={<ActionProvincial closeDialog={this.handleClose.bind(this)}/>} overlayStyle={{backgroundColor: 'transparent'}} onRequestClose={this.handleClose.bind(this)} modal={false} />
+                <Dialog title="Contact enforcement agencies" open={this.state.action==='contactEnforcementAgencies'} actions={<ActionEnforcement closeDialog={this.handleClose.bind(this)}/>} overlayStyle={{backgroundColor: 'transparent'}} onRequestClose={this.handleClose.bind(this)} modal={false} />
             </List>
         );
     }
