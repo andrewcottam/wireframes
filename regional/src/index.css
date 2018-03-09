@@ -24,7 +24,20 @@ div {
 
 .mapboxgl-popup-content {
   box-shadow: 0 0 10px 2px rgba(31, 51, 73, .25) !important;
-  padding: 8px !important;
+  padding: 4px !important;
   color: rgb(39, 61, 86) !important;
   font-size: 10px !important;
+}
+.popupItem {
+  padding: 3px!important;
+}
+
+.popupItem:hover {
+  background-color: #c6d2e1!important;
+  color: #273d56!important;
+  transition: all .125s;
+  padding: 3px!important;
+  display: block!important;
+  cursor: pointer!important;
+  border-radius: 4px!important;
 }

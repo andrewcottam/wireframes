@@ -26,12 +26,14 @@ class App extends Component {
           <Router>
             <div>
               <Route path={window.basepath} render={props=>
-                <PoliciesDrawer map={this.state.map} {...props}/>
+                <React.Fragment>
+                  <PoliciesDrawer map={this.state.map} {...props}/>
+                  <IndicatorCard map={this.state.map}/>
+                  <Map onStyleLoad={this.mapLoaded.bind(this)} {...props}/>
+                  <MapToolbar map={this.state.map}/>
+                  <ActionsDrawer map={this.state.map}/>
+                </React.Fragment>
               }/>
-              <IndicatorCard map={this.state.map}/>
-              <Map onStyleLoad={this.mapLoaded.bind(this)}/>
-              <MapToolbar map={this.state.map}/>
-              <ActionsDrawer map={this.state.map}/>
             </div>
           </Router>
         </div>

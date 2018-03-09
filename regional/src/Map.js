@@ -17,7 +17,7 @@ class Map extends React.Component {
   render() {
     return (
       <ReactMap {...this.props} style= {INITIAL_STYLE} center={INITIAL_CENTER} zoom={INITIAL_ZOOM} containerStyle={CONTAINER_STYLE} ref={(elem)=>{this.reactMap=elem}}>              
-        <MapPopup reactMap={this.reactMap} showPopup="click"/>
+        <MapPopup reactMap={this.reactMap} showPopup="mapClick" {...this.props}/>
       </ReactMap>
     );
   }
