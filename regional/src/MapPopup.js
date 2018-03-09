@@ -9,15 +9,19 @@ class MapPopup extends React.Component {
   componentWillReceiveProps(nextProps) {
     if (nextProps.reactMap) {
       this.mapboxgl = nextProps.reactMap.state.map; //get the mapbox-gl javascript object
-      this.mapboxgl.on("mousemove", this.mouseMove.bind(this));
-      console.log("mousemove event handler added");
+      this.props.showPopup === "mousemove" && this.mapboxgl.on("mousemove", this.mouseMove.bind(this));
+      this.props.showPopup === "click" && this.mapboxgl.on("click", this.click.bind(this));
     }
   }
   componentWillUnmount() {
-    this.mapboxgl && this.mapboxgl.off("mousemove", this.mouseMove);
-    console.log("mousemove event handler removed");
+    this.props.showPopup === "mousemove" && this.mapboxgl && this.mapboxgl.off("mousemove", this.mouseMove);
+    this.props.showPopup === "click" && this.mapboxgl.off("click", this.click.bind(this));
   }
   mouseMove(e) {
+    var features = e.target.queryRenderedFeatures(e.point);
+    this.setState({ mouseFeatures: features, mouseCentre: [e.lngLat.lng, e.lngLat.lat] });
+  }
+  click(e) {
     var features = e.target.queryRenderedFeatures(e.point);
     this.setState({ mouseFeatures: features, mouseCentre: [e.lngLat.lng, e.lngLat.lat] });
   }
