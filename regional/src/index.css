@@ -22,3 +22,9 @@ div {
   height: 42px;
 }
 
+.mapboxgl-popup-content {
+  box-shadow: 0 0 10px 2px rgba(31, 51, 73, .25) !important;
+  padding: 8px !important;
+  color: rgb(39, 61, 86) !important;
+  font-size: 10px !important;
+}

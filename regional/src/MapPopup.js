@@ -15,7 +15,7 @@ class MapPopup extends React.Component {
     const text = this.getText();
     return (
       this.props.mouseCentre.length && text.length &&
-      <Popup coordinates={this.props.mouseCentre}>
+      <Popup coordinates={this.props.mouseCentre} offset={12}>
         <div>{text}</div>
       </Popup>
     );
