@@ -4,13 +4,9 @@ import { List, ListItem } from 'material-ui/List';
 const STYLE_ID = 'cjefq7q90ivui2sn3ripbqq7b';
 
 class ActionShowActionFundProposals extends React.Component {
-  constructor(props) {
-    super(props);
-  }
   onClick(e) {
     this.props.map.setCenter([-73, 21]);
     this.props.map.zoomTo(5);
-    this.props.showActionFundProposalsClicked && this.props.showActionFundProposalsClicked(e);
   }
 
   render() {

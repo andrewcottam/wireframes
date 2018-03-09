@@ -3,7 +3,9 @@ import ReactMapboxGl from "react-mapbox-gl";
 import MapPopup from './MapPopup.js';
 
 const ReactMap = ReactMapboxGl({
-  accessToken: "pk.eyJ1IjoiYmxpc2h0ZW4iLCJhIjoiMEZrNzFqRSJ9.0QBRA2HxTb8YHErUFRMPZg"
+  accessToken: "pk.eyJ1IjoiYmxpc2h0ZW4iLCJhIjoiMEZrNzFqRSJ9.0QBRA2HxTb8YHErUFRMPZg",
+  movingMethod: "jumpTo",
+  hash: true
 });
 
 const INITIAL_CENTER = [20, -2];
@@ -12,18 +14,10 @@ const INITIAL_STYLE = "mapbox://styles/blishten/cj6f4n2j026qf2rnunkauikjm";
 const CONTAINER_STYLE = { height: "100vh", width: "100vw" };
 
 class Map extends React.Component {
-  constructor(props) {
-    super(props);
-    this.state = { mouseCentre: [], mouseFeatures: [] };
-  }
-  onMouseMove(e) {
-    var features = e.target.queryRenderedFeatures(e.point);
-    this.setState({ mouseFeatures: features, mouseCentre: [e.lngLat.lng, e.lngLat.lat] });
-  }
   render() {
     return (
-      <ReactMap {...this.props} style= {INITIAL_STYLE} center={INITIAL_CENTER} zoom={INITIAL_ZOOM} containerStyle={CONTAINER_STYLE} onMouseMove={(map,e)=>this.onMouseMove(e)} >              
-        <MapPopup mouseFeatures={this.state.mouseFeatures} mouseCentre={this.state.mouseCentre}/>
+      <ReactMap {...this.props} style= {INITIAL_STYLE} center={INITIAL_CENTER} zoom={INITIAL_ZOOM} containerStyle={CONTAINER_STYLE} ref={(elem)=>{this.reactMap=elem}}>              
+        <MapPopup reactMap={this.reactMap} />
       </ReactMap>
     );
   }
