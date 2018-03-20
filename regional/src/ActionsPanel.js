@@ -13,6 +13,9 @@ import ActionManagementEffectivenessData from './ActionManagementEffectivenessDa
 import ActionIncident from './ActionIncident.js';
 import ActionProvincial from './ActionProvincial.js';
 import ActionEnforcement from './ActionEnforcement.js';
+import ActionGapAnalysis from './ActionGapAnalysis.js';
+import ActionSDM from './ActionSDM.js';
+import ActionLCC from './ActionLCC.js';
 import Divider from 'material-ui/Divider';
 
 function ActionsHeader(props) {
@@ -42,20 +45,24 @@ class ActionsPanel extends React.Component {
         return (
             <List>
                 <ActionsHeader text="Analyse"/>
+                <ActionListItem primaryText="Gap analysis" onClick={()=>this.setState({action:'gapAnalysis'})}/>
+                <ActionListItem primaryText="Land Cover Change analysis" onClick={()=>this.setState({action:'lcc'})}/>
                 <ActionShowRecentImagery map={this.props.map}/>
+                <ActionListItem primaryText="Species Distribution Modelling" onClick={()=>this.setState({action:'sdm'})}/>
                 <ActionsHeader text="Contribute"/>
+                <ActionListItem primaryText="Digitise features" onClick={()=>this.setState({action:'digitiseFeatures'})}/>
+                <ActionListItem primaryText="Management effectiveness data" onClick={()=>this.setState({action:'managementEffectivenessData'})}/>
+                <ActionListItem primaryText="Photos" onClick={()=>this.setState({action:'photos'})}/>
+                <ActionListItem primaryText="Protected area boundaries" onClick={()=>this.setState({action:'protectedAreaBoundaries'})}/>
                 <ActionListItem primaryText="Spatial data" onClick={()=>this.setState({action:'spatialData'})}/>
                 <ActionListItem primaryText="Species observations" onClick={()=>this.setState({action:'speciesObservations'})}/>
-                <ActionListItem primaryText="Photos" onClick={()=>this.setState({action:'photos'})}/>
-                <ActionListItem primaryText="Digitise features (OpenStreetMap)" onClick={()=>this.setState({action:'digitiseFeatures'})}/>
-                <ActionListItem primaryText="Protected area boundaries" onClick={()=>this.setState({action:'protectedAreaBoundaries'})}/>
-                <ActionListItem primaryText="Management effectiveness data" onClick={()=>this.setState({action:'managementEffectivenessData'})}/>
                 <ActionsHeader text="Fund"/>
                 <ActionShowActionFundProposals {...this.props}/>
+                <ActionListItem primaryText="Show existing funded projects" onClick={()=>this.setState({action:'existingProjects'})}/>
                 <ActionsHeader text="Network"/>
-                <ActionListItem primaryText="Report incident" onClick={()=>this.setState({action:'reportIncident'})}/>
-                <ActionListItem primaryText="Contact provincial body" onClick={()=>this.setState({action:'contactProvincialBody'})}/>
                 <ActionListItem primaryText="Contact enforcement agencies" onClick={()=>this.setState({action:'contactEnforcementAgencies'})}/>
+                <ActionListItem primaryText="Contact provincial body" onClick={()=>this.setState({action:'contactProvincialBody'})}/>
+                <ActionListItem primaryText="Report incident" onClick={()=>this.setState({action:'reportIncident'})}/>
                 <ActionsHeader text="Reports"/>
                 <Dialog title="Spatial data" open={this.state.action==='spatialData'} actions={<ActionSpatialData closeDialog={this.handleClose.bind(this)}/>} overlayStyle={{backgroundColor: 'transparent'}} onRequestClose={this.handleClose.bind(this)} modal={false} />
                 <Dialog title="Species observations" open={this.state.action==='speciesObservations'} actions={<ActionSpeciesObservations closeDialog={this.handleClose.bind(this)}/>} overlayStyle={{backgroundColor: 'transparent'}} onRequestClose={this.handleClose.bind(this)} modal={false} />
@@ -67,6 +74,9 @@ class ActionsPanel extends React.Component {
                 <Dialog title="Report incident" open={this.state.action==='reportIncident'} actions={<ActionIncident closeDialog={this.handleClose.bind(this)}/>} overlayStyle={{backgroundColor: 'transparent'}} onRequestClose={this.handleClose.bind(this)} modal={false} />
                 <Dialog title="Contact provincial body" open={this.state.action==='contactProvincialBody'} actions={<ActionProvincial closeDialog={this.handleClose.bind(this)}/>} overlayStyle={{backgroundColor: 'transparent'}} onRequestClose={this.handleClose.bind(this)} modal={false} />
                 <Dialog title="Contact enforcement agencies" open={this.state.action==='contactEnforcementAgencies'} actions={<ActionEnforcement closeDialog={this.handleClose.bind(this)}/>} overlayStyle={{backgroundColor: 'transparent'}} onRequestClose={this.handleClose.bind(this)} modal={false} />
+                <Dialog title="Gap Analysis" open={this.state.action==='gapAnalysis'} actions={<ActionGapAnalysis closeDialog={this.handleClose.bind(this)}/>} overlayStyle={{backgroundColor: 'transparent'}} onRequestClose={this.handleClose.bind(this)} modal={false} />
+                <Dialog title="Species Distribution Modelling" open={this.state.action==='sdm'} actions={<ActionSDM closeDialog={this.handleClose.bind(this)}/>} overlayStyle={{backgroundColor: 'transparent'}} onRequestClose={this.handleClose.bind(this)} modal={false} />
+                <Dialog title="Land Cover Change Analysis" open={this.state.action==='lcc'} actions={<ActionLCC closeDialog={this.handleClose.bind(this)}/>} overlayStyle={{backgroundColor: 'transparent'}} onRequestClose={this.handleClose.bind(this)} modal={false} />
             </List>
         );
     }

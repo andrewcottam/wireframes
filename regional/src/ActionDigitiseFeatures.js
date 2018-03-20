@@ -34,7 +34,7 @@ class ActionDigitiseFeatures extends React.Component {
             <StepLabel>Select your source imagery</StepLabel>
           </Step>
           <Step>
-            <StepLabel>Digitise features</StepLabel>
+            <StepLabel>Digitise features into OpenStreetMap</StepLabel>
           </Step>
         </Stepper>
         <div style={contentStyle}>
