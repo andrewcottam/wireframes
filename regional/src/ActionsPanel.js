@@ -74,9 +74,9 @@ class ActionsPanel extends React.Component {
                 <Dialog title="Report incident" open={this.state.action==='reportIncident'} actions={<ActionIncident closeDialog={this.handleClose.bind(this)}/>} overlayStyle={{backgroundColor: 'transparent'}} onRequestClose={this.handleClose.bind(this)} modal={false} />
                 <Dialog title="Contact provincial body" open={this.state.action==='contactProvincialBody'} actions={<ActionProvincial closeDialog={this.handleClose.bind(this)}/>} overlayStyle={{backgroundColor: 'transparent'}} onRequestClose={this.handleClose.bind(this)} modal={false} />
                 <Dialog title="Contact enforcement agencies" open={this.state.action==='contactEnforcementAgencies'} actions={<ActionEnforcement closeDialog={this.handleClose.bind(this)}/>} overlayStyle={{backgroundColor: 'transparent'}} onRequestClose={this.handleClose.bind(this)} modal={false} />
-                <Dialog title="Gap Analysis" open={this.state.action==='gapAnalysis'} actions={<ActionGapAnalysis closeDialog={this.handleClose.bind(this)}/>} overlayStyle={{backgroundColor: 'transparent'}} onRequestClose={this.handleClose.bind(this)} modal={false} />
+                <Dialog title="Gap analysis" open={this.state.action==='gapAnalysis'} actions={<ActionGapAnalysis closeDialog={this.handleClose.bind(this)}/>} overlayStyle={{backgroundColor: 'transparent'}} onRequestClose={this.handleClose.bind(this)} modal={false} />
                 <Dialog title="Species Distribution Modelling" open={this.state.action==='sdm'} actions={<ActionSDM closeDialog={this.handleClose.bind(this)}/>} overlayStyle={{backgroundColor: 'transparent'}} onRequestClose={this.handleClose.bind(this)} modal={false} />
-                <Dialog title="Land Cover Change Analysis" open={this.state.action==='lcc'} actions={<ActionLCC closeDialog={this.handleClose.bind(this)}/>} overlayStyle={{backgroundColor: 'transparent'}} onRequestClose={this.handleClose.bind(this)} modal={false} />
+                <Dialog title="Land Cover Change analysis" open={this.state.action==='lcc'} actions={<ActionLCC closeDialog={this.handleClose.bind(this)}/>} overlayStyle={{backgroundColor: 'transparent'}} onRequestClose={this.handleClose.bind(this)} modal={false} />
             </List>
         );
     }
