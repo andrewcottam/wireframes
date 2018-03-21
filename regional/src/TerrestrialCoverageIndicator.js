@@ -11,7 +11,7 @@ class TerrestrialCoverageIndicator extends React.Component {
     super(props);
     this.state = { data: [] };
     let ENDPOINT = "https://db-server-blishten.c9users.io/cgi-bin/services.py/biopama/services/get_wdpa_terrestrial_coverage_statistics?iso3code=TZA";
-    jsonp(ENDPOINT, this.parseData.bind(this));
+    jsonp(ENDPOINT, this.parseData.bind(this)); //get the data from the server and parse it
   }
   parseData(err, response) {
     if (err) throw err;

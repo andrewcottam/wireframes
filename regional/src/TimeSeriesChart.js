@@ -23,7 +23,7 @@ class TimeSeriesChart extends React.Component {
     render() {
         return (
             <LineChart {...this.props} onMouseMove={this.mouseMove.bind(this)}>
-              <XAxis scale="linear" dataKey="x" domain={this.props.xdomain} label={{value:"Year", position:"insideBottom",style:{fontSize:'11px'},offset:-1}} style={{fontSize:'11px',paddingTop:'20px'}} ticks={[1905,1925,1945,1965,1985,2005]}  padding={{ left: 10, right: 10 }}/>
+              <XAxis scale="linear" dataKey="x" domain={this.props.xdomain} label={{value:"Year", position:"insideBottom",style:{fontSize:'11px'},offset:-1}} style={{fontSize:'11px',paddingTop:'20px'}} padding={{ left: 10, right: 10 }}/>
               <YAxis label={{ value: '% protected', angle: -90, position: 'inside', style:{fontSize:'11px'}}} style={{fontSize:'11px'}}/>
               <Tooltip isAnimationActive={false} content={<CBD11Tooltip/>}/>
               <Line type="monotone" dataKey="threshold" stroke="#d0d0d0" isAnimationActive={false} dot={false} connectNulls={true}/>
