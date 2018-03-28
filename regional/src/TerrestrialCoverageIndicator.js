@@ -10,7 +10,7 @@ class TerrestrialCoverageIndicator extends React.Component {
   constructor(props) {
     super(props);
     this.state = { data: [], xdomain: [] };
-    let ENDPOINT = "https://db-server-blishten.c9users.io/cgi-bin/services.py/biopama/services/get_wdpa_terrestrial_coverage_statistics?iso3code=TZA";
+    let ENDPOINT = "https://db-server-blishten.c9users.io/cgi-bin/services.py/biopama/services/get_wdpa_terrestrial_coverage_statistics?iso3code="  + this.props.country;
     jsonp(ENDPOINT, this.parseData.bind(this)); //get the data from the server and parse it
   }
   parseData(err, response) {
@@ -52,13 +52,13 @@ class TerrestrialCoverageIndicator extends React.Component {
           buttonStyle={{height:'25px',padding:'3px 0px 3px 0px'}}
           style={{fontSize:'12px'}}
           >
-          {this.props.indicatorTitle ? 
+          {this.props.country ? 
           <div
             style={{padding:'12px',fontSize:'19px'}}>
-            {this.props.indicatorTitle}
+            {this.props.country}  terrestrial protected area coverage
           </div> : null }
           <React.Fragment>
-            <TimeSeriesChart width={400} height={200} data={this.state.data} margin={{ top: 25, right: 15, bottom: 25, left: 15 }} map={this.props.map} xdomain={this.state.xdomain}/>
+            <TimeSeriesChart width={400} height={200} data={this.state.data} margin={{ top: 25, right: 15, bottom: 25, left: 15 }} {...this.props} xdomain={this.state.xdomain}/>
             <CardText 
               style={{padding:'12px',fontSize:'13px'}}>{this.props.desc ? this.props.desc : "Move the mouse over the chart to see the change in protection through time."}
             </CardText>

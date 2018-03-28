@@ -22,13 +22,14 @@ class IndicatorContent extends React.Component {
         var children, policyTitle, avatar, targetTitle, targetSubtitle, backgroundImage;
         if (this.props.map) {
             switch (Number(this.props.match.params.id)) {
-                case 0:
+                case 0:             
                     this.configureMap('mapbox://styles/blishten/cjckavkjc9xui2snvo09hqpfs', [35.607, -6.273], 6); //terrestrial style
                     policyTitle = "Convention on Biological Diversity";
                     avatar = <Avatar src={logo_g1}/>;
                     targetTitle = "CBD Target 11";
                     targetSubtitle = "By 2020, at least 17 per cent of terrestrial and inland water areas, especially areas of particular importance for biodiversity and ecosystem services, are conserved through effectively and equitably managed, ecologically representative and well-connected systems of protected areas and other effective area-based conservation measures, and integrated into the wider landscape and seascape.";
-                    children = <TerrestrialCoverageIndicator {...this.props} indicatorTitle="Tanzania terrestrial protected area coverage"/>;
+                    let country = this.props.match.params.iso3 ? this.props.match.params.iso3 : "&lt;unknown country&gt;";
+                    children = <TerrestrialCoverageIndicator {...this.props} country={country}/>;
                     backgroundImage = intactForest;
                     break;
                 case 1:

@@ -3,6 +3,14 @@ import { Tooltip, LineChart, Line, XAxis, YAxis } from 'recharts';
 import CBD11Tooltip from './CBD11Tooltip.js';
 
 class TimeSeriesChart extends React.Component {
+  constructor(props){
+    super(props);
+    this.props.map && this.props.map.on('style.load', this.initialiseMap.bind(this));
+  }
+     initialiseMap () { 
+      this.filterMap(3000);
+    };
+
     mouseMove(e) {
         if (e && e.activeLabel) {
             this.filterMap(e.activeLabel);
@@ -11,13 +19,22 @@ class TimeSeriesChart extends React.Component {
     filterMap(yr) {
         // this.props.map.on('render', this.onSourceData.bind(this, yr));
         this.props.map.setFilter("terrestrial-pas", ["all", ["<", "STATUS_YR", yr],
-            ["==", "PARENT_ISO", 'TZA']
+            ["==", "PARENT_ISO", this.props.country]
         ]);
         this.props.map.setFilter("terrestrial-pas-active", ["all", ["==", "STATUS_YR", yr],
-            ["==", "PARENT_ISO", 'TZA']
+            ["==", "PARENT_ISO", this.props.country]
         ]);
         this.props.map.setFilter("terrestrial-pas-labels", ["all", ["==", "STATUS_YR", yr],
-            ["==", "PARENT_ISO", 'TZA']
+            ["==", "PARENT_ISO", this.props.country]
+        ]);
+        this.props.map.setFilter("marine-pas", ["all", ["<", "STATUS_YR", yr],
+            ["==", "PARENT_ISO", this.props.country]
+        ]);
+        this.props.map.setFilter("marine-pas-active", ["all", ["==", "STATUS_YR", yr],
+            ["==", "PARENT_ISO", this.props.country]
+        ]);
+        this.props.map.setFilter("marine-pas-labels", ["all", ["==", "STATUS_YR", yr],
+            ["==", "PARENT_ISO", this.props.country]
         ]);
     }
     render() {
