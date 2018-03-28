@@ -24,7 +24,7 @@ class TerrestrialCoverageIndicator extends React.Component {
     allyears = (allyears[0].x === 0) ? allyears.slice(1) : allyears;
     this.setState({ data: allyears, xdomain: [xstart, xend] });
   }
-
+  
   render() {
     return (
       <Tabs        
