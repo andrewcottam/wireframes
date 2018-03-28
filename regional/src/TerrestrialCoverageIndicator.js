@@ -9,14 +9,15 @@ const TZA_DATA = [{ "iso3": "TZA", "yr": 1905, "new_area": 41306.61, "cum_area":
 class TerrestrialCoverageIndicator extends React.Component {
   constructor(props) {
     super(props);
-    this.state = { data: [] };
+    this.state = { data: [], xdomain: [] };
     let ENDPOINT = "https://db-server-blishten.c9users.io/cgi-bin/services.py/biopama/services/get_wdpa_terrestrial_coverage_statistics?iso3code=TZA";
     jsonp(ENDPOINT, this.parseData.bind(this)); //get the data from the server and parse it
   }
   parseData(err, response) {
     if (err) throw err;
+    let countryArea = response.records && response.records[0] && response.records[0].country_area;
     let allyears = response.records.map((item) => {
-      return { x: item.yr, cum_area: item.cum_area, percent: (item.cum_area / 9450.87), threshold: 17 };
+      return { x: item.yr, cum_area: item.cum_area, percent: (item.cum_area / (countryArea/100000000)), threshold: 17 };
     });
     let xstart = (allyears[0].x === 0) ? allyears[1].x : allyears[0].x;
     let xend = 2018;
@@ -27,50 +28,50 @@ class TerrestrialCoverageIndicator extends React.Component {
   render() {
     return (
       <Tabs        
-                value="Country"
-                onChange={this.handleChange}
-                >
-                <Tab 
-                  label="Indicator" 
-                  value="Indicator"
-                  disabled={true}
-                  buttonStyle={{height:'25px',padding:'3px 0px 3px 0px',backgroundColor:'#d0d0d0'}}
-                  style={{fontSize:'12px'}}
-                  >
-                </Tab>
-                <Tab 
-                  label="Region" 
-                  value="Region"
-                  disabled={true}
-                  buttonStyle={{height:'25px',padding:'3px 0px 3px 0px',backgroundColor:'#d0d0d0'}}
-                  style={{fontSize:'12px'}}
-                  />
-                <Tab 
-                  label="Country" 
-                  value="Country"
-                  buttonStyle={{height:'25px',padding:'3px 0px 3px 0px'}}
-                  style={{fontSize:'12px'}}
-                  >
-                  {this.props.indicatorTitle ? 
-                  <div
-                    style={{padding:'12px',fontSize:'19px'}}>
-                    {this.props.indicatorTitle}
-                  </div> : null }
-                  <React.Fragment>
-                    <TimeSeriesChart width={400} height={200} data={this.state.data} margin={{ top: 25, right: 15, bottom: 25, left: 15 }} map={this.props.map} xdomain={this.state.xdomain}/>
-                    <CardText 
-                      style={{padding:'12px',fontSize:'13px'}}>{this.props.desc ? this.props.desc : "Move the mouse over the chart to see the change in protection through time."}
-                    </CardText>
-                  </React.Fragment>
-                </Tab>                  
-                <Tab 
-                  label="Province" 
-                  value="Province"
-                  disabled={true}
-                  buttonStyle={{height:'25px',padding:'3px 0px 3px 0px',backgroundColor:'#d0d0d0'}}
-                  style={{fontSize:'12px'}}
-                  />
-             </Tabs>
+        value="Country"
+        onChange={this.handleChange}
+        >
+        <Tab 
+          label="Indicator" 
+          value="Indicator"
+          disabled={true}
+          buttonStyle={{height:'25px',padding:'3px 0px 3px 0px',backgroundColor:'#d0d0d0'}}
+          style={{fontSize:'12px'}}
+          >
+        </Tab>
+        <Tab 
+          label="Region" 
+          value="Region"
+          disabled={true}
+          buttonStyle={{height:'25px',padding:'3px 0px 3px 0px',backgroundColor:'#d0d0d0'}}
+          style={{fontSize:'12px'}}
+          />
+        <Tab 
+          label="Country" 
+          value="Country"
+          buttonStyle={{height:'25px',padding:'3px 0px 3px 0px'}}
+          style={{fontSize:'12px'}}
+          >
+          {this.props.indicatorTitle ? 
+          <div
+            style={{padding:'12px',fontSize:'19px'}}>
+            {this.props.indicatorTitle}
+          </div> : null }
+          <React.Fragment>
+            <TimeSeriesChart width={400} height={200} data={this.state.data} margin={{ top: 25, right: 15, bottom: 25, left: 15 }} map={this.props.map} xdomain={this.state.xdomain}/>
+            <CardText 
+              style={{padding:'12px',fontSize:'13px'}}>{this.props.desc ? this.props.desc : "Move the mouse over the chart to see the change in protection through time."}
+            </CardText>
+          </React.Fragment>
+        </Tab>                  
+        <Tab 
+          label="Province" 
+          value="Province"
+          disabled={true}
+          buttonStyle={{height:'25px',padding:'3px 0px 3px 0px',backgroundColor:'#d0d0d0'}}
+          style={{fontSize:'12px'}}
+          />
+     </Tabs>
     );
   }
 }

@@ -6,6 +6,7 @@ import intactForest from './intactForest.png';
 import logo_g1 from './logo-g1.png';
 import logo_r1 from './logo-r1.png';
 import Avatar from 'material-ui/Avatar';
+import { Route } from "react-router-dom";
 
 class IndicatorContent extends React.Component {
     onClick(e) {
