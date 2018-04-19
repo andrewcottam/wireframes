@@ -8543,8 +8543,7 @@
             "source": "wdpa_terrestrial",
             "source-layer": "wdpa_aug_2017_terrestrial",
             "paint": {
-                "fill-color": "rgba(99, 148, 69, 0.5)",
-                "fill-opacity": 1
+                "fill-color": "rgba(99, 148, 69, 0.5)"
             }
         },
         {
@@ -8553,15 +8552,14 @@
             "source": "wdpa_marine",
             "source-layer": "wdpa_aug_2017_marine",
             "paint": {
-                "fill-color": "rgba(63, 127, 191, 0.5)",
-                "fill-opacity": 1
+                "fill-color": "rgba(63, 127, 191, 0.5)"
             }
         },
         {
             "id": "terrestrial-pas-active",
             "type": "fill",
-            "source": "composite",
-            "source-layer": "terrestrial_pas-3jsxyf",
+            "source": "wdpa_terrestrial",
+            "source-layer": "wdpa_aug_2017_terrestrial",
             "filter": [
                 "==",
                 "STATUS_YR",
@@ -8577,8 +8575,8 @@
         {
             "id": "marine-pas-active",
             "type": "fill",
-            "source": "composite",
-            "source-layer": "marine_pas-3r2m03",
+            "source": "wdpa_marine",
+            "source-layer": "wdpa_aug_2017_marine",
             "filter": [
                 "==",
                 "STATUS_YR",
@@ -8588,8 +8586,7 @@
                 "visibility": "none"
             },
             "paint": {
-                "fill-color": "rgba(228, 58, 45, 0.5)",
-                "fill-opacity": 1
+                "fill-color": "rgba(229, 58, 45, 0.5)"
             }
         },
         {
