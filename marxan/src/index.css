@@ -3,3 +3,54 @@ body {
   padding: 0;
   font-family: sans-serif;
 }
+
+#loading {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+}
+
+#InfoPanel {
+  height: 500px;
+  width: 400px;
+  margin: 20px;
+}
+
+.rt-noData {
+  display: none !important;
+}
+
+.tab {
+  font-size: 12px !important;
+  padding: 20px;
+}
+
+.tabTitle {
+  font-Size: 18px;
+  margin-Bottom: 12px;
+  font-Weight: 400;
+}
+
+.run {
+  position: absolute;
+  bottom: 36px;
+  left: 165px;
+}
+
+.tabPanel {
+  margin: 15px;
+}
+
+#log {
+  height: 271px;
+  width: 370px;
+  overflow: auto;
+}
+
+.ReactTable {
+  height: 239px;
+  font-size: 12px;
+}
+.rt-td{
+  padding:0px 5px !important;
+}

@@ -5,11 +5,14 @@
   "dependencies": {
     "jsonp": "^0.2.1",
     "mapbox-gl": "^0.44.2",
+    "material-ui": "^0.20.0",
     "react": "^16.3.2",
     "react-dom": "^16.3.2",
+    "react-fontawesome": "^1.6.1",
     "react-mapbox-gl": "^3.8.0",
     "react-scripts": "1.1.4",
-    "react-table": "^6.8.2"
+    "react-table": "^6.8.2",
+    "typeface-roboto": "0.0.54"
   },
   "scripts": {
     "start": "PORT=8081 react-scripts start",
