@@ -11,7 +11,7 @@ body {
 }
 
 #InfoPanel {
-  height: 500px;
+  height: 528px;
   width: 400px;
   margin: 20px;
 }
@@ -39,7 +39,7 @@ body {
 .run {
   position: absolute;
   bottom: 36px;
-  left: 165px;
+  right:36px;
 }
 
 .tabPanel {
@@ -81,6 +81,9 @@ body {
 }
 
 .summary_infoTable{
-  height:157px;
-  width:270px;
+  height:300px;
+  /*width:270px;*/
+}
+.rt-tr-group{
+  cursor: pointer !important;
 }

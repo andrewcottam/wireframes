@@ -66,7 +66,10 @@ class App extends React.Component {
     // Last value is the default, used where there is no data
     expression.push("rgba(0,0,0,0)");
     this.map.setPaintProperty("planning-units-3857-visible-a-0vmt87", "fill-color", expression);
-    this.setState({ running: false, log: response.log.replace(/(\r\n|\n|\r)/g, "<br />"), outputsTabString: '',summary_info:response.sum });
+    //create the array of solutions to pass to the InfoPanel
+    let solutions = response.sum;
+    solutions.splice(0,0,{'Run_Number':'Sum','Score':'','Cost':'','Planning_Units':''});
+    this.setState({ running: false, log: response.log.replace(/(\r\n|\n|\r)/g, "<br />"), outputsTabString: '',solutions:solutions});
   }
 
   mouseMove(e) {
@@ -94,7 +97,7 @@ class App extends React.Component {
       <MuiThemeProvider>
         <React.Fragment>
           <div ref={el => this.mapContainer = el} className="absolute top right left bottom" />
-          <InfoPanel runMarxan={this.runMarxan.bind(this)} running={this.state.running} outputsTabString={this.state.outputsTabString} log={this.state.log} dataAvailable={this.state.dataAvailable} setVerbosity={this.setVerbosity.bind(this)} summary_info={this.state.summary_info}/>
+          <InfoPanel runMarxan={this.runMarxan.bind(this)} running={this.state.running} outputsTabString={this.state.outputsTabString} log={this.state.log} dataAvailable={this.state.dataAvailable} setVerbosity={this.setVerbosity.bind(this)} solutions={this.state.solutions}/>
           <img src={Loading} id='loading' style={{'display': (this.state.running ? 'block' : 'none')}}/>
           <Popup active_pu={this.state.active_pu} xy={this.state.popup_point}/>
         </React.Fragment>
