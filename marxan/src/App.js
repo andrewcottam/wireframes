@@ -8,7 +8,7 @@ import Popup from './Popup.js';
 import Loading from './loading.gif';
 
 //CONSTANTS
-let ENDPOINT = "https://db-server-blishten.c9users.io/marxan/webAPI/run";
+let ENDPOINT = "https://db-server-blishten.c9users.io/marxan/webAPI/";
 let NUMBER_OF_RUNS = 10;
 
 mapboxgl.accessToken = 'pk.eyJ1IjoiYmxpc2h0ZW4iLCJhIjoiMEZrNzFqRSJ9.0QBRA2HxTb8YHErUFRMPZg';
@@ -44,7 +44,7 @@ class App extends React.Component {
 
   runMarxan() {
     this.setState({ running: true, log: 'Running...', active_pu: undefined, outputsTabString: 'Running...' });
-    jsonp(ENDPOINT + "?numreps=" + NUMBER_OF_RUNS + "&verbosity=" + this.verbosity, this.parseData.bind(this)); //get the data from the server and parse it
+    jsonp(ENDPOINT + "run?numreps=" + NUMBER_OF_RUNS + "&verbosity=" + this.verbosity, this.parseData.bind(this)); //get the data from the server and parse it
   }
 
   parseData(err, response) {
