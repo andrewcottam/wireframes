@@ -4,6 +4,7 @@ import mapboxgl from 'mapbox-gl';
 import * as jsonp from 'jsonp';
 import InfoPanel from './InfoPanel.js';
 import Loading from './loading.gif';
+import ReactTable from "react-table";
 
 //CONSTANTS
 let ENDPOINT = "https://db-server-blishten.c9users.io/marxan/webAPI/run";
@@ -59,7 +60,7 @@ class App extends React.Component {
     // Last value is the default, used where there is no data
     expression.push("rgba(0,0,0,0)");
     this.map.setPaintProperty("planning-units-3857-visible-a-0vmt87", "fill-color", expression);
-    this.setState({ 'running': false, 'log': response.log ,'results':'Hover over the features to show the data'});
+    this.setState({ 'running': false, 'log': response.log.replace(/(\r\n|\n|\r)/g,"<br />") ,'results':'Hover over the features to show the data'});
   }
 
   showPopup(e) {
@@ -95,12 +96,28 @@ class App extends React.Component {
   }
 
   render() {
-    let d = this.state.running ? 'block' : 'none';
+    let data = this.state.planning_unit ? Object.keys(this.state.planning_unit).map(key => ({ key, value: this.state.planning_unit[key] })) : [];
     return (
       <React.Fragment>
         <div ref={el => this.mapContainer = el} className="absolute top right left bottom" />
         <InfoPanel planning_unit={this.state.planning_unit} runMarxan={this.runMarxan.bind(this)} running={this.state.running} results={this.state.results} log={this.state.log} dataAvailable={this.state.dataAvailable}/>
-        <img src={Loading} id='loading' style={{'display': d}}/>
+        <img src={Loading} id='loading' style={{'display': (this.state.running ? 'block' : 'none')}}/>
+        <div style={{'display': data.length>0 ? 'block' : 'none'}}>
+          <ReactTable
+              showPagination={false}
+              minRows={0}
+              pageSize={200}
+              noDataText=''
+              data={data}
+              columns={[{
+                 Header: 'Property',
+                 accessor: 'key' 
+              },{
+                 Header: 'Value',
+                 accessor: 'value' 
+              }]}
+          />
+        </div>
       </React.Fragment>
     );
   }

@@ -44,7 +44,8 @@ body {
 #log {
   height: 271px;
   width: 370px;
-  overflow: auto;
+  font-size: 13px;
+  overflow:scroll;
 }
 
 .ReactTable {
