@@ -31,6 +31,11 @@ body {
   font-Weight: 400;
 }
 
+.solutionHeader{
+  font-Size: 16px;
+  margin-Bottom: 12px;
+  font-Weight: 400;
+}
 .run {
   position: absolute;
   bottom: 36px;
@@ -41,22 +46,41 @@ body {
   margin: 15px;
 }
 
+.uploadImg {
+  padding: 10px;
+  cursor: pointer;
+}
+
 #log {
-  height: 271px;
+  height: 243px;
   width: 370px;
-  font-size: 13px;
-  overflow:scroll;
+  /*font-size: 13px;*/
+  overflow: scroll;
 }
 
 .ReactTable {
   height: 239px;
   font-size: 12px;
 }
-.rt-td{
-  padding:0px 5px !important;
+
+.rt-td {
+  padding: 0px 5px !important;
 }
 
-#popup{
-  position:  absolute;
+#popup {
+  position: absolute;
   background-color: white;
+  box-shadow: rgba(0, 0, 0, 0.16) 0px 3px 10px, rgba(0, 0, 0, 0.23) 0px 3px 10px;
+}
+
+.popupHeader {
+  background-color: rgb(0, 188, 212);
+  color: white;
+  padding: 5px;
+  font-family: Roboto, sans-serif;
+}
+
+.summary_infoTable{
+  height:157px;
+  width:270px;
 }
