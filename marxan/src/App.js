@@ -81,7 +81,7 @@ class App extends React.Component {
         let _name = 'output_r' + this.pad(solution, 5);
         this.renderSolution(this.response[_name]);
       }
-      else {
+      else { 
         //request the data for the specific solution
         jsonp(MARXAN_ENDPOINT + "loadSolution?solution=" + solution, this.parseLoadSolutionResponse.bind(this));
       }
