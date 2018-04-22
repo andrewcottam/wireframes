@@ -11,9 +11,14 @@ body {
 }
 
 #InfoPanel {
-  height: 528px;
+  height: 548px;
   width: 400px;
   margin: 20px;
+}
+
+.textFieldClass {
+  height: 33px !important;
+
 }
 
 .rt-noData {
@@ -26,20 +31,43 @@ body {
 }
 
 .tabTitle {
-  font-Size: 18px;
-  margin-Bottom: 12px;
-  font-Weight: 400;
+  font-Size: 16px;
+  margin: 0px 0px 12px 10px;
 }
 
-.solutionHeader{
+.solutionHeader {
   font-Size: 16px;
   margin-Bottom: 12px;
   font-Weight: 400;
 }
+
 .run {
   position: absolute;
-  bottom: 36px;
-  right:36px;
+  bottom: 60px;
+  right: 36px;
+}
+
+.runParamsTable {
+  font-size: 13px;
+  margin-left: 10px;
+}
+
+.uploadControls {
+  font-size: 13px;
+}
+
+.footer {
+  background-color: rgb(0, 188, 212);
+  color: white;
+  position: absolute;
+  bottom: 20px;
+  width: 400px;
+  font-size: 13px;
+  padding: 5px 10px;
+}
+
+.email {
+  text-decoration: underline;
 }
 
 .tabPanel {
@@ -52,10 +80,11 @@ body {
 }
 
 #log {
-  height: 243px;
+  height: 270px;
   width: 370px;
-  /*font-size: 13px;*/
+  font-size: 12px;
   overflow: scroll;
+  margin-left: 10px;
 }
 
 .ReactTable {
@@ -80,10 +109,13 @@ body {
   font-family: Roboto, sans-serif;
 }
 
-.summary_infoTable{
-  height:300px;
+.summary_infoTable {
+  height: 300px;
   /*width:270px;*/
+  margin-left: 9px;
+  margin-right: 8px;
 }
-.rt-tr-group{
+
+.rt-tr-group {
   cursor: pointer !important;
 }

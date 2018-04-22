@@ -8,7 +8,7 @@ import Popup from './Popup.js';
 import Loading from './loading.gif';
 
 //CONSTANTS
-let ENDPOINT = "https://db-server-blishten.c9users.io/marxan/webAPI/";
+let MARXAN_ENDPOINT = "https://db-server-blishten.c9users.io/marxan/webAPI/";
 let NUMBER_OF_RUNS = 10;
 
 mapboxgl.accessToken = 'pk.eyJ1IjoiYmxpc2h0ZW4iLCJhIjoiMEZrNzFqRSJ9.0QBRA2HxTb8YHErUFRMPZg';
@@ -17,7 +17,15 @@ class App extends React.Component {
 
   constructor(props) {
     super(props);
-    this.state = { running: false, active_pu: undefined, log: 'No data', dataAvailable: false, outputsTabString: 'No data', popup_point: { x: 0, y: 0 } };
+    this.state = {runParams:{ 'numRuns': 10 },
+                  running: false, 
+                  active_pu: undefined, 
+                  log: 'No data', 
+                  dataAvailable: false, 
+                  outputsTabString: 'No data', 
+                  popup_point: { x: 0, y: 0 },
+                  numRuns: 10
+    };
     this.verbosity = "3";
   }
 
@@ -42,12 +50,25 @@ class App extends React.Component {
     this.verbosity = value;
   }
 
-  runMarxan() {
+  //run a marxan job on the server
+  runMarxan(e) {
     this.setState({ running: true, log: 'Running...', active_pu: undefined, outputsTabString: 'Running...' });
-    jsonp(ENDPOINT + "run?numreps=" + NUMBER_OF_RUNS + "&verbosity=" + this.verbosity, this.parseData.bind(this)); //get the data from the server and parse it
+    jsonp(MARXAN_ENDPOINT + "run?numreps=" + this.state.numRuns + "&verbosity=" + this.verbosity, this.parseRunMarxanResponse.bind(this)); //get the data from the server and parse it
   }
 
-  parseData(err, response) {
+  //load a previously outputted solution
+  loadSolution(solution) {
+    if (solution == "Sum") {
+      //load the sum of solutions which will already be loaded
+      this.renderSumSolutionMap(this.ssoln);
+    }
+    else {
+      //request the data for the specific solution
+      jsonp(MARXAN_ENDPOINT + "loadSolution?solution=" + solution, this.parseLoadSolutionResponse.bind(this));
+    }
+  }
+
+  parseRunMarxanResponse(err, response) {
     if (err) throw err;
     this.ssoln = response.ssoln && response.ssoln;
     if (this.ssoln) {
@@ -56,9 +77,31 @@ class App extends React.Component {
     else {
       this.setState({ dataAvailable: false });
     }
+    //render the sum solution map
+    this.renderSumSolutionMap(this.ssoln);
+    //create the array of solutions to pass to the InfoPanel
+    let solutions = response.sum;
+    solutions.splice(0, 0, { 'Run_Number': 'Sum', 'Score': '', 'Cost': '', 'Planning_Units': '' });
+    this.setState({ running: false, log: response.log.replace(/(\r\n|\n|\r)/g, "<br />"), outputsTabString: '', solutions: solutions });
+  }
+
+  parseLoadSolutionResponse(err, response) {
+    if (err) throw err;
+    // Calculate color for each planning unit 
+    var expression = ["match", ["get", "PUID"]];
+    response.forEach(function(row) {
+      var red = row["solution"] * 255;
+      var color = "rgba(" + red + ", " + 0 + ", " + 0 + ", 1)";
+      expression.push(row["planning_unit"], color);
+    });
+    // Last value is the default, used where there is no data
+    expression.push("rgba(0,0,0,0)");
+    this.map.setPaintProperty("planning-units-3857-visible-a-0vmt87", "fill-color", expression);
+  }
+  renderSumSolutionMap(data) {
     // Calculate color for each planning unit based on the total number of selections in the marxan runs
     var expression = ["match", ["get", "PUID"]];
-    this.ssoln.forEach(function(row) {
+    data.forEach(function(row) {
       var green = (row["number"] / NUMBER_OF_RUNS) * 255;
       var color = "rgba(" + 0 + ", " + green + ", " + 0 + ", 1)";
       expression.push(row["planning_unit"], color);
@@ -66,12 +109,7 @@ class App extends React.Component {
     // Last value is the default, used where there is no data
     expression.push("rgba(0,0,0,0)");
     this.map.setPaintProperty("planning-units-3857-visible-a-0vmt87", "fill-color", expression);
-    //create the array of solutions to pass to the InfoPanel
-    let solutions = response.sum;
-    solutions.splice(0,0,{'Run_Number':'Sum','Score':'','Cost':'','Planning_Units':''});
-    this.setState({ running: false, log: response.log.replace(/(\r\n|\n|\r)/g, "<br />"), outputsTabString: '',solutions:solutions});
   }
-
   mouseMove(e) {
     var features = this.map.queryRenderedFeatures(e.point);
     //get the planning unit features that are underneath the mouse
@@ -92,12 +130,26 @@ class App extends React.Component {
     }
   }
 
+  setNumRuns(e,v){
+    this.setState({numRuns:v});
+  }
+  
   render() {
     return (
       <MuiThemeProvider>
         <React.Fragment>
           <div ref={el => this.mapContainer = el} className="absolute top right left bottom" />
-          <InfoPanel runMarxan={this.runMarxan.bind(this)} running={this.state.running} outputsTabString={this.state.outputsTabString} log={this.state.log} dataAvailable={this.state.dataAvailable} setVerbosity={this.setVerbosity.bind(this)} solutions={this.state.solutions}/>
+          <InfoPanel runParams={this.state.runParams} 
+                    runMarxan={this.runMarxan.bind(this)} 
+                    loadSolution={this.loadSolution.bind(this)} 
+                    running={this.state.running} 
+                    outputsTabString={this.state.outputsTabString} 
+                    log={this.state.log} 
+                    dataAvailable={this.state.dataAvailable} 
+                    setVerbosity={this.setVerbosity.bind(this)} 
+                    solutions={this.state.solutions}
+                    setNumRuns={this.setNumRuns.bind(this)}
+                    numRuns={this.state.numRuns}/>
           <img src={Loading} id='loading' style={{'display': (this.state.running ? 'block' : 'none')}}/>
           <Popup active_pu={this.state.active_pu} xy={this.state.popup_point}/>
         </React.Fragment>
