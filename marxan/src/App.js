@@ -17,14 +17,15 @@ class App extends React.Component {
 
   constructor(props) {
     super(props);
-    this.state = {runParams:{ 'numRuns': 10 },
-                  running: false, 
-                  active_pu: undefined, 
-                  log: 'No data', 
-                  dataAvailable: false, 
-                  outputsTabString: 'No data', 
-                  popup_point: { x: 0, y: 0 },
-                  numRuns: 10
+    this.state = {
+      runParams: { 'numRuns': 10 },
+      running: false,
+      active_pu: undefined,
+      log: 'No data',
+      dataAvailable: false,
+      outputsTabString: 'No data',
+      popup_point: { x: 0, y: 0 },
+      numRuns: 10
     };
     this.verbosity = "3";
   }
@@ -52,34 +53,50 @@ class App extends React.Component {
 
   //run a marxan job on the server
   runMarxan(e) {
+    //update the ui to reflect the fact that a job is running
     this.setState({ running: true, log: 'Running...', active_pu: undefined, outputsTabString: 'Running...' });
-    jsonp(MARXAN_ENDPOINT + "run?numreps=" + this.state.numRuns + "&verbosity=" + this.verbosity, this.parseRunMarxanResponse.bind(this)); //get the data from the server and parse it
+    //if we are requesting more than 10 solutions, then we should not load all of them in the REST call - they can be requested asynchronously as and when they are needed
+    this.returnall = this.state.numRuns > 10 ? 'false' : 'true';
+    //make the request to get the marxan data
+    jsonp(MARXAN_ENDPOINT + "run?numreps=" + this.state.numRuns + "&verbosity=" + this.verbosity + "&returnall=" + this.returnall, this.parseRunMarxanResponse.bind(this)); //get the data from the server and parse it
   }
 
-  //load a previously outputted solution
+  //pads a number with zeros to a specific size, e.g. pad(9,5) => 00009
+  pad(num, size) {
+    var s = num + "";
+    while (s.length < size) s = "0" + s;
+    return s;
+  }
+  
+  //load a specific solution
   loadSolution(solution) {
     if (solution == "Sum") {
       //load the sum of solutions which will already be loaded
-      this.renderSumSolutionMap(this.ssoln);
+      this.renderSumSolutionMap(this.response.ssoln);
     }
     else {
-      //request the data for the specific solution
-      jsonp(MARXAN_ENDPOINT + "loadSolution?solution=" + solution, this.parseLoadSolutionResponse.bind(this));
+      //see if the data are already loaded
+      if (this.returnall == 'true') {
+        //get the name of the REST response object which holds the data for the specific solution
+        let _name = 'output_r' + this.pad(solution, 5);
+        this.renderSolution(this.response[_name]);
+      }
+      else {
+        //request the data for the specific solution
+        jsonp(MARXAN_ENDPOINT + "loadSolution?solution=" + solution, this.parseLoadSolutionResponse.bind(this));
+      }
     }
   }
 
   parseRunMarxanResponse(err, response) {
     if (err) throw err;
-    this.ssoln = response.ssoln && response.ssoln;
-    if (this.ssoln) {
-      this.setState({ dataAvailable: true });
-    }
-    else {
-      this.setState({ dataAvailable: false });
-    }
+    //get the response and store it in this component
+    this.response = response;
+    //if we have some data to map then set the state to reflect this
+    (this.response.ssoln) ? this.setState({ dataAvailable: true }): this.setState({ dataAvailable: false });
     //render the sum solution map
-    this.renderSumSolutionMap(this.ssoln);
-    //create the array of solutions to pass to the InfoPanel
+    this.renderSumSolutionMap(this.response.ssoln);
+    //create the array of solutions to pass to the InfoPanels table
     let solutions = response.sum;
     solutions.splice(0, 0, { 'Run_Number': 'Sum', 'Score': '', 'Cost': '', 'Planning_Units': '' });
     this.setState({ running: false, log: response.log.replace(/(\r\n|\n|\r)/g, "<br />"), outputsTabString: '', solutions: solutions });
@@ -87,17 +104,10 @@ class App extends React.Component {
 
   parseLoadSolutionResponse(err, response) {
     if (err) throw err;
-    // Calculate color for each planning unit 
-    var expression = ["match", ["get", "PUID"]];
-    response.forEach(function(row) {
-      var red = row["solution"] * 255;
-      var color = "rgba(" + red + ", " + 0 + ", " + 0 + ", 1)";
-      expression.push(row["planning_unit"], color);
-    });
-    // Last value is the default, used where there is no data
-    expression.push("rgba(0,0,0,0)");
-    this.map.setPaintProperty("planning-units-3857-visible-a-0vmt87", "fill-color", expression);
+    this.renderSolution(response);
   }
+  
+  //renders the sum of solutions
   renderSumSolutionMap(data) {
     // Calculate color for each planning unit based on the total number of selections in the marxan runs
     var expression = ["match", ["get", "PUID"]];
@@ -110,6 +120,21 @@ class App extends React.Component {
     expression.push("rgba(0,0,0,0)");
     this.map.setPaintProperty("planning-units-3857-visible-a-0vmt87", "fill-color", expression);
   }
+  
+  //renders a specific solutions data
+  renderSolution(data){
+    // Calculate color for each planning unit 
+    var expression = ["match", ["get", "PUID"]];
+    data.forEach(function(row) {
+      var red = row["solution"] * 255;
+      var color = "rgba(" + red + ", " + 0 + ", " + 0 + ", 1)";
+      expression.push(row["planning_unit"], color);
+    });
+    // Last value is the default, used where there is no data
+    expression.push("rgba(0,0,0,0)");
+    this.map.setPaintProperty("planning-units-3857-visible-a-0vmt87", "fill-color", expression);
+  }
+  
   mouseMove(e) {
     var features = this.map.queryRenderedFeatures(e.point);
     //get the planning unit features that are underneath the mouse
@@ -119,7 +144,7 @@ class App extends React.Component {
       //get the properties from the vector tiles
       let vector_tile_properties = features[0].properties;
       //get the properties from the marxan results
-      let marxan_results = this.ssoln ? this.ssoln.filter(item => item.planning_unit == vector_tile_properties.PUID)[0] : {};
+      let marxan_results = this.response && this.response.ssoln ? this.response.ssoln.filter(item => item.planning_unit == vector_tile_properties.PUID)[0] : {};
       //combine the 2 sets of properties
       let active_pu = Object.assign(marxan_results, vector_tile_properties);
       //set the state to re-render the popup
@@ -130,10 +155,10 @@ class App extends React.Component {
     }
   }
 
-  setNumRuns(e,v){
-    this.setState({numRuns:v});
+  setNumRuns(e, v) {
+    this.setState({ numRuns: v });
   }
-  
+
   render() {
     return (
       <MuiThemeProvider>

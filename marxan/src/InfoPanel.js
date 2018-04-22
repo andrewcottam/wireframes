@@ -102,7 +102,7 @@ class InfoPanel extends React.Component {
                     getTrProps={(state, rowInfo, column, instance) => {
                         return {
                           onClick: (e, handleOriginal) => {
-                            if (instance.lastSelectedRow) instance.lastSelectedRow.style['background-color'] = 'white';
+                            if (instance.lastSelectedRow) instance.lastSelectedRow.style['background-color'] = '';
                             instance.lastSelectedRow = e.currentTarget;
                             e.currentTarget.style['background-color'] = 'lightgray';
                             instance.props.infoPanel.loadSolution(rowInfo.original.Run_Number);
