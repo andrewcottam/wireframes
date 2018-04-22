@@ -53,6 +53,7 @@ class InfoPanel extends React.Component {
                     <div><FontAwesome name='upload' color='red' className='uploadImg'/>Input Folder file </div>
                   </label>
                 </div>
+                <div style={{'fontSize': '13px','margin':'10px 0px 0px 10px'}}>(Not currently implemented)</div>
               </div>
             </Tab>
             <Tab

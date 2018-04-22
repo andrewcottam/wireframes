@@ -41,7 +41,7 @@ class App extends React.Component {
   }
 
   mapLoaded(e) {
-    this.map.addControl(new mapboxgl.FullscreenControl(), 'bottom-right');
+    // this.map.addControl(new mapboxgl.FullscreenControl(), 'bottom-right'); // currently full screen hides the info panel and setting position:absolute and z-index: 10000000000 doesnt work properly
     this.map.addControl(new mapboxgl.ScaleControl());
     this.map.addControl(new mapboxgl.NavigationControl(), 'bottom-right');
     this.map.on("mousemove", this.mouseMove.bind(this));
