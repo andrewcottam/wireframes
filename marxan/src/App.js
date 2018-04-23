@@ -89,16 +89,20 @@ class App extends React.Component {
   }
 
   parseRunMarxanResponse(err, response) {
-    if (err) throw err;
-    //get the response and store it in this component
-    this.response = response;
-    //if we have some data to map then set the state to reflect this
-    (this.response.ssoln) ? this.setState({ dataAvailable: true }): this.setState({ dataAvailable: false });
-    //render the sum solution map
-    this.renderSumSolutionMap(this.response.ssoln);
-    //create the array of solutions to pass to the InfoPanels table
-    let solutions = response.sum;
-    solutions.splice(0, 0, { 'Run_Number': 'Sum', 'Score': '', 'Cost': '', 'Planning_Units': '' });
+    var solutions;
+    if (response.error){
+      solutions = [];  
+    }else{
+      //get the response and store it in this component
+      this.response = response;
+      //if we have some data to map then set the state to reflect this
+      (this.response.ssoln) ? this.setState({ dataAvailable: true }): this.setState({ dataAvailable: false });
+      //render the sum solution map
+      this.renderSumSolutionMap(this.response.ssoln);
+      //create the array of solutions to pass to the InfoPanels table
+      solutions = response.sum;
+      solutions.splice(0, 0, { 'Run_Number': 'Sum', 'Score': '', 'Cost': '', 'Planning_Units': '' });
+    }
     this.setState({ running: false, log: response.log.replace(/(\r\n|\n|\r)/g, "<br />"), outputsTabString: '', solutions: solutions });
   }
 

@@ -5,17 +5,26 @@ import AppBar from 'material-ui/AppBar';
 import { Tabs, Tab } from 'material-ui/Tabs';
 import RaisedButton from 'material-ui/RaisedButton';
 import TextField from 'material-ui/TextField';
-import FontAwesome from 'react-fontawesome';
 import { RadioButton, RadioButtonGroup } from 'material-ui/RadioButton';
 import ReactTable from "react-table";
 import FileUpload from './FileUpload.js';
 
 class InfoPanel extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { 'allFilesUploaded': true };
+    this.nUploading = 0;
+  }
   changeVerbosity(e, value) {
     this.props.setVerbosity(value);
   }
   loadSolution(solution) {
     this.props.loadSolution(solution);
+  }
+  validateUploads(validated) {
+    //each time we upload a file we increment the uploading files counter - when it has finished then we decrement the counter
+    validated ? this.nUploading -= 1 : this.nUploading += 1;
+    (this.nUploading == 0) ? this.setState({ 'allFilesUploaded': true }): this.setState({ 'allFilesUploaded': false });
   }
   render() {
     return (
@@ -44,11 +53,11 @@ class InfoPanel extends React.Component {
               <div className='tabPanel'>
                 <div className={'tabTitle'}>Input files</div>
                 <div className={'uploadControls'}>
-                  <FileUpload marxanfile="spec.dat" label="Species file"/>
-                  <FileUpload marxanfile="pu.dat" label="Planning unit file"/>
-                  <FileUpload marxanfile="puvspr.dat" label="Planning unit vs species file"/>
-                  <FileUpload marxanfile="bound.dat" label="Block definitions"/>
-                  <FileUpload marxanfile="blockdef.dat" label="Boundary length file"/>
+                  <FileUpload marxanfile="spec.dat" label="Species file" fileUploaded={this.validateUploads.bind(this)}/>
+                  <FileUpload marxanfile="pu.dat" label="Planning unit file" fileUploaded={this.validateUploads.bind(this)}/>
+                  <FileUpload marxanfile="puvspr.dat" label="Planning unit vs species file" fileUploaded={this.validateUploads.bind(this)}/>
+                  <FileUpload marxanfile="bound.dat" label="Block definitions" fileUploaded={this.validateUploads.bind(this)}/>
+                  <FileUpload marxanfile="blockdef.dat" label="Boundary length file" fileUploaded={this.validateUploads.bind(this)}/>
                 </div>
               </div>
             </Tab>
@@ -140,7 +149,7 @@ class InfoPanel extends React.Component {
               </div>
             </Tab>
           </Tabs>                        
-          <RaisedButton label={this.props.running ? "Running" : "Run"} secondary={true} className={'run'} onClick={this.props.runMarxan} disabled={this.props.running}/>
+          <RaisedButton label={this.props.running ? "Running" : "Run"} secondary={true} className={'run'} onClick={this.props.runMarxan} disabled={this.props.running || (this.state && this.state.allFilesUploaded==false)}/>
           <div className='footer'>v0.1 Feedback: <a href='mailto:andrew.cottam@ec.europa.eu' className='email'>Andrew Cottam</a></div>
         </Paper>
       </div>
