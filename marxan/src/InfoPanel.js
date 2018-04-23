@@ -8,6 +8,7 @@ import TextField from 'material-ui/TextField';
 import FontAwesome from 'react-fontawesome';
 import { RadioButton, RadioButtonGroup } from 'material-ui/RadioButton';
 import ReactTable from "react-table";
+import FileUpload from './FileUpload.js';
 
 class InfoPanel extends React.Component {
   changeVerbosity(e, value) {
@@ -45,14 +46,14 @@ class InfoPanel extends React.Component {
                 <div className={'uploadControls'}>
                   <label htmlFor='myInput'>
                     <input id="myInput" type="file" style={{visibility: 'hidden',display:'none'}} />
-                    <div><FontAwesome name='upload' color='red' className='uploadImg'/>Species File Name </div>
-                    <div><FontAwesome name='upload' color='red' className='uploadImg'/>Planning unit file </div>
-                    <div><FontAwesome name='upload' color='red' className='uploadImg'/>Planning Unit versus Species </div>
-                    <div><FontAwesome name='upload' color='red' className='uploadImg'/>Block Definitions </div>
-                    <div><FontAwesome name='upload' color='red' className='uploadImg'/>Boundary Length file </div>
-                    <div><FontAwesome name='upload' color='red' className='uploadImg'/>Input Folder file </div>
+                    <div><FontAwesome name='upload' color='red' className='uploadImg'/>Species file</div>
+                    <div><FontAwesome name='upload' color='red' className='uploadImg'/>Planning unit file</div>
+                    <div><FontAwesome name='upload' color='red' className='uploadImg'/>Planning unit versus species file</div>
+                    <div><FontAwesome name='upload' color='red' className='uploadImg'/>Block definitions (optional)</div>
+                    <div><FontAwesome name='upload' color='red' className='uploadImg'/>Boundary length file (optional)</div>
                   </label>
                 </div>
+                <FileUpload/>
                 <div style={{'fontSize': '13px','margin':'10px 0px 0px 10px'}}>(Not currently implemented)</div>
               </div>
             </Tab>
