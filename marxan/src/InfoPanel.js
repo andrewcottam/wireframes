@@ -44,17 +44,12 @@ class InfoPanel extends React.Component {
               <div className='tabPanel'>
                 <div className={'tabTitle'}>Input files</div>
                 <div className={'uploadControls'}>
-                  <label htmlFor='myInput'>
-                    <input id="myInput" type="file" style={{visibility: 'hidden',display:'none'}} />
-                    <div><FontAwesome name='upload' color='red' className='uploadImg'/>Species file</div>
-                    <div><FontAwesome name='upload' color='red' className='uploadImg'/>Planning unit file</div>
-                    <div><FontAwesome name='upload' color='red' className='uploadImg'/>Planning unit versus species file</div>
-                    <div><FontAwesome name='upload' color='red' className='uploadImg'/>Block definitions (optional)</div>
-                    <div><FontAwesome name='upload' color='red' className='uploadImg'/>Boundary length file (optional)</div>
-                  </label>
+                  <FileUpload marxanfile="spec.dat" label="Species file"/>
+                  <FileUpload marxanfile="pu.dat" label="Planning unit file"/>
+                  <FileUpload marxanfile="puvspr.dat" label="Planning unit vs species file"/>
+                  <FileUpload marxanfile="bound.dat" label="Block definitions"/>
+                  <FileUpload marxanfile="blockdef.dat" label="Boundary length file"/>
                 </div>
-                <FileUpload/>
-                <div style={{'fontSize': '13px','margin':'10px 0px 0px 10px'}}>(Not currently implemented)</div>
               </div>
             </Tab>
             <Tab

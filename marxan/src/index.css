@@ -52,8 +52,35 @@ body {
   margin-left: 10px;
 }
 
+.FileUploadForm {
+  margin-bottom: 4px;
+}
+
 .uploadControls {
   font-size: 13px;
+  margin: 14px 0px 0px 10px;
+}
+
+.uploadFileTD {
+  width: 140px;
+  background-color: #F7F7F7;
+  border-radius: 4px;
+  border: 1px solid #F0F0F0;
+}
+
+.uploadFileField {
+  padding:2px;
+}
+
+.uploadFileFieldLabel {
+  display: inline-block;
+  padding-left: 5px;
+}
+
+.uploadFileFieldIcon {
+  display: inline-block;
+  padding-left: 5px;
+  cursor: pointer;
 }
 
 .footer {
@@ -118,4 +145,18 @@ body {
 
 .rt-tr-group {
   cursor: pointer !important;
+}
+
+table input {
+  font-size: 13px;
+}
+
+.uploadDiv {
+  cursor: pointer;
+}
+
+.fa,
+.fas {
+  font-weight: 400;
+  /*to make the upload icon not filled in*/
 }
