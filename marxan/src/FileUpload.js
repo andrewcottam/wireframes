@@ -14,8 +14,10 @@ class FileUpload extends React.Component {
     }
 
     onChange(e) {
-        this.setState({ value: e.target.files[0] });
-        this.fileUpload(e.target.files[0]);
+        if (e.target.files.length) {
+            this.setState({ value: e.target.files[0] });
+            this.fileUpload(e.target.files[0]);
+        }
     }
 
     fileUpload(value) {
@@ -54,12 +56,12 @@ class FileUpload extends React.Component {
                                 <div className='uploadFileField'>
                                     <div className='uploadFileFieldIcon'>
                                         <label htmlFor={id}><FontAwesome name='file' title='Click to upload a file' style={{'cursor':'pointer'}}/></label>
-                                        <input type="file" onChange={this.onChange} style={{'display':'none', 'width':'10px'}} id={id}/>
+                                        <input type="file" onChange={this.onChange} accept=".dat" style={{'display':'none', 'width':'10px'}} id={id}/>
                                     </div>
                                     <div className='uploadFileFieldLabel'>{this.state.value && this.state.value.name}</div>
                                 </div>
                             </td>
-                            <td><FontAwesome name='sync' spin style={{'display': (this.state.loading ? 'block' : 'none')}}/></td>
+                            <td><FontAwesome name='sync' spin style={{'display': (this.state.loading ? 'block' : 'none'), 'marginLeft':'6px'}}/></td>
                         </tr>
                     </tbody>
                 </table>
