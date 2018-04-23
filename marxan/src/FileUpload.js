@@ -53,7 +53,7 @@ class FileUpload extends React.Component {
                             <td className='uploadFileTD'>
                                 <div className='uploadFileField'>
                                     <div className='uploadFileFieldIcon'>
-                                        <label htmlFor={id}><FontAwesome name='file' title='Click to select a file' style={{'cursor':'pointer'}}/></label>
+                                        <label htmlFor={id}><FontAwesome name='file' title='Click to upload a file' style={{'cursor':'pointer'}}/></label>
                                         <input type="file" onChange={this.onChange} style={{'display':'none', 'width':'10px'}} id={id}/>
                                     </div>
                                     <div className='uploadFileFieldLabel'>{this.state.value && this.state.value.name}</div>
