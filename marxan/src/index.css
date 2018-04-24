@@ -1,7 +1,17 @@
+Html,
+body {
+  height: 100%;
+  background-color:lightgrey; 
+}
+
 body {
   margin: 0;
   padding: 0;
   font-family: sans-serif;
+}
+
+#root {
+  height: 100%;
 }
 
 #loading {
@@ -69,7 +79,7 @@ body {
 }
 
 .uploadFileField {
-  padding:2px;
+  padding: 2px;
 }
 
 .uploadFileFieldLabel {
@@ -154,3 +164,28 @@ table input {
   cursor: pointer;
 }
 
+#loginForm {
+  background-color: white;
+  width: 300px;
+  position: relative;
+  font-size: 13px;
+  z-index:100000000000000;
+}
+
+.loginTitle h1 {
+  height: 52px;
+  line-height: 52px;
+  font-size: 13px;
+}
+
+#gpc {
+  display: table;
+  height: 100%;
+  margin: 0 auto;
+}
+
+#pc {
+  display: table-cell;
+  vertical-align: middle;
+  height: 100%;
+}

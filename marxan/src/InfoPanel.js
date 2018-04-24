@@ -12,7 +12,7 @@ import FileUpload from './FileUpload.js';
 class InfoPanel extends React.Component {
   constructor(props) {
     super(props);
-    this.state = { 'allFilesUploaded': true };
+    this.state = { 'allFilesUploaded': true }; 
     this.nUploading = 0;
   }
   changeVerbosity(e, value) {

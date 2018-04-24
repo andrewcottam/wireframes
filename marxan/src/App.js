@@ -6,9 +6,10 @@ import * as jsonp from 'jsonp';
 import InfoPanel from './InfoPanel.js';
 import Popup from './Popup.js';
 import Loading from './loading.gif';
+import Login from './login.js';
 
 //CONSTANTS
-let MARXAN_ENDPOINT = "https://db-server-blishten.c9users.io/marxan/webAPI/";
+let MARXAN_ENDPOINT = "https://db-server-blishten.c9users.io/marxan/webAPI2/";
 let NUMBER_OF_RUNS = 10;
 
 mapboxgl.accessToken = 'pk.eyJ1IjoiYmxpc2h0ZW4iLCJhIjoiMEZrNzFqRSJ9.0QBRA2HxTb8YHErUFRMPZg';
@@ -18,6 +19,9 @@ class App extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
+      loggedIn: false,
+      loggedInUser:'',
+      showCreateUserForm: false,
       runParams: { 'numRuns': 10 },
       running: false,
       active_pu: undefined,
@@ -44,11 +48,35 @@ class App extends React.Component {
     // this.map.addControl(new mapboxgl.FullscreenControl(), 'bottom-right'); // currently full screen hides the info panel and setting position:absolute and z-index: 10000000000 doesnt work properly
     this.map.addControl(new mapboxgl.ScaleControl());
     this.map.addControl(new mapboxgl.NavigationControl(), 'bottom-right');
-    this.map.on("mousemove", this.mouseMove.bind(this));
   }
 
   setVerbosity(value) {
     this.verbosity = value;
+  }
+
+  tryLogin(user) {
+    //set the user trying to log in
+    this.tryLoginUser = user;
+    //get a list of existing users
+    this.getUsers();
+  }
+
+  getUsers() {
+    //Get a user list
+    jsonp(MARXAN_ENDPOINT + "listUsers", this.parseGetUsersResponse.bind(this));
+  }
+
+  parseGetUsersResponse(err, response) {
+    this.getUsersResponse = response;
+    if (response.users.indexOf(this.tryLoginUser) > -1) {
+      //the popup will now display when the mouse moves - this is here otherwise when you login it pops up
+      this.map.on("mousemove", this.mouseMove.bind(this));
+      //see if the user already exists
+      this.setState({ loggedIn: true, loggedInUser: this.tryLoginUser });
+    }
+    else {
+      this.setState({showCreateUserForm:true});
+    }
   }
 
   //run a marxan job on the server
@@ -58,7 +86,7 @@ class App extends React.Component {
     //if we are requesting more than 10 solutions, then we should not load all of them in the REST call - they can be requested asynchronously as and when they are needed
     this.returnall = this.state.numRuns > 10 ? 'false' : 'true';
     //make the request to get the marxan data
-    jsonp(MARXAN_ENDPOINT + "run?numreps=" + this.state.numRuns + "&verbosity=" + this.verbosity + "&returnall=" + this.returnall, this.parseRunMarxanResponse.bind(this)); //get the data from the server and parse it
+    jsonp(MARXAN_ENDPOINT + "runMarxan?numreps=" + this.state.numRuns + "&verbosity=" + this.verbosity + "&returnall=" + this.returnall, this.parseRunMarxanResponse.bind(this)); //get the data from the server and parse it
   }
 
   //pads a number with zeros to a specific size, e.g. pad(9,5) => 00009
@@ -67,21 +95,21 @@ class App extends React.Component {
     while (s.length < size) s = "0" + s;
     return s;
   }
-  
+
   //load a specific solution
   loadSolution(solution) {
     if (solution == "Sum") {
       //load the sum of solutions which will already be loaded
-      this.renderSumSolutionMap(this.response.ssoln);
+      this.renderSumSolutionMap(this.runMarxanResponse.ssoln);
     }
     else {
       //see if the data are already loaded
       if (this.returnall == 'true') {
         //get the name of the REST response object which holds the data for the specific solution
         let _name = 'output_r' + this.pad(solution, 5);
-        this.renderSolution(this.response[_name]);
+        this.renderSolution(this.runMarxanResponse[_name]);
       }
-      else { 
+      else {
         //request the data for the specific solution
         jsonp(MARXAN_ENDPOINT + "loadSolution?solution=" + solution, this.parseLoadSolutionResponse.bind(this));
       }
@@ -90,15 +118,16 @@ class App extends React.Component {
 
   parseRunMarxanResponse(err, response) {
     var solutions;
-    if (response.error){
-      solutions = [];  
-    }else{
+    if (response.error) {
+      solutions = [];
+    }
+    else {
       //get the response and store it in this component
-      this.response = response;
+      this.runMarxanResponse = response;
       //if we have some data to map then set the state to reflect this
-      (this.response.ssoln) ? this.setState({ dataAvailable: true }): this.setState({ dataAvailable: false });
+      (this.runMarxanResponse.ssoln) ? this.setState({ dataAvailable: true }): this.setState({ dataAvailable: false });
       //render the sum solution map
-      this.renderSumSolutionMap(this.response.ssoln);
+      this.renderSumSolutionMap(this.runMarxanResponse.ssoln);
       //create the array of solutions to pass to the InfoPanels table
       solutions = response.sum;
       solutions.splice(0, 0, { 'Run_Number': 'Sum', 'Score': '', 'Cost': '', 'Planning_Units': '' });
@@ -108,9 +137,9 @@ class App extends React.Component {
 
   parseLoadSolutionResponse(err, response) {
     if (err) throw err;
-    this.renderSolution(response);
+    this.renderSolution(response.solution);
   }
-  
+
   //renders the sum of solutions
   renderSumSolutionMap(data) {
     // Calculate color for each planning unit based on the total number of selections in the marxan runs
@@ -124,9 +153,9 @@ class App extends React.Component {
     expression.push("rgba(0,0,0,0)");
     this.map.setPaintProperty("planning-units-3857-visible-a-0vmt87", "fill-color", expression);
   }
-  
+
   //renders a specific solutions data
-  renderSolution(data){
+  renderSolution(data) {
     // Calculate color for each planning unit 
     var expression = ["match", ["get", "PUID"]];
     data.forEach(function(row) {
@@ -138,7 +167,7 @@ class App extends React.Component {
     expression.push("rgba(0,0,0,0)");
     this.map.setPaintProperty("planning-units-3857-visible-a-0vmt87", "fill-color", expression);
   }
-  
+
   mouseMove(e) {
     var features = this.map.queryRenderedFeatures(e.point);
     //get the planning unit features that are underneath the mouse
@@ -148,7 +177,7 @@ class App extends React.Component {
       //get the properties from the vector tiles
       let vector_tile_properties = features[0].properties;
       //get the properties from the marxan results
-      let marxan_results = this.response && this.response.ssoln ? this.response.ssoln.filter(item => item.planning_unit == vector_tile_properties.PUID)[0] : {};
+      let marxan_results = this.runMarxanResponse && this.runMarxanResponse.ssoln ? this.runMarxanResponse.ssoln.filter(item => item.planning_unit == vector_tile_properties.PUID)[0] : {};
       //combine the 2 sets of properties
       let active_pu = Object.assign(marxan_results, vector_tile_properties);
       //set the state to re-render the popup
@@ -167,6 +196,7 @@ class App extends React.Component {
     return (
       <MuiThemeProvider>
         <React.Fragment>
+        <div style={{'opacity': (this.state.loggedIn ? 1 : 0)}}>
           <div ref={el => this.mapContainer = el} className="absolute top right left bottom" />
           <InfoPanel runParams={this.state.runParams} 
                     runMarxan={this.runMarxan.bind(this)} 
@@ -178,8 +208,15 @@ class App extends React.Component {
                     setVerbosity={this.setVerbosity.bind(this)} 
                     solutions={this.state.solutions}
                     setNumRuns={this.setNumRuns.bind(this)}
-                    numRuns={this.state.numRuns}/>
+                    numRuns={this.state.numRuns}
+                    />
           <img src={Loading} id='loading' style={{'display': (this.state.running ? 'block' : 'none')}}/>
+          </div>
+          <div id='gpc'>
+            <div id='pc'>
+              <Login login={this.tryLogin.bind(this)} loggedIn={this.state.loggedIn}/>
+            </div>
+          </div>
           <Popup active_pu={this.state.active_pu} xy={this.state.popup_point}/>
         </React.Fragment>
       </MuiThemeProvider>
