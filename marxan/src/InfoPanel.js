@@ -24,13 +24,13 @@ class InfoPanel extends React.Component {
   validateUploads(validated) {
     //each time we upload a file we increment the uploading files counter - when it has finished then we decrement the counter
     validated ? this.nUploading -= 1 : this.nUploading += 1;
-    (this.nUploading == 0) ? this.setState({ 'allFilesUploaded': true }): this.setState({ 'allFilesUploaded': false });
+    (this.nUploading === 0) ? this.setState({ 'allFilesUploaded': true }): this.setState({ 'allFilesUploaded': false });
   }
   render() {
     return (
       <div style={{'position':'absolute'}}>
         <Paper zDepth={2} id='InfoPanel'>
-          <AppBar  title="Marxan Demonstration" showMenuIconButton={false}/>
+          <AppBar title="Marxan Demonstration" showMenuIconButton={false}  style={{'opactiy': this.props.loggedIn ? 1 : 0.2}}/>
           <Tabs>
             <Tab label="Params" className={'tab'}>
               <div className='tabPanel'>
@@ -123,7 +123,7 @@ class InfoPanel extends React.Component {
                     noDataText=''
                     data={this.props.solutions}
                     columns={[{
-                       Header: 'Run',
+                       Header: 'Run', 
                        accessor: 'Run_Number',
                        width:44,
                        headerStyle:{'textAlign':'left'}                             
@@ -149,7 +149,7 @@ class InfoPanel extends React.Component {
               </div>
             </Tab>
           </Tabs>                        
-          <RaisedButton label={this.props.running ? "Running" : "Run"} secondary={true} className={'run'} onClick={this.props.runMarxan} disabled={this.props.running || (this.state && this.state.allFilesUploaded==false)}/>
+          <RaisedButton label={this.props.running ? "Running" : "Run"} secondary={true} className={'run'} onClick={this.props.runMarxan} disabled={this.props.running || (this.state && this.state.allFilesUploaded === false)}/>
           <div className='footer'>v0.1 Feedback: <a href='mailto:andrew.cottam@ec.europa.eu' className='email'>Andrew Cottam</a></div>
         </Paper>
       </div>

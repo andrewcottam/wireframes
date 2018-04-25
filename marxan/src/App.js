@@ -20,8 +20,9 @@ class App extends React.Component {
     super(props);
     this.state = {
       loggedIn: false,
-      loggedInUser:'',
-      showCreateUserForm: false,
+      loggedInUser: '',
+      loggingIn: false,
+      invalidUser: false,
       runParams: { 'numRuns': 10 },
       running: false,
       active_pu: undefined,
@@ -68,15 +69,32 @@ class App extends React.Component {
 
   parseGetUsersResponse(err, response) {
     this.getUsersResponse = response;
+    //the user already exists
     if (response.users.indexOf(this.tryLoginUser) > -1) {
-      //the popup will now display when the mouse moves - this is here otherwise when you login it pops up
-      this.map.on("mousemove", this.mouseMove.bind(this));
-      //see if the user already exists
+      //set the logged in information
       this.setState({ loggedIn: true, loggedInUser: this.tryLoginUser });
     }
     else {
-      this.setState({showCreateUserForm:true});
+      //user doesn't currently exist so set a flag that is passed to the login form
+      this.setState({ invalidUser: true });
     }
+  }
+
+  //reset the user form to the default login by resetting the controlling property for the createNewUserForm
+  resetLoginForm() {
+    this.setState({ invalidUser: false });
+  }
+
+  //create a new user on the server
+  createNewUser(user) {
+    jsonp(MARXAN_ENDPOINT + "createUser?user=" + user, this.parseCreateNewUserResponse.bind(this));
+  }
+
+  parseCreateNewUserResponse(err, response) {
+    if (response.error === undefined) {
+      this.setState({ loggedIn: true });
+    }
+    console.log(response);
   }
 
   //run a marxan job on the server
@@ -98,13 +116,13 @@ class App extends React.Component {
 
   //load a specific solution
   loadSolution(solution) {
-    if (solution == "Sum") {
+    if (solution === "Sum") {
       //load the sum of solutions which will already be loaded
       this.renderSumSolutionMap(this.runMarxanResponse.ssoln);
     }
     else {
       //see if the data are already loaded
-      if (this.returnall == 'true') {
+      if (this.returnall === 'true') {
         //get the name of the REST response object which holds the data for the specific solution
         let _name = 'output_r' + this.pad(solution, 5);
         this.renderSolution(this.runMarxanResponse[_name]);
@@ -171,13 +189,13 @@ class App extends React.Component {
   mouseMove(e) {
     var features = this.map.queryRenderedFeatures(e.point);
     //get the planning unit features that are underneath the mouse
-    if ((features.length) && (features[0].layer.id == "planning-units-3857-visible-a-0vmt87")) {
+    if ((features.length) && (features[0].layer.id === "planning-units-3857-visible-a-0vmt87")) {
       //set the location for the popup
       if (!this.state.active_pu || (this.state.active_pu && this.state.active_pu.PUID !== features[0].properties.PUID)) this.setState({ popup_point: e.point });
       //get the properties from the vector tiles
       let vector_tile_properties = features[0].properties;
       //get the properties from the marxan results
-      let marxan_results = this.runMarxanResponse && this.runMarxanResponse.ssoln ? this.runMarxanResponse.ssoln.filter(item => item.planning_unit == vector_tile_properties.PUID)[0] : {};
+      let marxan_results = this.runMarxanResponse && this.runMarxanResponse.ssoln ? this.runMarxanResponse.ssoln.filter(item => item.planning_unit === vector_tile_properties.PUID)[0] : {};
       //combine the 2 sets of properties
       let active_pu = Object.assign(marxan_results, vector_tile_properties);
       //set the state to re-render the popup
@@ -196,7 +214,6 @@ class App extends React.Component {
     return (
       <MuiThemeProvider>
         <React.Fragment>
-        <div style={{'opacity': (this.state.loggedIn ? 1 : 0)}}>
           <div ref={el => this.mapContainer = el} className="absolute top right left bottom" />
           <InfoPanel runParams={this.state.runParams} 
                     runMarxan={this.runMarxan.bind(this)} 
@@ -209,15 +226,16 @@ class App extends React.Component {
                     solutions={this.state.solutions}
                     setNumRuns={this.setNumRuns.bind(this)}
                     numRuns={this.state.numRuns}
+                    loggedIn={this.state.loggedIn}
                     />
-          <img src={Loading} id='loading' style={{'display': (this.state.running ? 'block' : 'none')}}/>
-          </div>
-          <div id='gpc'>
-            <div id='pc'>
-              <Login login={this.tryLogin.bind(this)} loggedIn={this.state.loggedIn}/>
+          <img src={Loading} id='loading' style={{'display': (this.state.running ? 'block' : 'none')}} alt='loading'/>
+          <Popup active_pu={this.state.active_pu} xy={this.state.popup_point}/>
+          <div id='blocker' style={{display: this.state.loggedIn ? 'none' : 'block'}}></div>
+          <div className='gpc'>
+            <div className='pc'>
+              <Login login={this.tryLogin.bind(this)} loggedIn={this.state.loggedIn} invalidUser={this.state.invalidUser} resetLoginForm={this.resetLoginForm.bind(this)} createNewUser={this.createNewUser.bind(this)}/>
             </div>
           </div>
-          <Popup active_pu={this.state.active_pu} xy={this.state.popup_point}/>
         </React.Fragment>
       </MuiThemeProvider>
     );

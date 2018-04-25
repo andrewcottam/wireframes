@@ -37,7 +37,7 @@ class FileUpload extends React.Component {
     }
 
     finishedLoading(response) {
-        if (response.data == 'Complete') {
+        if (response.data === 'Complete') {
             this.setState({ loading: false });
             this.props.fileUploaded(true);
         }
@@ -52,7 +52,7 @@ class FileUpload extends React.Component {
                             <td>
                                 <div style={{'width':'180px'}}>{this.props.label}</div>
                             </td>
-                            <td className='uploadFileTD'>
+                            <td className='uploadFileTD'> 
                                 <div className='uploadFileField'>
                                     <div className='uploadFileFieldIcon'>
                                         <label htmlFor={id}><FontAwesome name='file' title='Click to upload a file' style={{'cursor':'pointer'}}/></label>
