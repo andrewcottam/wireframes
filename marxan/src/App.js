@@ -19,10 +19,7 @@ class App extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      loggedIn: false,
-      loggedInUser: '',
-      loggingIn: false,
-      invalidUser: false,
+      userValidated: undefined,
       runParams: { 'numRuns': 10 },
       running: false,
       active_pu: undefined,
@@ -55,9 +52,11 @@ class App extends React.Component {
     this.verbosity = value;
   }
 
-  tryLogin(user) {
+  validateUser(user) {
+    //set the validation state to undefined
+    this.setState({ userValidated: undefined });
     //set the user trying to log in
-    this.tryLoginUser = user;
+    this.userToValidate = user;
     //get a list of existing users
     this.getUsers();
   }
@@ -70,21 +69,20 @@ class App extends React.Component {
   parseGetUsersResponse(err, response) {
     this.getUsersResponse = response;
     //the user already exists
-    if (response.users.indexOf(this.tryLoginUser) > -1) {
-      //set the logged in information
-      this.setState({ loggedIn: true, loggedInUser: this.tryLoginUser });
+    if (response.users.indexOf(this.userToValidate) > -1) {
+      //user validated
+      this.setState({ userValidated: true });
     }
     else {
-      //user doesn't currently exist so set a flag that is passed to the login form
-      this.setState({ invalidUser: true });
+      //user not validated
+      this.setState({ userValidated: false });
     }
   }
 
-  //reset the user form to the default login by resetting the controlling property for the createNewUserForm
-  resetLoginForm() {
-    this.setState({ invalidUser: false });
+  login(user){
+    this.setState({user:user});
   }
-
+  
   //create a new user on the server
   createNewUser(user) {
     jsonp(MARXAN_ENDPOINT + "createUser?user=" + user, this.parseCreateNewUserResponse.bind(this));
@@ -94,7 +92,6 @@ class App extends React.Component {
     if (response.error === undefined) {
       this.setState({ loggedIn: true });
     }
-    console.log(response);
   }
 
   //run a marxan job on the server
@@ -230,12 +227,7 @@ class App extends React.Component {
                     />
           <img src={Loading} id='loading' style={{'display': (this.state.running ? 'block' : 'none')}} alt='loading'/>
           <Popup active_pu={this.state.active_pu} xy={this.state.popup_point}/>
-          <div id='blocker' style={{display: this.state.loggedIn ? 'none' : 'block'}}></div>
-          <div className='gpc'>
-            <div className='pc'>
-              <Login login={this.tryLogin.bind(this)} loggedIn={this.state.loggedIn} invalidUser={this.state.invalidUser} resetLoginForm={this.resetLoginForm.bind(this)} createNewUser={this.createNewUser.bind(this)}/>
-            </div>
-          </div>
+          <Login validateUser={this.validateUser.bind(this)} userValidated={this.state.userValidated} login={this.login.bind(this)} createNewUser={this.createNewUser.bind(this)}/>
         </React.Fragment>
       </MuiThemeProvider>
     );
