@@ -9,6 +9,7 @@ import Loading from './loading.gif';
 import Login from './login.js';
 
 //CONSTANTS
+//THE MARXAN_ENDPOINT MUST ALSO BE CHANGED IN THE FILEUPLOAD.JS FILE
 let MARXAN_ENDPOINT = "https://db-server-blishten.c9users.io/marxan/webAPI2/";
 let NUMBER_OF_RUNS = 10;
 
@@ -19,6 +20,7 @@ class App extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
+      user:'logged out',
       userValidated: undefined,
       runParams: { 'numRuns': 10 },
       running: false,
@@ -83,14 +85,22 @@ class App extends React.Component {
     this.setState({user:user});
   }
   
+  logout(){
+    this.setState({userValidated:undefined});
+  }
+  
   //create a new user on the server
   createNewUser(user) {
+    //set the userCreated state to undefined
+    this.setState({ userValidated: undefined });
     jsonp(MARXAN_ENDPOINT + "createUser?user=" + user, this.parseCreateNewUserResponse.bind(this));
   }
 
   parseCreateNewUserResponse(err, response) {
     if (response.error === undefined) {
-      this.setState({ loggedIn: true });
+       this.setState({ userCreated: true });
+    }else{
+      this.setState({ userCreated: false });
     }
   }
 
@@ -101,7 +111,7 @@ class App extends React.Component {
     //if we are requesting more than 10 solutions, then we should not load all of them in the REST call - they can be requested asynchronously as and when they are needed
     this.returnall = this.state.numRuns > 10 ? 'false' : 'true';
     //make the request to get the marxan data
-    jsonp(MARXAN_ENDPOINT + "runMarxan?numreps=" + this.state.numRuns + "&verbosity=" + this.verbosity + "&returnall=" + this.returnall, this.parseRunMarxanResponse.bind(this)); //get the data from the server and parse it
+    jsonp(MARXAN_ENDPOINT + "runMarxan?user=" + this.state.user + "&numreps=" + this.state.numRuns + "&verbosity=" + this.verbosity + "&returnall=" + this.returnall, this.parseRunMarxanResponse.bind(this)); //get the data from the server and parse it
   }
 
   //pads a number with zeros to a specific size, e.g. pad(9,5) => 00009
@@ -126,7 +136,7 @@ class App extends React.Component {
       }
       else {
         //request the data for the specific solution
-        jsonp(MARXAN_ENDPOINT + "loadSolution?solution=" + solution, this.parseLoadSolutionResponse.bind(this));
+        jsonp(MARXAN_ENDPOINT + "loadSolution?user=" + this.state.user + "&solution=" + solution, this.parseLoadSolutionResponse.bind(this));
       }
     }
   }
@@ -151,8 +161,7 @@ class App extends React.Component {
   }
 
   parseLoadSolutionResponse(err, response) {
-    if (err) throw err;
-    this.renderSolution(response.solution);
+    (response.error) ? console.error("Marxan: " + response.error) : this.renderSolution(response.solution) ;
   }
 
   //renders the sum of solutions
@@ -212,22 +221,24 @@ class App extends React.Component {
       <MuiThemeProvider>
         <React.Fragment>
           <div ref={el => this.mapContainer = el} className="absolute top right left bottom" />
-          <InfoPanel runParams={this.state.runParams} 
-                    runMarxan={this.runMarxan.bind(this)} 
-                    loadSolution={this.loadSolution.bind(this)} 
-                    running={this.state.running} 
-                    outputsTabString={this.state.outputsTabString} 
-                    log={this.state.log} 
-                    dataAvailable={this.state.dataAvailable} 
-                    setVerbosity={this.setVerbosity.bind(this)} 
-                    solutions={this.state.solutions}
-                    setNumRuns={this.setNumRuns.bind(this)}
-                    numRuns={this.state.numRuns}
-                    loggedIn={this.state.loggedIn}
-                    />
+          <InfoPanel
+            user={this.state.user}
+            logout={this.logout.bind(this)}
+            runParams={this.state.runParams} 
+            runMarxan={this.runMarxan.bind(this)} 
+            loadSolution={this.loadSolution.bind(this)} 
+            running={this.state.running} 
+            outputsTabString={this.state.outputsTabString} 
+            dataAvailable={this.state.dataAvailable} 
+            setVerbosity={this.setVerbosity.bind(this)} 
+            solutions={this.state.solutions}
+            setNumRuns={this.setNumRuns.bind(this)}
+            numRuns={this.state.numRuns}
+            log={this.state.log} 
+            />
           <img src={Loading} id='loading' style={{'display': (this.state.running ? 'block' : 'none')}} alt='loading'/>
           <Popup active_pu={this.state.active_pu} xy={this.state.popup_point}/>
-          <Login validateUser={this.validateUser.bind(this)} userValidated={this.state.userValidated} login={this.login.bind(this)} createNewUser={this.createNewUser.bind(this)}/>
+          <Login validateUser={this.validateUser.bind(this)} userValidated={this.state.userValidated} login={this.login.bind(this)} createNewUser={this.createNewUser.bind(this)} userCreated={this.state.userCreated}/>
         </React.Fragment>
       </MuiThemeProvider>
     );

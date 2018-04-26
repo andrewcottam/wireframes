@@ -163,17 +163,3 @@ table input {
 .uploadDiv {
   cursor: pointer;
 }
-
-.createNewUserDiv {
-  text-align: center;
-  padding-bottom: 10px;
-}
-
-.createNewUserText {
-  color: rgba(0, 0, 0, 0.3);
-}
-
-.createNewUserBtn {
-  margin: 4px;
-}
-

@@ -8,11 +8,12 @@ import TextField from 'material-ui/TextField';
 import { RadioButton, RadioButtonGroup } from 'material-ui/RadioButton';
 import ReactTable from "react-table";
 import FileUpload from './FileUpload.js';
+import UserMenu from './UserMenu.js';
 
 class InfoPanel extends React.Component {
   constructor(props) {
     super(props);
-    this.state = { 'allFilesUploaded': true }; 
+    this.state = { 'allFilesUploaded': true };
     this.nUploading = 0;
   }
   changeVerbosity(e, value) {
@@ -26,11 +27,24 @@ class InfoPanel extends React.Component {
     validated ? this.nUploading -= 1 : this.nUploading += 1;
     (this.nUploading === 0) ? this.setState({ 'allFilesUploaded': true }): this.setState({ 'allFilesUploaded': false });
   }
+  showUserMenu(e) {
+    e.preventDefault();
+    this.setState({ userMenuOpen: true, anchorEl: e.currentTarget });
+  }
+  hideUserMenu(e) {
+    e && e.preventDefault && e.preventDefault();
+    this.setState({ userMenuOpen: false });
+  }
+  logout() {
+    this.hideUserMenu();
+    this.props.logout();
+  }
+
   render() {
     return (
       <div style={{'position':'absolute'}}>
         <Paper zDepth={2} id='InfoPanel'>
-          <AppBar title="Marxan Demonstration" showMenuIconButton={false}  style={{'opactiy': this.props.loggedIn ? 1 : 0.2}}/>
+          <AppBar title="Marxan Demo" showMenuIconButton={false}  style={{'opactiy': this.props.loggedIn ? 1 : 0.2}} iconElementRight={<UserMenu user={ this.props.user} showUserMenu={this.showUserMenu.bind(this)} userMenuOpen={this.state.userMenuOpen} anchorEl={this.state.anchorEl} hideUserMenu={this.hideUserMenu.bind(this)} logout={this.logout.bind(this)}/>}/>
           <Tabs>
             <Tab label="Params" className={'tab'}>
               <div className='tabPanel'>
@@ -53,11 +67,11 @@ class InfoPanel extends React.Component {
               <div className='tabPanel'>
                 <div className={'tabTitle'}>Input files</div>
                 <div className={'uploadControls'}>
-                  <FileUpload marxanfile="spec.dat" label="Species file" fileUploaded={this.validateUploads.bind(this)}/>
-                  <FileUpload marxanfile="pu.dat" label="Planning unit file" fileUploaded={this.validateUploads.bind(this)}/>
-                  <FileUpload marxanfile="puvspr.dat" label="Planning unit vs species file" fileUploaded={this.validateUploads.bind(this)}/>
-                  <FileUpload marxanfile="bound.dat" label="Block definitions" fileUploaded={this.validateUploads.bind(this)}/>
-                  <FileUpload marxanfile="blockdef.dat" label="Boundary length file" fileUploaded={this.validateUploads.bind(this)}/>
+                  <FileUpload marxanfile="spec.dat" label="Species file" fileUploaded={this.validateUploads.bind(this)} user={this.props.user}/>
+                  <FileUpload marxanfile="pu.dat" label="Planning unit file" fileUploaded={this.validateUploads.bind(this)} user={this.props.user}/>
+                  <FileUpload marxanfile="puvspr.dat" label="Planning unit vs species file" fileUploaded={this.validateUploads.bind(this)} user={this.props.user}/>
+                  <FileUpload marxanfile="bound.dat" label="Block definitions" fileUploaded={this.validateUploads.bind(this)} user={this.props.user}/>
+                  <FileUpload marxanfile="blockdef.dat" label="Boundary length file" fileUploaded={this.validateUploads.bind(this)} user={this.props.user}/>
                 </div>
               </div>
             </Tab>

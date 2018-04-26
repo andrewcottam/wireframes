@@ -21,13 +21,14 @@ class FileUpload extends React.Component {
     }
 
     fileUpload(value) {
-        this.setState({ loading: true });
         this.props.fileUploaded(false);
-        const url = "https://db-server-blishten.c9users.io/marxan/webAPI/postFile";
+        this.setState({ loading: true });
+        const url = "https://db-server-blishten.c9users.io/marxan/webAPI2/postFile";
         const formData = new FormData();
         formData.append('value', value);
         formData.append('filename', value['name']);
         formData.append('marxanfile', this.props.marxanfile);
+        formData.append('user', this.props.user);
         const config = {
             headers: {
                 'content-type': 'multipart/form-data'
