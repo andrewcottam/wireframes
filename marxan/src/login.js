@@ -67,7 +67,7 @@ class Login extends React.Component {
 
     }
     handleKeyPress(e) {
-        if (e.nativeEvent.key === "Enter") this.login();
+        if (e.nativeEvent.key === "Enter") this.validateUser();
     }
     render() {
         const actions = [
