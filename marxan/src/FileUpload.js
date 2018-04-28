@@ -29,6 +29,7 @@ class FileUpload extends React.Component {
         formData.append('filename', value['name']);
         formData.append('marxanfile', this.props.marxanfile);
         formData.append('user', this.props.user);
+        formData.append('scenario', this.props.scenario);
         const config = {
             headers: {
                 'content-type': 'multipart/form-data'
@@ -38,7 +39,7 @@ class FileUpload extends React.Component {
     }
 
     finishedLoading(response) {
-        if (response.data === 'Complete') {
+        if (response.error === undefined) {
             this.setState({ loading: false });
             this.props.fileUploaded(true);
         }

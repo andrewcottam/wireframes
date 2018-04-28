@@ -9,6 +9,7 @@ import { RadioButton, RadioButtonGroup } from 'material-ui/RadioButton';
 import ReactTable from "react-table";
 import FileUpload from './FileUpload.js';
 import UserMenu from './UserMenu.js';
+import SpatialDataSelector from './SpatialDataSelector.js';
 
 class InfoPanel extends React.Component {
   constructor(props) {
@@ -40,12 +41,39 @@ class InfoPanel extends React.Component {
     this.props.logout();
   }
 
+  spatialLayerChanged(tileset, zoomToBounds) {
+    this.props.spatialLayerChanged(tileset,zoomToBounds);
+  }
+
   render() {
     return (
       <div style={{'position':'absolute'}}>
         <Paper zDepth={2} id='InfoPanel'>
-          <AppBar title="Marxan Demo" showMenuIconButton={false}  style={{'opactiy': this.props.loggedIn ? 1 : 0.2}} iconElementRight={<UserMenu user={ this.props.user} showUserMenu={this.showUserMenu.bind(this)} userMenuOpen={this.state.userMenuOpen} anchorEl={this.state.anchorEl} hideUserMenu={this.hideUserMenu.bind(this)} logout={this.logout.bind(this)}/>}/>
+          <AppBar title={this.props.scenario} showMenuIconButton={false}  style={{'opactiy': this.props.loggedIn ? 1 : 0.2}} iconElementRight={
+          <UserMenu user={ this.props.user} 
+                    onMouseEnter={this.showUserMenu.bind(this)} 
+                    showUserMenu={this.showUserMenu.bind(this)} 
+                    userMenuOpen={this.state.userMenuOpen} 
+                    anchorEl={this.state.anchorEl} 
+                    hideUserMenu={this.hideUserMenu.bind(this)} 
+                    logout={this.logout.bind(this)}
+                    listScenarios={this.props.listScenarios}
+                    scenarios={this.props.scenarios}
+                    />}/>
           <Tabs>
+            <Tab label="Inputs" className={'tab'}>
+              <div className='tabPanel'>
+                <div className={'tabTitle'}>Input files</div>
+                <div className={'uploadControls'}>
+                  <SpatialDataSelector spatialLayerChanged={this.spatialLayerChanged.bind(this)}/>
+                  <FileUpload marxanfile="spec.dat" label="Species file" fileUploaded={this.validateUploads.bind(this)} user={this.props.user} scenario={this.props.scenario}/>
+                  <FileUpload marxanfile="pu.dat" label="Planning unit file" fileUploaded={this.validateUploads.bind(this)} user={this.props.user} scenario={this.props.scenario}/>
+                  <FileUpload marxanfile="puvspr.dat" label="Planning unit vs species file" fileUploaded={this.validateUploads.bind(this)} user={this.props.user} scenario={this.props.scenario}/>
+                  <FileUpload marxanfile="bound.dat" label="Block definitions" fileUploaded={this.validateUploads.bind(this)} user={this.props.user} scenario={this.props.scenario}/>
+                  <FileUpload marxanfile="blockdef.dat" label="Boundary length file" fileUploaded={this.validateUploads.bind(this)} user={this.props.user} scenario={this.props.scenario}/>
+                </div>
+              </div>
+            </Tab>
             <Tab label="Params" className={'tab'}>
               <div className='tabPanel'>
                 <div className={'tabTitle'}>Input parameters</div>
@@ -61,18 +89,6 @@ class InfoPanel extends React.Component {
                     </tr>
                   </tbody>
                 </table>
-              </div>
-            </Tab>
-            <Tab label="Inputs" className={'tab'}>
-              <div className='tabPanel'>
-                <div className={'tabTitle'}>Input files</div>
-                <div className={'uploadControls'}>
-                  <FileUpload marxanfile="spec.dat" label="Species file" fileUploaded={this.validateUploads.bind(this)} user={this.props.user}/>
-                  <FileUpload marxanfile="pu.dat" label="Planning unit file" fileUploaded={this.validateUploads.bind(this)} user={this.props.user}/>
-                  <FileUpload marxanfile="puvspr.dat" label="Planning unit vs species file" fileUploaded={this.validateUploads.bind(this)} user={this.props.user}/>
-                  <FileUpload marxanfile="bound.dat" label="Block definitions" fileUploaded={this.validateUploads.bind(this)} user={this.props.user}/>
-                  <FileUpload marxanfile="blockdef.dat" label="Boundary length file" fileUploaded={this.validateUploads.bind(this)} user={this.props.user}/>
-                </div>
               </div>
             </Tab>
             <Tab

@@ -20,7 +20,8 @@ class App extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      user:'logged out',
+      user: 'logged out',
+      scenario: '',
       userValidated: undefined,
       runParams: { 'numRuns': 10 },
       running: false,
@@ -49,7 +50,7 @@ class App extends React.Component {
     this.map.addControl(new mapboxgl.ScaleControl());
     this.map.addControl(new mapboxgl.NavigationControl(), 'bottom-right');
     this.map.on("mousemove", this.mouseMove.bind(this));
-}
+  }
 
   setVerbosity(value) {
     this.verbosity = value;
@@ -82,14 +83,15 @@ class App extends React.Component {
     }
   }
 
-  login(user){
-    this.setState({user:user});
+  login(user) {
+    this.setState({ user: user });
+    this.setState({ scenario: 'Sample scenario' });
   }
-  
-  logout(){
-    this.setState({userValidated:undefined});
+
+  logout() {
+    this.setState({ userValidated: undefined,scenario: '',scenarios:[] });
   }
-  
+
   //create a new user on the server
   createNewUser(user) {
     //set the userCreated state to undefined
@@ -99,8 +101,9 @@ class App extends React.Component {
 
   parseCreateNewUserResponse(err, response) {
     if (response.error === undefined) {
-       this.setState({ userCreated: true });
-    }else{
+      this.setState({ userCreated: true });
+    }
+    else {
       this.setState({ userCreated: false });
     }
   }
@@ -112,7 +115,7 @@ class App extends React.Component {
     //if we are requesting more than 10 solutions, then we should not load all of them in the REST call - they can be requested asynchronously as and when they are needed
     this.returnall = this.state.numRuns > 10 ? 'false' : 'true';
     //make the request to get the marxan data
-    jsonp(MARXAN_ENDPOINT + "runMarxan?user=" + this.state.user + "&numreps=" + this.state.numRuns + "&verbosity=" + this.verbosity + "&returnall=" + this.returnall, this.parseRunMarxanResponse.bind(this)); //get the data from the server and parse it
+    jsonp(MARXAN_ENDPOINT + "runMarxan?user=" + this.state.user + "&scenario=" + this.state.scenario + "&numreps=" + this.state.numRuns + "&verbosity=" + this.verbosity + "&returnall=" + this.returnall, this.parseRunMarxanResponse.bind(this)); //get the data from the server and parse it
   }
 
   //pads a number with zeros to a specific size, e.g. pad(9,5) => 00009
@@ -137,7 +140,7 @@ class App extends React.Component {
       }
       else {
         //request the data for the specific solution
-        jsonp(MARXAN_ENDPOINT + "loadSolution?user=" + this.state.user + "&solution=" + solution, this.parseLoadSolutionResponse.bind(this));
+        jsonp(MARXAN_ENDPOINT + "loadSolution?user=" + this.state.user + "&scenario=" + this.state.scenario + "&solution=" + solution, this.parseLoadSolutionResponse.bind(this));
       }
     }
   }
@@ -162,9 +165,24 @@ class App extends React.Component {
   }
 
   parseLoadSolutionResponse(err, response) {
-    (response.error) ? console.error("Marxan: " + response.error) : this.renderSolution(response.solution) ;
+    (response.error) ? console.error("Marxan: " + response.error): this.renderSolution(response.solution);
   }
 
+  listScenarios(){
+    jsonp(MARXAN_ENDPOINT + "listScenarios?user=" + this.state.user , this.parseListScenariosResponse.bind(this));
+
+  }
+  
+   parseListScenariosResponse(err, response) {
+    if (response.error === undefined) {
+      this.setState({ scenarios: response.scenarios });
+    }
+    else {
+      this.setState({ scenarios: undefined });
+    }
+  }
+ 
+  
   //renders the sum of solutions
   renderSumSolutionMap(data) {
     // Calculate color for each planning unit based on the total number of selections in the marxan runs
@@ -217,6 +235,44 @@ class App extends React.Component {
     this.setState({ numRuns: v });
   }
 
+  spatialLayerChanged(tileset, zoomToBounds) {
+    this.removeSpatialLayer();
+    this.addSpatialLayer(tileset);
+    this.zoomToBounds(tileset.bounds);
+    this.setState({ tileset: tileset });
+  }
+
+  removeSpatialLayer() {
+    let layers = this.map.getStyle().layers;
+    let layerId = layers[layers.length - 1].id;
+    this.map.removeLayer(layerId);
+  }
+
+  addSpatialLayer(tileset) {
+    this.map.addLayer({
+      'id': tileset.name,
+      'type': "fill",
+      'source': {
+        'type': "vector",
+        'url': "mapbox://" + tileset.id
+      },
+      'source-layer': tileset.vector_layers[0].id,
+      'paint': {
+        'fill-color': '#f08',
+        'fill-opacity': 0.4
+      }
+    });
+  }
+  zoomToBounds(bounds) {
+    let minLng = (bounds[0] < -180) ? -180 : bounds[0];
+    let minLat = (bounds[1] < -90) ? -90 : bounds[1];
+    let maxLng = (bounds[2] > 180) ? 180 : bounds[2];
+    let maxLat = (bounds[3] > 90) ? 90 : bounds[3];
+    this.map.fitBounds([minLng, minLat, maxLng, maxLat], {
+      padding: { top: 10, bottom: 10, left: 10, right: 10 }
+    });
+  }
+
   render() {
     return (
       <MuiThemeProvider>
@@ -224,6 +280,9 @@ class App extends React.Component {
           <div ref={el => this.mapContainer = el} className="absolute top right left bottom" />
           <InfoPanel
             user={this.state.user}
+            listScenarios={this.listScenarios.bind(this)}
+            scenarios={this.state.scenarios}
+            scenario={this.state.scenario}
             logout={this.logout.bind(this)}
             runParams={this.state.runParams} 
             runMarxan={this.runMarxan.bind(this)} 
@@ -236,6 +295,7 @@ class App extends React.Component {
             setNumRuns={this.setNumRuns.bind(this)}
             numRuns={this.state.numRuns}
             log={this.state.log} 
+            spatialLayerChanged={this.spatialLayerChanged.bind(this)}
             />
           <img src={Loading} id='loading' style={{'display': (this.state.running ? 'block' : 'none')}} alt='loading'/>
           <Popup active_pu={this.state.active_pu} xy={this.state.popup_point}/>
