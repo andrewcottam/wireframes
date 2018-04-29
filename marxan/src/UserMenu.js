@@ -19,6 +19,10 @@ class UserMenu extends React.Component {
   closeScenariosDialog() {
     this.setState({ scenariosDialogOpen: false });
   }
+  loadScenario(scenario){
+    this.props.loadScenario(scenario);
+    this.closeScenariosDialog();
+  }
   render() {
     return (
       <React.Fragment>
@@ -45,7 +49,11 @@ class UserMenu extends React.Component {
               <ScenariosDialog 
               scenariosDialogOpen={this.state.scenariosDialogOpen} 
               closeScenariosDialog={this.closeScenariosDialog.bind(this)}
-              scenarios={this.props.scenarios}/>
+              scenarios={this.props.scenarios}
+              createNewScenario={this.props.createNewScenario}
+              deleteScenario={this.props.deleteScenario}
+              loadScenario={this.loadScenario.bind(this)}
+              />
             </React.Fragment>
     );
   }

@@ -4,12 +4,12 @@ import Paper from 'material-ui/Paper';
 import AppBar from 'material-ui/AppBar';
 import { Tabs, Tab } from 'material-ui/Tabs';
 import RaisedButton from 'material-ui/RaisedButton';
-import TextField from 'material-ui/TextField';
 import { RadioButton, RadioButtonGroup } from 'material-ui/RadioButton';
 import ReactTable from "react-table";
 import FileUpload from './FileUpload.js';
 import UserMenu from './UserMenu.js';
 import SpatialDataSelector from './SpatialDataSelector.js';
+import ParametersTable from './ParametersTable.js';
 
 class InfoPanel extends React.Component {
   constructor(props) {
@@ -59,6 +59,9 @@ class InfoPanel extends React.Component {
                     logout={this.logout.bind(this)}
                     listScenarios={this.props.listScenarios}
                     scenarios={this.props.scenarios}
+                    createNewScenario={this.props.createNewScenario}
+                    deleteScenario={this.props.deleteScenario}
+                    loadScenario={this.props.loadScenario}
                     />}/>
           <Tabs>
             <Tab label="Inputs" className={'tab'}>
@@ -77,18 +80,7 @@ class InfoPanel extends React.Component {
             <Tab label="Params" className={'tab'}>
               <div className='tabPanel'>
                 <div className={'tabTitle'}>Input parameters</div>
-                <table className='runParamsTable'>
-                  <tbody>
-                    <tr>
-                      <td style={{'width':'170px','paddingRight': '12px'}}>
-                          Number of solutions: 
-                      </td>
-                      <td>
-                          <TextField id='numRuns' className='textFieldClass' value={this.props.numRuns} style={{'width':'80px'}} onChange={this.props.setNumRuns} inputStyle={{'fontSize':'13px'}}/>
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
+                  <ParametersTable runParams={this.props.runParams}/>
               </div>
             </Tab>
             <Tab

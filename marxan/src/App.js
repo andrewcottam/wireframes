@@ -7,6 +7,7 @@ import InfoPanel from './InfoPanel.js';
 import Popup from './Popup.js';
 import Loading from './loading.gif';
 import Login from './login.js';
+import Snackbar from 'material-ui/Snackbar';
 
 //CONSTANTS
 //THE MARXAN_ENDPOINT MUST ALSO BE CHANGED IN THE FILEUPLOAD.JS FILE
@@ -23,14 +24,16 @@ class App extends React.Component {
       user: 'logged out',
       scenario: '',
       userValidated: undefined,
-      runParams: { 'numRuns': 10 },
+      runParams: [],
       running: false,
       active_pu: undefined,
       log: 'No data',
       dataAvailable: false,
       outputsTabString: 'No data',
       popup_point: { x: 0, y: 0 },
-      numRuns: 10
+      numRuns: 10,
+      snackbarOpen: false,
+      snackbarMessage: ''
     };
     this.verbosity = "3";
   }
@@ -45,6 +48,12 @@ class App extends React.Component {
     this.map.on("load", this.mapLoaded.bind(this));
   }
 
+  componentDidUpdate(prevProps, prevState) {
+    //if the user has logged in and the state has been set we can now load the scenario
+    if (this.state.user !== 'logged out' && prevState.user === 'logged out') {
+      this.loadScenario('Sample scenario');
+    }
+  }
   mapLoaded(e) {
     // this.map.addControl(new mapboxgl.FullscreenControl(), 'bottom-right'); // currently full screen hides the info panel and setting position:absolute and z-index: 10000000000 doesnt work properly
     this.map.addControl(new mapboxgl.ScaleControl());
@@ -85,13 +94,25 @@ class App extends React.Component {
 
   login(user) {
     this.setState({ user: user });
-    this.setState({ scenario: 'Sample scenario' });
   }
 
   logout() {
-    this.setState({ userValidated: undefined,scenario: '',scenarios:[] });
+    this.setState({ user: 'logged out', userValidated: undefined, scenario: '', scenarios: [] });
   }
 
+  loadScenario(scenario) {
+    jsonp(MARXAN_ENDPOINT + "getScenario?user=" + this.state.user + "&scenario=" + scenario, this.parseLoadScenarioResponse.bind(this));
+  }
+
+  parseLoadScenarioResponse(err, response) {
+    if (response.error === undefined) {
+      this.setState({ scenario: response.scenario ,runParams: response.runParameters});
+    }
+    else {
+      //ui feedback
+      this.setState({ snackbarOpen: true, snackbarMessage: response.error });
+    }
+  }
   //create a new user on the server
   createNewUser(user) {
     //set the userCreated state to undefined
@@ -105,9 +126,48 @@ class App extends React.Component {
     }
     else {
       this.setState({ userCreated: false });
+      //ui feedback
+      this.setState({ snackbarOpen: true, snackbarMessage: response.error });
     }
   }
 
+  createNewScenario(scenario) {
+    if (scenario.description) {
+      jsonp(MARXAN_ENDPOINT + "createScenario?user=" + this.state.user + "&scenario=" + scenario.name + "&description=" + scenario.description, this.parseCreateNewScenarioResponse.bind(this));
+    }
+    else {
+      jsonp(MARXAN_ENDPOINT + "createScenario?user=" + this.state.user + "&scenario=" + scenario.name, this.parseCreateNewScenarioResponse.bind(this));
+    }
+  }
+
+  parseCreateNewScenarioResponse(err, response) {
+    if (response.error === undefined) {
+      //refresh the scenarios list
+      this.listScenarios();
+    }
+    else {
+      //ui feedback
+      this.setState({ snackbarOpen: true, snackbarMessage: response.error });
+    }
+  }
+
+  deleteScenario(name) {
+    jsonp(MARXAN_ENDPOINT + "deleteScenario?user=" + this.state.user + "&scenario=" + name, this.parseDeleteScenarioResponse.bind(this));
+  }
+
+  parseDeleteScenarioResponse(err, response) {
+    if (response.error === undefined) {
+      //refresh the scenarios list
+      this.listScenarios();
+      //ui feedback
+      this.setState({ snackbarOpen: true, snackbarMessage: "Scenario deleted" });
+    }
+    else {
+      //ui feedback
+      this.setState({ snackbarOpen: true, snackbarMessage: response.error });
+    }
+
+  }
   //run a marxan job on the server
   runMarxan(e) {
     //update the ui to reflect the fact that a job is running
@@ -168,12 +228,12 @@ class App extends React.Component {
     (response.error) ? console.error("Marxan: " + response.error): this.renderSolution(response.solution);
   }
 
-  listScenarios(){
-    jsonp(MARXAN_ENDPOINT + "listScenarios?user=" + this.state.user , this.parseListScenariosResponse.bind(this));
+  listScenarios() {
+    jsonp(MARXAN_ENDPOINT + "listScenarios?user=" + this.state.user, this.parseListScenariosResponse.bind(this));
 
   }
-  
-   parseListScenariosResponse(err, response) {
+
+  parseListScenariosResponse(err, response) {
     if (response.error === undefined) {
       this.setState({ scenarios: response.scenarios });
     }
@@ -181,8 +241,8 @@ class App extends React.Component {
       this.setState({ scenarios: undefined });
     }
   }
- 
-  
+
+
   //renders the sum of solutions
   renderSumSolutionMap(data) {
     // Calculate color for each planning unit based on the total number of selections in the marxan runs
@@ -296,10 +356,19 @@ class App extends React.Component {
             numRuns={this.state.numRuns}
             log={this.state.log} 
             spatialLayerChanged={this.spatialLayerChanged.bind(this)}
+            createNewScenario={this.createNewScenario.bind(this)}
+            deleteScenario={this.deleteScenario.bind(this)}
+            loadScenario={this.loadScenario.bind(this)}
             />
           <img src={Loading} id='loading' style={{'display': (this.state.running ? 'block' : 'none')}} alt='loading'/>
           <Popup active_pu={this.state.active_pu} xy={this.state.popup_point}/>
           <Login validateUser={this.validateUser.bind(this)} userValidated={this.state.userValidated} login={this.login.bind(this)} createNewUser={this.createNewUser.bind(this)} userCreated={this.state.userCreated}/>
+          <Snackbar
+            open={this.state.snackbarOpen}
+            message={this.state.snackbarMessage}
+            autoHideDuration={4000}
+            onRequestClose={this.handleRequestClose}
+          />
         </React.Fragment>
       </MuiThemeProvider>
     );
