@@ -115,6 +115,7 @@ class App extends React.Component {
     }
   }
 
+  //called after a file has been uploaded
   fileUploaded(parameter, filename) {
     let files = Object.assign(this.state.files, { [parameter]: filename });
     this.setState({ files: files });
