@@ -86,7 +86,7 @@ class Login extends React.Component {
                                     <TextField hintText="Enter your Username" floatingLabelText="Username" onChange = {(event,newValue) => this.setState({user:newValue})} className='loginUserField' disabled = {this.state.validatingUser ? true : false} onKeyPress={this.handleKeyPress.bind(this)}/>
                                     <FontAwesome spin name='sync' style={{'display': (this.state.validatingUser ? 'inline-block' : 'none')}} className='spinner'/>
                                 </div>
-                                <RaisedButton onClick={(event) => this.validateUser(event)} label= {this.state.validatingUser ? "Submitted" : "Submit"} disabled = {this.state.validatingUser ? true : false} primary={true} className='submitButton' type="submit"/>
+                                <RaisedButton onClick={(event) => this.validateUser(event)} label= {this.state.validatingUser ? "Logging in" : "Submit"} disabled = {this.state.validatingUser ? true : false} primary={true} className='submitButton' type="submit"/>
                             </div>
                         </div>
                     </div>

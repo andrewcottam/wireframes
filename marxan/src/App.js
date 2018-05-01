@@ -68,6 +68,10 @@ class App extends React.Component {
     this.map.on("mousemove", this.mouseMove.bind(this));
   }
 
+  closeSnackbar() {
+    this.setState({ snackbarOpen: false });
+  }
+
   setVerbosity(value) {
     this.verbosity = value;
   }
@@ -137,12 +141,10 @@ class App extends React.Component {
 
   parseCreateNewUserResponse(err, response) {
     if (response.error === undefined) {
-      this.setState({ userCreated: true });
+      this.setState({ userCreated: true, snackbarOpen: true, snackbarMessage: response.info });
     }
     else {
-      this.setState({ userCreated: false });
-      //ui feedback
-      this.setState({ snackbarOpen: true, snackbarMessage: response.error });
+      this.setState({ userCreated: false ,snackbarOpen: true, snackbarMessage: response.error });
     }
   }
 
@@ -159,6 +161,7 @@ class App extends React.Component {
     if (response.error === undefined) {
       //refresh the scenarios list
       this.listScenarios();
+      this.setState({ snackbarOpen: true, snackbarMessage: response.info });
     }
     else {
       //ui feedback
@@ -175,7 +178,13 @@ class App extends React.Component {
       //refresh the scenarios list
       this.listScenarios();
       //ui feedback
-      this.setState({ snackbarOpen: true, snackbarMessage: "Scenario deleted" });
+      this.setState({ snackbarOpen: true, snackbarMessage: response.info });
+      //see if the user deleted the current scenario
+      if (response.scenario === this.state.scenario){
+        //ui feedback
+        this.setState({ snackbarOpen: true, snackbarMessage: "Current scenario deleted - loading next available" });
+        this.state.scenarios.map((scenario)=>{if (scenario.name !== this.state.scenario) this.loadScenario(scenario.name)});
+      }
     }
     else {
       //ui feedback
@@ -193,9 +202,7 @@ class App extends React.Component {
   parseRenameScenarioResponse(err, response) {
     this.setState({ editingScenarioName: false });
     if (response.error === undefined) {
-      this.setState({ scenario: response.scenario });
-      //ui feedback
-      this.setState({ snackbarOpen: true, snackbarMessage: "Scenario renamed" });
+      this.setState({ scenario: response.scenario, snackbarOpen: true, snackbarMessage: response.info });
     }
     else {
       //ui feedback
@@ -264,7 +271,6 @@ class App extends React.Component {
 
   listScenarios() {
     jsonp(MARXAN_ENDPOINT + "listScenarios?user=" + this.state.user, this.parseListScenariosResponse.bind(this));
-
   }
 
   parseListScenariosResponse(err, response) {
@@ -406,8 +412,7 @@ class App extends React.Component {
           <Snackbar
             open={this.state.snackbarOpen}
             message={this.state.snackbarMessage}
-            autoHideDuration={4000}
-            onRequestClose={this.handleRequestClose}
+            onRequestClose={this.closeSnackbar.bind(this)}
           />
         </React.Fragment>
       </MuiThemeProvider>

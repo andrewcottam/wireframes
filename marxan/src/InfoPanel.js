@@ -17,11 +17,11 @@ class InfoPanel extends React.Component {
     this.state = { 'allFilesUploaded': true, editingScenarioName: false };
     this.nUploading = 0;
   }
-  componentDidUpdate(prevProps, prevState){
+  componentDidUpdate(prevProps, prevState) {
     //if the input box for renaming the scenario has been made visible and it has no value, then initialise it with the scenario name and focus it
-    if (prevProps.editingScenarioName === false && this.props.editingScenarioName){
-        document.getElementById("scenarioName").value = this.props.scenario;
-        document.getElementById("scenarioName").focus();
+    if (prevProps.editingScenarioName === false && this.props.editingScenarioName) {
+      document.getElementById("scenarioName").value = this.props.scenario;
+      document.getElementById("scenarioName").focus();
     }
   }
   changeVerbosity(e, value) {
@@ -55,19 +55,24 @@ class InfoPanel extends React.Component {
 
   onKeyPress(e) {
     if (e.nativeEvent.keyCode === 13) {
-      document.getElementById("scenarioName").blur();
-      this.props.renameScenario(e.target.value);
+      document.getElementById("scenarioName").blur(); //call the onBlur event which will call the REST service to rename the scenario
     }
   }
 
-  startEditingScenarioName(){
-    this.props.startEditingScenarioName();
+  onBlur(e) {
+    this.props.renameScenario(e.target.value);
+  }
+
+  startEditingScenarioName() {
+    if (this.props.scenario) { //a scenario may not be loaded
+      this.props.startEditingScenarioName();
+    }
   }
   render() {
     return (
       <div style={{'position':'absolute'}}>
         <Paper zDepth={2} id='InfoPanel'>
-          <input id="scenarioName" style={{'display': (this.props.editingScenarioName) ? 'block' : 'none'}} className={'scenarioNameEditBox'} onKeyPress={this.onKeyPress.bind(this)}/>
+          <input id="scenarioName" style={{'display': (this.props.editingScenarioName) ? 'block' : 'none'}} className={'scenarioNameEditBox'} onKeyPress={this.onKeyPress.bind(this)} onBlur={this.onBlur.bind(this)}/>
           <AppBar title={this.props.scenario} showMenuIconButton={false}  style={{'opactiy': this.props.loggedIn ? 1 : 0.2}} onClick={this.startEditingScenarioName.bind(this)}
           iconElementRight={
           <UserMenu user={ this.props.user} 
