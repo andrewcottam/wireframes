@@ -8,26 +8,25 @@ class FileUpload extends React.Component {
 
     constructor(props) {
         super(props);
-        this.state = { value: { name: props.marxanfile }, loading: false };
+        this.state = { loading: false };
         this.onChange = this.onChange.bind(this);
         this.fileUpload = this.fileUpload.bind(this);
     }
 
     onChange(e) {
         if (e.target.files.length) {
-            this.setState({ value: e.target.files[0] });
             this.fileUpload(e.target.files[0]);
         }
     }
 
     fileUpload(value) {
-        this.props.fileUploaded(false);
+        this.props.fileUploaded(false, '');
         this.setState({ loading: true });
         const url = "https://db-server-blishten.c9users.io/marxan/webAPI2/postFile";
         const formData = new FormData();
         formData.append('value', value);
         formData.append('filename', value['name']);
-        formData.append('marxanfile', this.props.marxanfile);
+        formData.append('parameter', this.props.parameter);
         formData.append('user', this.props.user);
         formData.append('scenario', this.props.scenario);
         const config = {
@@ -41,11 +40,11 @@ class FileUpload extends React.Component {
     finishedLoading(response) {
         if (response.error === undefined) {
             this.setState({ loading: false });
-            this.props.fileUploaded(true);
+            this.props.fileUploaded(true, this.props.parameter,response.data.file); 
         }
     }
     render() {
-        let id = "upload" + this.props.marxanfile;
+        let id = "upload" + this.props.parameter;
         return (
             <form className='FileUploadForm'>
                 <table>
@@ -58,9 +57,9 @@ class FileUpload extends React.Component {
                                 <div className='uploadFileField'>
                                     <div className='uploadFileFieldIcon'>
                                         <label htmlFor={id}><FontAwesome name='file' title='Click to upload a file' style={{'cursor':'pointer'}}/></label>
-                                        <input type="file" onChange={this.onChange} accept=".dat" style={{'display':'none', 'width':'10px'}} id={id}/>
+                                        <input type="file" onChange={this.onChange} accept=".dat" style={{'display':'none', 'width':'10px'}} id={id} />
                                     </div>
-                                    <div className='uploadFileFieldLabel'>{this.state.value && this.state.value.name}</div>
+                                    <div className='uploadFileFieldLabel'>{this.props.value}</div>
                                 </div>
                             </td>
                             <td><FontAwesome name='sync' spin style={{'display': (this.state.loading ? 'block' : 'none'), 'marginLeft':'6px'}}/></td>

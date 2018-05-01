@@ -25,6 +25,7 @@ class App extends React.Component {
       scenario: '',
       userValidated: undefined,
       runParams: [],
+      files: {},
       running: false,
       active_pu: undefined,
       log: 'No data',
@@ -106,13 +107,19 @@ class App extends React.Component {
 
   parseLoadScenarioResponse(err, response) {
     if (response.error === undefined) {
-      this.setState({ scenario: response.scenario ,runParams: response.runParameters});
+      this.setState({ scenario: response.scenario, runParams: response.runParameters, files: response.files });
     }
     else {
       //ui feedback
       this.setState({ snackbarOpen: true, snackbarMessage: response.error });
     }
   }
+
+  fileUploaded(parameter, filename) {
+    let files = Object.assign(this.state.files, { [parameter]: filename });
+    this.setState({ files: files });
+  }
+
   //create a new user on the server
   createNewUser(user) {
     //set the userCreated state to undefined
@@ -345,6 +352,8 @@ class App extends React.Component {
             scenario={this.state.scenario}
             logout={this.logout.bind(this)}
             runParams={this.state.runParams} 
+            files={this.state.files}
+            fileUploaded={this.fileUploaded.bind(this)}
             runMarxan={this.runMarxan.bind(this)} 
             loadSolution={this.loadSolution.bind(this)} 
             running={this.state.running} 

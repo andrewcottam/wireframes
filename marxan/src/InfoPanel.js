@@ -14,7 +14,7 @@ import ParametersTable from './ParametersTable.js';
 class InfoPanel extends React.Component {
   constructor(props) {
     super(props);
-    this.state = { 'allFilesUploaded': true };
+    this.state = { 'allFilesUploaded': true};
     this.nUploading = 0;
   }
   changeVerbosity(e, value) {
@@ -23,10 +23,11 @@ class InfoPanel extends React.Component {
   loadSolution(solution) {
     this.props.loadSolution(solution);
   }
-  validateUploads(validated) {
+  validateUploads(validated, parameter, filename) {
     //each time we upload a file we increment the uploading files counter - when it has finished then we decrement the counter
     validated ? this.nUploading -= 1 : this.nUploading += 1;
     (this.nUploading === 0) ? this.setState({ 'allFilesUploaded': true }): this.setState({ 'allFilesUploaded': false });
+    if (validated) this.props.fileUploaded(parameter, filename);
   }
   showUserMenu(e) {
     e.preventDefault();
@@ -69,11 +70,11 @@ class InfoPanel extends React.Component {
                 <div className={'tabTitle'}>Input files</div>
                 <div className={'uploadControls'}>
                   <SpatialDataSelector spatialLayerChanged={this.spatialLayerChanged.bind(this)}/>
-                  <FileUpload marxanfile="spec.dat" label="Species file" fileUploaded={this.validateUploads.bind(this)} user={this.props.user} scenario={this.props.scenario}/>
-                  <FileUpload marxanfile="pu.dat" label="Planning unit file" fileUploaded={this.validateUploads.bind(this)} user={this.props.user} scenario={this.props.scenario}/>
-                  <FileUpload marxanfile="puvspr.dat" label="Planning unit vs species file" fileUploaded={this.validateUploads.bind(this)} user={this.props.user} scenario={this.props.scenario}/>
-                  <FileUpload marxanfile="bound.dat" label="Block definitions" fileUploaded={this.validateUploads.bind(this)} user={this.props.user} scenario={this.props.scenario}/>
-                  <FileUpload marxanfile="blockdef.dat" label="Boundary length file" fileUploaded={this.validateUploads.bind(this)} user={this.props.user} scenario={this.props.scenario}/>
+                  <FileUpload parameter="SPECNAME" value={this.props.files.SPECNAME} label="Species file" fileUploaded={this.validateUploads.bind(this)} user={this.props.user} scenario={this.props.scenario}/>
+                  <FileUpload parameter="PUNAME" value={this.props.files.PUNAME} label="Planning unit file" fileUploaded={this.validateUploads.bind(this)} user={this.props.user} scenario={this.props.scenario}/>
+                  <FileUpload parameter="PUVSPRNAME" value={this.props.files.PUVSPRNAME} label="Planning unit vs species file" fileUploaded={this.validateUploads.bind(this)} user={this.props.user} scenario={this.props.scenario}/>
+                  <FileUpload parameter="BOUNDNAME" value={this.props.files.BOUNDNAME} label="Block definitions" fileUploaded={this.validateUploads.bind(this)} user={this.props.user} scenario={this.props.scenario}/>
+                  <FileUpload parameter="BLOCKDEFNAME" value={this.props.files.BLOCKDEFNAME} label="Boundary length file" fileUploaded={this.validateUploads.bind(this)} user={this.props.user} scenario={this.props.scenario}/>
                 </div>
               </div>
             </Tab>
