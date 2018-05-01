@@ -14,8 +14,15 @@ import ParametersTable from './ParametersTable.js';
 class InfoPanel extends React.Component {
   constructor(props) {
     super(props);
-    this.state = { 'allFilesUploaded': true};
+    this.state = { 'allFilesUploaded': true, editingScenarioName: false };
     this.nUploading = 0;
+  }
+  componentDidUpdate(prevProps, prevState){
+    //if the input box for renaming the scenario has been made visible and it has no value, then initialise it with the scenario name and focus it
+    if (prevProps.editingScenarioName === false && this.props.editingScenarioName){
+        document.getElementById("scenarioName").value = this.props.scenario;
+        document.getElementById("scenarioName").focus();
+    }
   }
   changeVerbosity(e, value) {
     this.props.setVerbosity(value);
@@ -43,14 +50,26 @@ class InfoPanel extends React.Component {
   }
 
   spatialLayerChanged(tileset, zoomToBounds) {
-    this.props.spatialLayerChanged(tileset,zoomToBounds);
+    this.props.spatialLayerChanged(tileset, zoomToBounds);
   }
 
+  onKeyPress(e) {
+    if (e.nativeEvent.keyCode === 13) {
+      document.getElementById("scenarioName").blur();
+      this.props.renameScenario(e.target.value);
+    }
+  }
+
+  startEditingScenarioName(){
+    this.props.startEditingScenarioName();
+  }
   render() {
     return (
       <div style={{'position':'absolute'}}>
         <Paper zDepth={2} id='InfoPanel'>
-          <AppBar title={this.props.scenario} showMenuIconButton={false}  style={{'opactiy': this.props.loggedIn ? 1 : 0.2}} iconElementRight={
+          <input id="scenarioName" style={{'display': (this.props.editingScenarioName) ? 'block' : 'none'}} className={'scenarioNameEditBox'} onKeyPress={this.onKeyPress.bind(this)}/>
+          <AppBar title={this.props.scenario} showMenuIconButton={false}  style={{'opactiy': this.props.loggedIn ? 1 : 0.2}} onClick={this.startEditingScenarioName.bind(this)}
+          iconElementRight={
           <UserMenu user={ this.props.user} 
                     onMouseEnter={this.showUserMenu.bind(this)} 
                     showUserMenu={this.showUserMenu.bind(this)} 

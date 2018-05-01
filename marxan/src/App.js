@@ -23,6 +23,7 @@ class App extends React.Component {
     this.state = {
       user: 'logged out',
       scenario: '',
+      editingScenarioName: false,
       userValidated: undefined,
       runParams: [],
       files: {},
@@ -180,7 +181,26 @@ class App extends React.Component {
       //ui feedback
       this.setState({ snackbarOpen: true, snackbarMessage: response.error });
     }
+  }
 
+  startEditingScenarioName() {
+    this.setState({ editingScenarioName: true });
+  }
+  renameScenario(newName) {
+    jsonp(MARXAN_ENDPOINT + "renameScenario?user=" + this.state.user + "&scenario=" + this.state.scenario + "&newName=" + newName, this.parseRenameScenarioResponse.bind(this));
+  }
+
+  parseRenameScenarioResponse(err, response) {
+    this.setState({ editingScenarioName: false });
+    if (response.error === undefined) {
+      this.setState({ scenario: response.scenario });
+      //ui feedback
+      this.setState({ snackbarOpen: true, snackbarMessage: "Scenario renamed" });
+    }
+    else {
+      //ui feedback
+      this.setState({ snackbarOpen: true, snackbarMessage: response.error });
+    }
   }
   //run a marxan job on the server
   runMarxan(e) {
@@ -376,6 +396,9 @@ class App extends React.Component {
             createNewScenario={this.createNewScenario.bind(this)}
             deleteScenario={this.deleteScenario.bind(this)}
             loadScenario={this.loadScenario.bind(this)}
+            renameScenario={this.renameScenario.bind(this)}
+            startEditingScenarioName={this.startEditingScenarioName.bind(this)}
+            editingScenarioName={this.state.editingScenarioName}
             />
           <img src={Loading} id='loading' style={{'display': (this.state.running ? 'block' : 'none')}} alt='loading'/>
           <Popup active_pu={this.state.active_pu} xy={this.state.popup_point}/>
