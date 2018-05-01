@@ -27,6 +27,7 @@ class App extends React.Component {
       runParams: [],
       files: {},
       running: false,
+      runnable: false,
       active_pu: undefined,
       log: 'No data',
       dataAvailable: false,
@@ -53,6 +54,10 @@ class App extends React.Component {
     //if the user has logged in and the state has been set we can now load the scenario
     if (this.state.user !== 'logged out' && prevState.user === 'logged out') {
       this.loadScenario('Sample scenario');
+    }
+    //if any files have been uploaded then check to see if we have all of the mandatory file inputs - if so, set the state to being runnable
+    if (this.state.files !== prevState.files) {
+      (this.state.files.SPECNAME !== '' && this.state.files.PUNAME !== '' && this.state.files.PUVSPRNAME !== '') ? this.setState({ runnable: true }): this.setState({ runnable: false });
     }
   }
   mapLoaded(e) {
@@ -107,7 +112,7 @@ class App extends React.Component {
 
   parseLoadScenarioResponse(err, response) {
     if (response.error === undefined) {
-      this.setState({ scenario: response.scenario, runParams: response.runParameters, files: response.files });
+      this.setState({ scenario: response.scenario, runParams: response.runParameters, files: Object.assign(response.files) });
     }
     else {
       //ui feedback
@@ -117,8 +122,9 @@ class App extends React.Component {
 
   //called after a file has been uploaded
   fileUploaded(parameter, filename) {
-    let files = Object.assign(this.state.files, { [parameter]: filename });
-    this.setState({ files: files });
+    let newFiles = Object.assign({}, this.state.files); //creating copy of object
+    newFiles[parameter] = filename; //updating value
+    this.setState({ files: newFiles });
   }
 
   //create a new user on the server
@@ -365,6 +371,7 @@ class App extends React.Component {
             setNumRuns={this.setNumRuns.bind(this)}
             numRuns={this.state.numRuns}
             log={this.state.log} 
+            runnable={this.state.runnable}
             spatialLayerChanged={this.spatialLayerChanged.bind(this)}
             createNewScenario={this.createNewScenario.bind(this)}
             deleteScenario={this.deleteScenario.bind(this)}
