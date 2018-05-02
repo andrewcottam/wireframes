@@ -54,7 +54,7 @@ class InfoPanel extends React.Component {
   }
 
   onKeyPress(e) {
-    if (e.nativeEvent.keyCode === 13) {
+    if (e.nativeEvent.keyCode === 13 || e.nativeEvent.keyCode === 27) {
       document.getElementById("scenarioName").blur(); //call the onBlur event which will call the REST service to rename the scenario
     }
   }

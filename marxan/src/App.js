@@ -54,7 +54,7 @@ class App extends React.Component {
   componentDidUpdate(prevProps, prevState) {
     //if the user has logged in and the state has been set we can now load the scenario
     if (this.state.user !== 'logged out' && prevState.user === 'logged out') {
-      this.loadScenario('Sample scenario');
+      this.getUsersLastScenario();
     }
     //if any files have been uploaded then check to see if we have all of the mandatory file inputs - if so, set the state to being runnable
     if (this.state.files !== prevState.files) {
@@ -111,6 +111,21 @@ class App extends React.Component {
     this.setState({ user: 'logged out', userValidated: undefined, scenario: '', scenarios: [] });
   }
 
+  getUsersLastScenario(){
+    jsonp(MARXAN_ENDPOINT + "getUser?user=" + this.state.user, this.parseGetUsersLastScenarioResponse.bind(this));
+  }
+  
+  parseGetUsersLastScenarioResponse(err,response){
+    if (response.error === undefined) {
+      this.setState({ scenario: response.lastScenario });
+      this.loadScenario(response.lastScenario);
+    }
+    else {
+      //ui feedback
+      this.setState({ snackbarOpen: true, snackbarMessage: response.error });
+    }
+  }
+  
   loadScenario(scenario) {
     jsonp(MARXAN_ENDPOINT + "getScenario?user=" + this.state.user + "&scenario=" + scenario, this.parseLoadScenarioResponse.bind(this));
   }
@@ -144,7 +159,7 @@ class App extends React.Component {
       this.setState({ userCreated: true, snackbarOpen: true, snackbarMessage: response.info });
     }
     else {
-      this.setState({ userCreated: false ,snackbarOpen: true, snackbarMessage: response.error });
+      this.setState({ userCreated: false, snackbarOpen: true, snackbarMessage: response.error });
     }
   }
 
@@ -180,10 +195,10 @@ class App extends React.Component {
       //ui feedback
       this.setState({ snackbarOpen: true, snackbarMessage: response.info });
       //see if the user deleted the current scenario
-      if (response.scenario === this.state.scenario){
+      if (response.scenario === this.state.scenario) {
         //ui feedback
         this.setState({ snackbarOpen: true, snackbarMessage: "Current scenario deleted - loading next available" });
-        this.state.scenarios.map((scenario)=>{if (scenario.name !== this.state.scenario) this.loadScenario(scenario.name)});
+        this.state.scenarios.map((scenario) => { if (scenario.name !== this.state.scenario) this.loadScenario(scenario.name) });
       }
     }
     else {
@@ -196,11 +211,13 @@ class App extends React.Component {
     this.setState({ editingScenarioName: true });
   }
   renameScenario(newName) {
-    jsonp(MARXAN_ENDPOINT + "renameScenario?user=" + this.state.user + "&scenario=" + this.state.scenario + "&newName=" + newName, this.parseRenameScenarioResponse.bind(this));
+    this.setState({ editingScenarioName: false });
+    if (newName !== '' && newName !== this.state.scenario) {
+      jsonp(MARXAN_ENDPOINT + "renameScenario?user=" + this.state.user + "&scenario=" + this.state.scenario + "&newName=" + newName, this.parseRenameScenarioResponse.bind(this));
+    }
   }
 
   parseRenameScenarioResponse(err, response) {
-    this.setState({ editingScenarioName: false });
     if (response.error === undefined) {
       this.setState({ scenario: response.scenario, snackbarOpen: true, snackbarMessage: response.info });
     }
