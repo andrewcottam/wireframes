@@ -56,10 +56,13 @@ class FileUpload extends React.Component {
                                 <div style={{'width':'180px'}}>{this.props.label}</div>
                             </td>
                             <td className='uploadFileTD'> 
-                                <div className='uploadFileField' style={{backgroundColor: (this.props.value  === '' && this.props.mandatory) ? 'rgba(193, 66, 66, 0.2)' : 'rgba(0, 0, 0, 0)'}}>
+                                <div className='uploadFileField'>
                                     <div className='uploadFileFieldIcon'>
                                         <label htmlFor={this.id}><FontAwesome name='file' title='Click to upload a file' style={{'cursor':'pointer'}}/></label>
                                         <input type="file" onChange={this.onChange} accept=".dat" style={{'display':'none', 'width':'10px'}} id={this.id} />
+                                    </div>
+                                    <div className='mandatoryIcon'>
+                                        <FontAwesome name='exclamation-circle' title='Required field' style={{ color: 'red', 'display': (this.props.value  === '' && this.props.mandatory) ? 'block' : 'none'}}/>
                                     </div>
                                     <div className='uploadFileFieldLabel'>{this.props.value}</div>
                                 </div>
