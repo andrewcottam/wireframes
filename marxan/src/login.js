@@ -1,11 +1,9 @@
 import React from 'react';
-import './login.css';
-import AppBar from 'material-ui/AppBar';
-import RaisedButton from 'material-ui/RaisedButton';
+import Dialog from 'material-ui/Dialog';
 import FlatButton from 'material-ui/FlatButton';
+import RaisedButton from 'material-ui/RaisedButton';
 import TextField from 'material-ui/TextField';
 import FontAwesome from 'react-fontawesome';
-import Dialog from 'material-ui/Dialog';
 
 class Login extends React.Component {
     constructor(props) {
@@ -74,23 +72,16 @@ class Login extends React.Component {
             <FlatButton label="No" primary={true} onClick={this.closeDialog.bind(this)} />,
             <FlatButton label="Yes" primary={true} keyboardFocused={true} onClick={this.createNewUser.bind(this)} />,
         ];
+        let c = <div>
+                    <div>
+                        <TextField hintText="Enter your Username" floatingLabelText="Username" onChange = {(event,newValue) => this.setState({user:newValue})} className='loginUserField' disabled = {this.state.validatingUser ? true : false} onKeyPress={this.handleKeyPress.bind(this)}/>
+                        <FontAwesome spin name='sync' style={{'display': (this.state.validatingUser ? 'inline-block' : 'none')}} className='spinner'/>
+                    </div>
+                    <RaisedButton onClick={(event) => this.validateUser(event)} label= {this.state.validatingUser ? "Logging in" : "Submit"} disabled = {this.state.validatingUser ? true : false} primary={true} className='submitButton' type="submit"/>
+                </div>;
         return (
             <React.Fragment>
-                <div id='blocker' style={{display: this.state.visible ? 'block' : 'none'}}></div>
-                <div className='gpc'>
-                    <div className='pc'>
-                        <div id='loginForm' style={{'display': (this.state.visible ? 'block' : 'none')}}>
-                            <div>
-                                <AppBar title="Login" showMenuIconButton={false} className='loginTitle'/>
-                                <div style={{'paddingLeft':'20px'}}>
-                                    <TextField hintText="Enter your Username" floatingLabelText="Username" onChange = {(event,newValue) => this.setState({user:newValue})} className='loginUserField' disabled = {this.state.validatingUser ? true : false} onKeyPress={this.handleKeyPress.bind(this)}/>
-                                    <FontAwesome spin name='sync' style={{'display': (this.state.validatingUser ? 'inline-block' : 'none')}} className='spinner'/>
-                                </div>
-                                <RaisedButton onClick={(event) => this.validateUser(event)} label= {this.state.validatingUser ? "Logging in" : "Submit"} disabled = {this.state.validatingUser ? true : false} primary={true} className='submitButton' type="submit"/>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                <Dialog title="Login" modal={true} children={c} open={this.state.visible}/>
                 <Dialog title="Invalid user" actions={actions} modal={true} open={this.state.createUserVisible} onRequestClose={this.handleClose} className='createNewUserDialog' contentStyle={{width:'350px'}}>
                  Create user {this.state.user} and login?
                 </Dialog>
