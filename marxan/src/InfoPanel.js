@@ -27,7 +27,7 @@ class InfoPanel extends React.Component {
   changeVerbosity(e, value) {
     this.props.setVerbosity(value);
   }
-  loadSolution(solution) {
+  loadSolution(solution) { 
     this.props.loadSolution(solution);
   }
   validateUploads(validated, parameter, filename) {
@@ -82,6 +82,8 @@ class InfoPanel extends React.Component {
                     anchorEl={this.state.anchorEl} 
                     hideUserMenu={this.hideUserMenu.bind(this)} 
                     logout={this.logout.bind(this)}
+                    loadingScenario={this.props.loadingScenario}
+                    loadingScenarios={this.props.loadingScenarios}
                     listScenarios={this.props.listScenarios}
                     scenarios={this.props.scenarios}
                     createNewScenario={this.props.createNewScenario}

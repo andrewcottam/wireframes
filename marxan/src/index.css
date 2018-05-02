@@ -63,7 +63,7 @@ body {
   padding-left: 5px;
 }
 
-.mandatoryIcon{
+.mandatoryIcon {
   display: inline-block;
   padding-left: 6px;
 }
@@ -146,4 +146,16 @@ table input {
   color: white;
   font-size: 24px;
   font-weight: 400;
+}
+
+.scenarioSpinner {
+  position: absolute;
+  top: 31px;
+  margin-left: 112px;
+}
+
+.loginSpinner {
+  position: absolute;
+  top: 31px;
+  margin-left: 66px;
 }

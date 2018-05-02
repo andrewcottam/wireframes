@@ -11,6 +11,11 @@ class UserMenu extends React.Component {
     super(props);
     this.state = { scenariosDialogOpen: false };
   }
+  componentDidUpdate(prevProps) {
+    if (prevProps.loadingScenario && this.props.loadingScenario === false) {
+      this.closeScenariosDialog();
+    }
+  }
   openScenariosDialog() {
     this.setState({ scenariosDialogOpen: true });
     this.props.listScenarios();
@@ -19,9 +24,8 @@ class UserMenu extends React.Component {
   closeScenariosDialog() {
     this.setState({ scenariosDialogOpen: false });
   }
-  loadScenario(scenario){
+  loadScenario(scenario) {
     this.props.loadScenario(scenario);
-    this.closeScenariosDialog();
   }
   render() {
     return (
@@ -47,7 +51,9 @@ class UserMenu extends React.Component {
                 </Menu>
               </Popover>
               <ScenariosDialog 
-              scenariosDialogOpen={this.state.scenariosDialogOpen} 
+              open={this.state.scenariosDialogOpen} 
+              loadingScenarios={this.props.loadingScenarios}
+              loadingScenario={this.props.loadingScenario}
               closeScenariosDialog={this.closeScenariosDialog.bind(this)}
               scenarios={this.props.scenarios}
               createNewScenario={this.props.createNewScenario}

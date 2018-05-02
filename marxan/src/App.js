@@ -61,6 +61,7 @@ class App extends React.Component {
       (this.state.files.SPECNAME !== '' && this.state.files.PUNAME !== '' && this.state.files.PUVSPRNAME !== '') ? this.setState({ runnable: true }): this.setState({ runnable: false });
     }
   }
+  
   mapLoaded(e) {
     // this.map.addControl(new mapboxgl.FullscreenControl(), 'bottom-right'); // currently full screen hides the info panel and setting position:absolute and z-index: 10000000000 doesnt work properly
     this.map.addControl(new mapboxgl.ScaleControl());
@@ -111,11 +112,11 @@ class App extends React.Component {
     this.setState({ user: 'logged out', userValidated: undefined, scenario: '', scenarios: [] });
   }
 
-  getUsersLastScenario(){
+  getUsersLastScenario() {
     jsonp(MARXAN_ENDPOINT + "getUser?user=" + this.state.user, this.parseGetUsersLastScenarioResponse.bind(this));
   }
-  
-  parseGetUsersLastScenarioResponse(err,response){
+
+  parseGetUsersLastScenarioResponse(err, response) {
     if (response.error === undefined) {
       this.setState({ scenario: response.lastScenario });
       this.loadScenario(response.lastScenario);
@@ -125,14 +126,16 @@ class App extends React.Component {
       this.setState({ snackbarOpen: true, snackbarMessage: response.error });
     }
   }
-  
+
   loadScenario(scenario) {
+    this.setState({ loadingScenario: true });
     jsonp(MARXAN_ENDPOINT + "getScenario?user=" + this.state.user + "&scenario=" + scenario, this.parseLoadScenarioResponse.bind(this));
   }
 
   parseLoadScenarioResponse(err, response) {
+    this.setState({ loadingScenario: false });
     if (response.error === undefined) {
-      this.setState({ scenario: response.scenario, runParams: response.runParameters, files: Object.assign(response.files) });
+      this.setState({ scenario: response.scenario, runParams: response.runParameters, files: Object.assign(response.files), metadata: response.metadata });
     }
     else {
       //ui feedback
@@ -164,6 +167,7 @@ class App extends React.Component {
   }
 
   createNewScenario(scenario) {
+    this.setState({ loadingScenarios: true });
     if (scenario.description) {
       jsonp(MARXAN_ENDPOINT + "createScenario?user=" + this.state.user + "&scenario=" + scenario.name + "&description=" + scenario.description, this.parseCreateNewScenarioResponse.bind(this));
     }
@@ -180,11 +184,12 @@ class App extends React.Component {
     }
     else {
       //ui feedback
-      this.setState({ snackbarOpen: true, snackbarMessage: response.error });
+      this.setState({ snackbarOpen: true, snackbarMessage: response.error, loadingScenarios: false });
     }
   }
 
   deleteScenario(name) {
+    this.setState({ loadingScenarios: true });
     jsonp(MARXAN_ENDPOINT + "deleteScenario?user=" + this.state.user + "&scenario=" + name, this.parseDeleteScenarioResponse.bind(this));
   }
 
@@ -203,7 +208,7 @@ class App extends React.Component {
     }
     else {
       //ui feedback
-      this.setState({ snackbarOpen: true, snackbarMessage: response.error });
+      this.setState({ snackbarOpen: true, snackbarMessage: response.error, loadingScenarios: false });
     }
   }
 
@@ -287,10 +292,12 @@ class App extends React.Component {
   }
 
   listScenarios() {
+    this.setState({ loadingScenarios: true });
     jsonp(MARXAN_ENDPOINT + "listScenarios?user=" + this.state.user, this.parseListScenariosResponse.bind(this));
   }
 
   parseListScenariosResponse(err, response) {
+    this.setState({ loadingScenarios: false });
     if (response.error === undefined) {
       this.setState({ scenarios: response.scenarios });
     }
@@ -422,6 +429,8 @@ class App extends React.Component {
             renameScenario={this.renameScenario.bind(this)}
             startEditingScenarioName={this.startEditingScenarioName.bind(this)}
             editingScenarioName={this.state.editingScenarioName}
+            loadingScenarios={this.state.loadingScenarios}
+            loadingScenario={this.state.loadingScenario}
             />
           <img src={Loading} id='loading' style={{'display': (this.state.running ? 'block' : 'none')}} alt='loading'/>
           <Popup active_pu={this.state.active_pu} xy={this.state.popup_point}/>
