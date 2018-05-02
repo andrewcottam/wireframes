@@ -1,17 +1,8 @@
 Html,
 body {
-  height: 100%;
-  background-color: lightgrey;
-}
-
-body {
   margin: 0;
   padding: 0;
-  font-family: sans-serif;
-}
-
-#root {
-  height: 100%;
+  font-family: Roboto, sans-serif;
 }
 
 #loading {
@@ -20,29 +11,10 @@ body {
   left: 50%;
 }
 
-#InfoPanel {
+.InfoPanelPaper {
   height: 548px;
   width: 400px;
   margin: 20px;
-}
-
-/*#paramsTable{*/
-
-/*  margin-left: 9px;*/
-
-/*  margin-right: 8px;*/
-
-/*  height:300px;*/
-
-/*}*/
-
-.textFieldClass {
-  height: 33px !important;
-
-}
-
-.rt-noData {
-  display: none !important;
 }
 
 .tab {
@@ -55,21 +27,10 @@ body {
   margin: 0px 0px 12px 10px;
 }
 
-.solutionHeader {
-  font-Size: 16px;
-  margin-Bottom: 12px;
-  font-Weight: 400;
-}
-
 .run {
   position: absolute;
   bottom: 60px;
   right: 43px;
-}
-
-.runParamsTable {
-  font-size: 13px;
-  margin-left: 10px;
 }
 
 .FileUploadForm {
@@ -118,11 +79,6 @@ body {
 
 .tabPanel {
   margin: 15px;
-}
-
-.uploadImg {
-  padding: 10px;
-  cursor: pointer;
 }
 
 #log {
@@ -177,8 +133,8 @@ table input {
 .scenarioNameEditBox {
   position: absolute;
   z-index: 1000000;
-  margin-left: 23px;
-  margin-top: 17px;
+  margin-left: 24px;
+  margin-top: 16px;
   font-family: Roboto, sans-serif;
   background-color: rgb(0, 188, 212);
   border: 0px;
