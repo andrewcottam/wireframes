@@ -38,10 +38,10 @@ class Login extends React.Component {
     render() {
         let c = <div>
                     <div>
-                        <FontAwesome spin name='sync' style={{'display': (this.props.validatingUser ? 'inline-block' : 'none')}} className='loginSpinner'/>
-                        <TextField hintText="Enter your Username" floatingLabelText="Username" onChange = {(event,newValue) => this.setState({user:newValue})} className='loginUserField' disabled = {this.props.validatingUser ? true : false} onKeyPress={this.handleKeyPress.bind(this)}/>
+                        <FontAwesome spin name='sync' style={{'display': (this.props.validatingUser || this.props.loggingIn ? 'inline-block' : 'none')}} className='loginSpinner'/>
+                        <TextField hintText="Enter your Username" floatingLabelText="Username" onChange = {(event,newValue) => this.setState({user:newValue})} className='loginUserField' disabled = {this.props.validatingUser || this.props.loggingIn ? true : false} onKeyPress={this.handleKeyPress.bind(this)}/>
                     </div>
-                    <RaisedButton onClick={this.validateUser.bind(this)} label= {this.props.validatingUser ? "Logging in" : "Submit"} disabled = {this.props.validatingUser ? true : false} primary={true} className='submitButton' type="submit"/>
+                    <RaisedButton onClick={this.validateUser.bind(this)} label= {this.props.validatingUser || this.props.loggingIn ? "Logging in" : "Submit"} disabled = {this.props.validatingUser || this.props.loggingIn ? true : false} primary={true} className='submitButton' type="submit"/>
                 </div>;
         return (
             <React.Fragment>

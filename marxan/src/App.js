@@ -22,6 +22,7 @@ class App extends React.Component {
     super(props);
     this.state = {
       user: 'logged out',
+      loggingIn: false,
       scenario: '',
       editingScenarioName: false,
       validatingUser: false,
@@ -106,7 +107,7 @@ class App extends React.Component {
   }
 
   login(user) {
-    this.setState({ user: user });
+    this.setState({ user: user, loggingIn: true });
   }
 
   logout() {
@@ -134,7 +135,7 @@ class App extends React.Component {
   }
 
   parseLoadScenarioResponse(err, response) {
-    this.setState({ loadingScenario: false });
+    this.setState({ loadingScenario: false,loggingIn: false });
     if (response.error === undefined) {
       this.setState({ scenario: response.scenario, runParams: response.runParameters, files: Object.assign(response.files), metadata: response.metadata });
     }
@@ -313,8 +314,9 @@ class App extends React.Component {
     // Calculate color for each planning unit based on the total number of selections in the marxan runs
     var expression = ["match", ["get", "PUID"]];
     data.forEach(function(row) {
-      var green = (row["number"] / NUMBER_OF_RUNS) * 255;
-      var color = "rgba(" + 0 + ", " + green + ", " + 0 + ", 1)";
+      // var green = (row["number"] / NUMBER_OF_RUNS) * 255;
+      // var color = "rgba(" + 0 + ", " + green + ", " + 0 + ", 1)";
+      var color = "rgba(255, 0, 136," + (row["number"] / NUMBER_OF_RUNS) + ")";
       expression.push(row["planning_unit"], color);
     });
     // Last value is the default, used where there is no data
@@ -435,7 +437,7 @@ class App extends React.Component {
             />
           <img src={Loading} id='loading' style={{'display': (this.state.running ? 'block' : 'none')}} alt='loading'/>
           <Popup active_pu={this.state.active_pu} xy={this.state.popup_point}/>
-          <Login open={this.state.validUser !== true} validatingUser={this.state.validatingUser} validateUser={this.validateUser.bind(this)} validUser={this.state.validUser} login={this.login.bind(this)} createNewUser={this.createNewUser.bind(this)} logout={this.logout.bind(this)}/>
+          <Login open={this.state.validUser !== true || this.state.loggingIn} validatingUser={this.state.validatingUser} validateUser={this.validateUser.bind(this)} validUser={this.state.validUser} login={this.login.bind(this)} loggingIn={this.state.loggingIn} createNewUser={this.createNewUser.bind(this)} logout={this.logout.bind(this)}/>
           <Snackbar
             open={this.state.snackbarOpen}
             message={this.state.snackbarMessage}
