@@ -36,22 +36,24 @@ class Login extends React.Component {
         this.props.createNewUser(this.state.user);
     }
     render() {
+        const actions = [
+            <RaisedButton onClick={this.validateUser.bind(this)} label= {this.props.validatingUser || this.props.loggingIn ? "Logging in" : "Submit"} disabled = {this.props.validatingUser || this.props.loggingIn ? true : false} primary={true} className="scenariosBtn" type="submit"/>
+        ];
         let c = <div>
                     <div>
                         <FontAwesome spin name='sync' style={{'display': (this.props.validatingUser || this.props.loggingIn ? 'inline-block' : 'none')}} className='loginSpinner'/>
                         <TextField hintText="Enter your Username" floatingLabelText="Username" onChange = {(event,newValue) => this.setState({user:newValue})} className='loginUserField' disabled = {this.props.validatingUser || this.props.loggingIn ? true : false} onKeyPress={this.handleKeyPress.bind(this)}/>
                     </div>
-                    <RaisedButton onClick={this.validateUser.bind(this)} label= {this.props.validatingUser || this.props.loggingIn ? "Logging in" : "Submit"} disabled = {this.props.validatingUser || this.props.loggingIn ? true : false} primary={true} className='submitButton' type="submit"/>
                 </div>;
         return (
             <React.Fragment>
-                <Dialog title="Login" modal={true} children={c} open={this.props.open} contentStyle={{width:'308px'}}/>
+                <Dialog actions={actions} title="Login" modal={true} children={c} open={this.props.open} contentStyle={{width:'308px'}}/>
                 <Dialog title="Invalid user" actions={
                     [
                         <FlatButton label="No" primary={true} onClick={this.closeDialog.bind(this)} />,
                         <FlatButton label="Yes" primary={true} keyboardFocused={true} onClick={this.createNewUser.bind(this)} />,
                     ]
-                } modal={true} open={this.state.createUserOpen} onRequestClose={this.handleClose} className='createNewUserDialog' contentStyle={{width:'566px'}}>
+                } modal={true} open={this.state.createUserOpen} onRequestClose={this.handleClose} className='createNewUserDialog' contentStyle={{width:'308px'}}>
                  Create user {this.state.user} and login?
                 </Dialog>
             </React.Fragment>

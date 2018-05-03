@@ -18,7 +18,7 @@ let MARXAN_ENDPOINT = "https://db-server-blishten.c9users.io/marxan/webAPI2/";
 let NUMBER_OF_RUNS = 10;
 
 mapboxgl.accessToken = 'pk.eyJ1IjoiYmxpc2h0ZW4iLCJhIjoiMEZrNzFqRSJ9.0QBRA2HxTb8YHErUFRMPZg';
-mapboxgl.secretAccessToken = 'sk.eyJ1IjoiYmxpc2h0ZW4iLCJhIjoiY2piNm1tOGwxMG9lajMzcXBlZDR4aWVjdiJ9.Z1Jq4UAgGpXukvnUReLO1g';
+mapboxgl.api_token = 'sk.eyJ1IjoiYmxpc2h0ZW4iLCJhIjoiY2piNm1tOGwxMG9lajMzcXBlZDR4aWVjdiJ9.Z1Jq4UAgGpXukvnUReLO1g';
 
 class App extends React.Component {
 
@@ -43,7 +43,8 @@ class App extends React.Component {
       numRuns: 10,
       snackbarOpen: false,
       snackbarMessage: '',
-      tilesets: []
+      tilesets: [],
+      showPopup: true
     };
     this.verbosity = "3";
   }
@@ -58,7 +59,7 @@ class App extends React.Component {
     });
     this.map.on("load", this.mapLoaded.bind(this));
     //get the tilesets for the user
-    this.client = new MapboxClient(mapboxgl.secretAccessToken);
+    this.client = new MapboxClient(mapboxgl.api_token);
     this.client.listTilesets(this.parseTilesets.bind(this));
   }
   //callback function with the tileset info for the user
@@ -72,7 +73,7 @@ class App extends React.Component {
   }
   //gets all of the info for the tileset
   getMetadata(tilesetId) {
-    return fetch("https://api.mapbox.com/v4/" + tilesetId + ".json?secure&access_token=" + mapboxgl.secretAccessToken)
+    return fetch("https://api.mapbox.com/v4/" + tilesetId + ".json?secure&access_token=" + mapboxgl.api_token)
       .then(response => response.json())
       .then(function(response) {
         return response;
@@ -147,6 +148,11 @@ class App extends React.Component {
     this.setState({ user: 'logged out', validUser: undefined, scenario: '', scenarios: [] });
   }
 
+  resetResults() {
+    this.runMarxanResponse = {};
+    this.setState({ log: 'No data', solutions: [], dataAvailable: false, outputsTabString: 'No data' })
+  }
+
   getUsersLastScenario() {
     jsonp(MARXAN_ENDPOINT + "getUser?user=" + this.state.user, this.parseGetUsersLastScenarioResponse.bind(this));
   }
@@ -164,6 +170,8 @@ class App extends React.Component {
 
   loadScenario(scenario) {
     this.setState({ loadingScenario: true });
+    //reset the results from any previous scenarios
+    this.resetResults();
     jsonp(MARXAN_ENDPOINT + "getScenario?user=" + this.state.user + "&scenario=" + scenario, this.parseLoadScenarioResponse.bind(this));
   }
 
@@ -357,10 +365,9 @@ class App extends React.Component {
     }
   }
 
-  setPaintProperty(expression){
+  setPaintProperty(expression) {
     //get the name of the render layer
-    let layer = this.map.getStyle().layers[this.map.getStyle().layers.length - 1];
-    this.map.setPaintProperty(layer.id, "fill-color", expression);
+    this.map.setPaintProperty(this.state.marxanLayer.id, "fill-color", expression);
   }
 
   //renders the sum of solutions
@@ -394,9 +401,10 @@ class App extends React.Component {
   }
 
   mouseMove(e) {
+    if (!this.state.showPopup) return;
     var features = this.map.queryRenderedFeatures(e.point);
     //get the planning unit features that are underneath the mouse
-    if ((features.length) && (features[0].layer.id === "planning-units-3857-visible-a-0vmt87")) {
+    if ((features.length) && (features[0].layer.id === this.state.marxanLayer.id)) {
       //set the location for the popup
       if (!this.state.active_pu || (this.state.active_pu && this.state.active_pu.PUID !== features[0].properties.PUID)) this.setState({ popup_point: e.point });
       //get the properties from the vector tiles
@@ -424,6 +432,9 @@ class App extends React.Component {
     this.removeSpatialLayer();
     //add in the new one
     this.addSpatialLayer(tileset);
+    //set the state for the marxan layer
+    let marxanLayer = this.map.getStyle().layers[this.map.getStyle().layers.length - 1];
+    this.setState({ marxanLayer: marxanLayer });
     //zoom to the layers extent
     this.zoomToBounds(tileset.bounds);
     //set the state
@@ -460,9 +471,12 @@ class App extends React.Component {
     let minLat = (bounds[1] < -90) ? -90 : bounds[1];
     let maxLng = (bounds[2] > 180) ? 180 : bounds[2];
     let maxLat = (bounds[3] > 90) ? 90 : bounds[3];
-    this.map.fitBounds([minLng, minLat, maxLng, maxLat], {padding: { top: 10, bottom: 10, left: 10, right: 10 },easing: function(num){return 1;}}  );
+    this.map.fitBounds([minLng, minLat, maxLng, maxLat], { padding: { top: 10, bottom: 10, left: 10, right: 10 }, easing: function(num) { return 1; } });
   }
 
+  setShowPopupOption(value) {
+    this.setState({ showPopup: value });
+  }
   render() {
     return (
       <MuiThemeProvider>
@@ -500,6 +514,7 @@ class App extends React.Component {
             tilesets={this.state.tilesets}
             changeTileset={this.changeTileset.bind(this)}
             tilesetid={this.state.tilesetid}
+            setShowPopupOption={this.setShowPopupOption.bind(this)}
             />
           <div className="runningSpinner"><FontAwesome spin name='sync' size='2x' style={{'display': (this.state.running ? 'block' : 'none')}}/></div>
           <Popup active_pu={this.state.active_pu} xy={this.state.popup_point}/>

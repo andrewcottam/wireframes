@@ -89,6 +89,7 @@ class InfoPanel extends React.Component {
                     createNewScenario={this.props.createNewScenario}
                     deleteScenario={this.props.deleteScenario}
                     loadScenario={this.props.loadScenario}
+                    setShowPopupOption={this.props.setShowPopupOption}
                     />}/>
           <Tabs>
             <Tab label="Inputs" className={'tab'}>
