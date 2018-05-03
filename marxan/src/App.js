@@ -150,7 +150,7 @@ class App extends React.Component {
 
   resetResults() {
     this.runMarxanResponse = {};
-    this.setState({ log: 'No data', solutions: [], dataAvailable: false, outputsTabString: 'No data' })
+    this.setState({ log: 'No data', solutions: [], dataAvailable: false, outputsTabString: 'No data' });
   }
 
   getUsersLastScenario() {
@@ -296,8 +296,34 @@ class App extends React.Component {
     this.setState({ running: true, log: 'Running...', active_pu: undefined, outputsTabString: 'Running...' });
     //if we are requesting more than 10 solutions, then we should not load all of them in the REST call - they can be requested asynchronously as and when they are needed
     this.returnall = this.state.numRuns > 10 ? 'false' : 'true';
+    this.returnall = false; //override as the png payload is huge!
     //make the request to get the marxan data
     jsonp(MARXAN_ENDPOINT + "runMarxan?user=" + this.state.user + "&scenario=" + this.state.scenario + "&numreps=" + this.state.numRuns + "&verbosity=" + this.verbosity + "&returnall=" + this.returnall, this.parseRunMarxanResponse.bind(this)); //get the data from the server and parse it
+  }
+
+  parseRunMarxanResponse(err, response) {
+    var solutions;
+    if (response.error) {
+      solutions = [];
+    }
+    else {
+      //get the response and store it in this component
+      this.runMarxanResponse = response;
+      //if we have some data to map then set the state to reflect this
+      (this.runMarxanResponse.ssoln) ? this.setState({ dataAvailable: true }): this.setState({ dataAvailable: false });
+      //render the sum solution map
+      this.renderSumSolutionMap(this.runMarxanResponse.ssoln);
+      //create the array of solutions to pass to the InfoPanels table
+      solutions = response.sum;
+      //the array data are in the format "Run_Number","Score","Cost","Planning_Units" - so create an array of objects to pass to the outputs table
+      solutions = solutions.map(function(item) {
+        return { "Run_Number": item[0], "Score": item[1], "Cost": item[2], "Planning_Units": item[3] };
+      });
+      //add in the row for the summed solutions
+      solutions.splice(0, 0, { 'Run_Number': 'Sum', 'Score': '', 'Cost': '', 'Planning_Units': '' });
+    }
+    //ui feedback
+    this.setState({ running: false, log: response.log.replace(/(\r\n|\n|\r)/g, "<br />"), outputsTabString: '', solutions: solutions });
   }
 
   //pads a number with zeros to a specific size, e.g. pad(9,5) => 00009
@@ -327,25 +353,6 @@ class App extends React.Component {
     }
   }
 
-  parseRunMarxanResponse(err, response) {
-    var solutions;
-    if (response.error) {
-      solutions = [];
-    }
-    else {
-      //get the response and store it in this component
-      this.runMarxanResponse = response;
-      //if we have some data to map then set the state to reflect this
-      (this.runMarxanResponse.ssoln) ? this.setState({ dataAvailable: true }): this.setState({ dataAvailable: false });
-      //render the sum solution map
-      this.renderSumSolutionMap(this.runMarxanResponse.ssoln);
-      //create the array of solutions to pass to the InfoPanels table
-      solutions = response.sum;
-      solutions.splice(0, 0, { 'Run_Number': 'Sum', 'Score': '', 'Cost': '', 'Planning_Units': '' });
-    }
-    this.setState({ running: false, log: response.log.replace(/(\r\n|\n|\r)/g, "<br />"), outputsTabString: '', solutions: solutions });
-  }
-
   parseLoadSolutionResponse(err, response) {
     (response.error) ? console.error("Marxan: " + response.error): this.renderSolution(response.solution);
   }
@@ -367,7 +374,7 @@ class App extends React.Component {
 
   setPaintProperty(expression) {
     //get the name of the render layer
-    this.map.setPaintProperty(this.state.marxanLayer.id, "fill-color", expression);
+    if (this.state.marxanLayer) this.map.setPaintProperty(this.state.marxanLayer.id, "fill-color", expression);
   }
 
   //renders the sum of solutions
@@ -375,10 +382,9 @@ class App extends React.Component {
     // Calculate color for each planning unit based on the total number of selections in the marxan runs
     var expression = ["match", ["get", "PUID"]];
     data.forEach(function(row) {
-      // var green = (row["number"] / NUMBER_OF_RUNS) * 255;
-      // var color = "rgba(" + 0 + ", " + green + ", " + 0 + ", 1)";
-      var color = "rgba(255, 0, 136," + (row["number"] / NUMBER_OF_RUNS) + ")";
-      expression.push(row["planning_unit"], color);
+      //set the opacity according to the number of solutions - the data are in the order PUID, Number
+      var color = "rgba(255, 0, 136," + (row[1] / NUMBER_OF_RUNS) + ")";
+      expression.push(row[0], color);
     });
     // Last value is the default, used where there is no data
     expression.push("rgba(0,0,0,0)");
@@ -391,8 +397,9 @@ class App extends React.Component {
     // Calculate color for each planning unit 
     var expression = ["match", ["get", "PUID"]];
     data.forEach(function(row) {
-      var color = "rgba(255,0,136, " + row["solution"] + ")"; //1's are pink and 0's are transparent
-      expression.push(row["planning_unit"], color);
+      //the data are in the order PUID, Number
+      var color = "rgba(255,0,136, " + row[1] + ")"; //1's are pink and 0's are transparent
+      expression.push(row[0], color);
     });
     // Last value is the default, used where there is no data
     expression.push("rgba(0,0,0,0)");
@@ -401,7 +408,7 @@ class App extends React.Component {
   }
 
   mouseMove(e) {
-    if (!this.state.showPopup) return;
+    if (!this.state.showPopup || this.state.marxanLayer === undefined) return;
     var features = this.map.queryRenderedFeatures(e.point);
     //get the planning unit features that are underneath the mouse
     if ((features.length) && (features[0].layer.id === this.state.marxanLayer.id)) {
@@ -410,9 +417,11 @@ class App extends React.Component {
       //get the properties from the vector tiles
       let vector_tile_properties = features[0].properties;
       //get the properties from the marxan results
-      let marxan_results = this.runMarxanResponse && this.runMarxanResponse.ssoln ? this.runMarxanResponse.ssoln.filter(item => item.planning_unit === vector_tile_properties.PUID)[0] : {};
+      let marxan_results = this.runMarxanResponse && this.runMarxanResponse.ssoln ? this.runMarxanResponse.ssoln.filter(item => item[0] === vector_tile_properties.PUID)[0] : {}; //data are - PUID, number
+      //convert the marxan results from an array to an object
+      let marxan_results_dict = { "PUID": marxan_results[0], "Number": marxan_results[1] };
       //combine the 2 sets of properties
-      let active_pu = Object.assign(marxan_results, vector_tile_properties);
+      let active_pu = Object.assign(marxan_results_dict, vector_tile_properties);
       //set the state to re-render the popup
       this.setState({ active_pu: active_pu });
     }
@@ -475,7 +484,7 @@ class App extends React.Component {
   }
 
   setShowPopupOption(value) {
-    this.setState({ showPopup: value });
+    this.setState({ showPopup: value, active_pu: undefined });
   }
   render() {
     return (

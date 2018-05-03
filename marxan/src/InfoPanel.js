@@ -201,7 +201,10 @@ class InfoPanel extends React.Component {
             </Tab>
           </Tabs>                        
           <RaisedButton label={this.props.running ? "Running" : "Run"} secondary={true} className={'run'} onClick={this.props.runMarxan} disabled={!this.props.runnable || this.props.running || (this.state && this.state.allFilesUploaded === false)}/>
-          <div className='footer'>v0.1 Feedback: <a href='mailto:andrew.cottam@ec.europa.eu' className='email'>Andrew Cottam</a></div>
+          <div className='footer'>
+            <div>v0.2 Feedback: <a href='mailto:andrew.cottam@ec.europa.eu' className='email'>Andrew Cottam</a></div>
+            <div>Marxan 2.4.3 - Ian Ball, Matthew Watts &amp; Hugh Possingham</div>
+          </div>
         </Paper>
       </div>
     );
