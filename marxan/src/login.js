@@ -8,81 +8,50 @@ import FontAwesome from 'react-fontawesome';
 class Login extends React.Component {
     constructor(props) {
         super(props);
-        this.state = { visible: true, user: '', validatingUser: false, createUserVisible: false };
-    }
-
-    validateUser(e) {
-        this.setState({ validatingUser: true });
-        this.props.validateUser(this.state.user);
+        this.state = { createUserOpen: false };
     }
     componentDidUpdate(prevProps, prevState, snapshot) {
-        //see if the user has logged out
-        if (this.props.userValidated === undefined && prevProps.userValidated === true) {
-            this.logout()
+        //if the user has been validated then login
+        if (this.props.validUser && prevProps.validUser === undefined) {
+            this.props.login(this.state.user);
         }
-        //see if the user has been validated after pressing submit
-        if (this.props.userValidated !== undefined && prevProps.userValidated === undefined) {
-            this.setState({ validatingUser: false });
-            if (this.props.userValidated) {
-                this.login();
-            }
-            else {
-                this.invalidUser();
-            }
+        //if the user has not been validated then show the create new user form
+        if (this.props.validUser === false && prevProps.validUser === undefined) {
+            this.setState({ createUserOpen: true });
         }
-        //see if the user has been created
-        if (this.props.userCreated !== undefined && prevProps.userCreated === undefined) {
-            if (this.props.userCreated) {
-                this.closeDialog();
-                this.login();
-            }
-            else {
-                this.failedToCreateUser();
-            }
-        }
+    }
+    closeDialog() {
+        this.setState({ createUserOpen: false });
+        this.props.logout(); //reset validUser to undefined
     }
 
-    login() {
-        this.setState({ visible: false });
-        this.props.login(this.state.user);
+    handleKeyPress(e) {
+        if (e.nativeEvent.key === "Enter") this.validateUser();
     }
-    logout() {
-        this.setState({ visible: true });
+    validateUser() {
+        this.props.validateUser(this.state.user);
     }
-    invalidUser() {
-        this.setState({ createUserVisible: true });
-    }
-
-    createNewUser(e) {
+    createNewUser() {
+        this.closeDialog();
         this.props.createNewUser(this.state.user);
     }
-
-    closeDialog() {
-        this.setState({ createUserVisible: false });
-    }
-
-    failedToCreateUser() {
-
-    }
-    handleKeyPress(e) {
-        if (e.nativeEvent.key === "Enter") this.validateUser(); 
-    }
     render() {
-        const actions = [
-            <FlatButton label="No" primary={true} onClick={this.closeDialog.bind(this)} />,
-            <FlatButton label="Yes" primary={true} keyboardFocused={true} onClick={this.createNewUser.bind(this)} />,
-        ];
         let c = <div>
                     <div>
-                        <FontAwesome spin name='sync' style={{'display': (this.state.validatingUser ? 'inline-block' : 'none')}} className='loginSpinner'/>
-                        <TextField hintText="Enter your Username" floatingLabelText="Username" onChange = {(event,newValue) => this.setState({user:newValue})} className='loginUserField' disabled = {this.state.validatingUser ? true : false} onKeyPress={this.handleKeyPress.bind(this)}/>
+                        <FontAwesome spin name='sync' style={{'display': (this.props.validatingUser ? 'inline-block' : 'none')}} className='loginSpinner'/>
+                        <TextField hintText="Enter your Username" floatingLabelText="Username" onChange = {(event,newValue) => this.setState({user:newValue})} className='loginUserField' disabled = {this.props.validatingUser ? true : false} onKeyPress={this.handleKeyPress.bind(this)}/>
                     </div>
-                    <RaisedButton onClick={(event) => this.validateUser(event)} label= {this.state.validatingUser ? "Logging in" : "Submit"} disabled = {this.state.validatingUser ? true : false} primary={true} className='submitButton' type="submit"/>
+                    <RaisedButton onClick={this.validateUser.bind(this)} label= {this.props.validatingUser ? "Logging in" : "Submit"} disabled = {this.props.validatingUser ? true : false} primary={true} className='submitButton' type="submit"/>
                 </div>;
         return (
             <React.Fragment>
-                <Dialog title="Login" modal={true} children={c} open={this.state.visible} contentStyle={{width:'308px'}}/>
-                <Dialog title="Invalid user" actions={actions} modal={true} open={this.state.createUserVisible} onRequestClose={this.handleClose} className='createNewUserDialog' contentStyle={{width:'566px'}}>
+                <Dialog title="Login" modal={true} children={c} open={this.props.open} contentStyle={{width:'308px'}}/>
+                <Dialog title="Invalid user" actions={
+                    [
+                        <FlatButton label="No" primary={true} onClick={this.closeDialog.bind(this)} />,
+                        <FlatButton label="Yes" primary={true} keyboardFocused={true} onClick={this.createNewUser.bind(this)} />,
+                    ]
+                } modal={true} open={this.state.createUserOpen} onRequestClose={this.handleClose} className='createNewUserDialog' contentStyle={{width:'566px'}}>
                  Create user {this.state.user} and login?
                 </Dialog>
             </React.Fragment>

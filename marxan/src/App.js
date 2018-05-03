@@ -24,7 +24,8 @@ class App extends React.Component {
       user: 'logged out',
       scenario: '',
       editingScenarioName: false,
-      userValidated: undefined,
+      validatingUser: false,
+      validUser: undefined,
       runParams: [],
       files: {},
       running: false,
@@ -61,7 +62,7 @@ class App extends React.Component {
       (this.state.files.SPECNAME !== '' && this.state.files.PUNAME !== '' && this.state.files.PUVSPRNAME !== '') ? this.setState({ runnable: true }): this.setState({ runnable: false });
     }
   }
-  
+
   mapLoaded(e) {
     // this.map.addControl(new mapboxgl.FullscreenControl(), 'bottom-right'); // currently full screen hides the info panel and setting position:absolute and z-index: 10000000000 doesnt work properly
     this.map.addControl(new mapboxgl.ScaleControl());
@@ -78,8 +79,8 @@ class App extends React.Component {
   }
 
   validateUser(user) {
-    //set the validation state to undefined
-    this.setState({ userValidated: undefined });
+    //set the state that we are validating the user
+    this.setState({ validatingUser: true });
     //set the user trying to log in
     this.userToValidate = user;
     //get a list of existing users
@@ -92,15 +93,15 @@ class App extends React.Component {
   }
 
   parseGetUsersResponse(err, response) {
-    this.getUsersResponse = response;
+    this.setState({ validatingUser: false });
     //the user already exists
     if (response.users.indexOf(this.userToValidate) > -1) {
       //user validated
-      this.setState({ userValidated: true });
+      this.setState({ validUser: true });
     }
     else {
       //user not validated
-      this.setState({ userValidated: false });
+      this.setState({ validUser: false });
     }
   }
 
@@ -109,7 +110,7 @@ class App extends React.Component {
   }
 
   logout() {
-    this.setState({ user: 'logged out', userValidated: undefined, scenario: '', scenarios: [] });
+    this.setState({ user: 'logged out', validUser: undefined, scenario: '', scenarios: [] });
   }
 
   getUsersLastScenario() {
@@ -152,17 +153,17 @@ class App extends React.Component {
 
   //create a new user on the server
   createNewUser(user) {
-    //set the userCreated state to undefined
-    this.setState({ userValidated: undefined });
+    this.setState({ validatingUser: true });
     jsonp(MARXAN_ENDPOINT + "createUser?user=" + user, this.parseCreateNewUserResponse.bind(this));
   }
 
   parseCreateNewUserResponse(err, response) {
+    this.setState({ validatingUser: false });
     if (response.error === undefined) {
-      this.setState({ userCreated: true, snackbarOpen: true, snackbarMessage: response.info });
+      this.setState({ validUser: true, snackbarOpen: true, snackbarMessage: response.info });
     }
     else {
-      this.setState({ userCreated: false, snackbarOpen: true, snackbarMessage: response.error });
+      this.setState({ validUser: false, snackbarOpen: true, snackbarMessage: response.error });
     }
   }
 
@@ -434,7 +435,7 @@ class App extends React.Component {
             />
           <img src={Loading} id='loading' style={{'display': (this.state.running ? 'block' : 'none')}} alt='loading'/>
           <Popup active_pu={this.state.active_pu} xy={this.state.popup_point}/>
-          <Login validateUser={this.validateUser.bind(this)} userValidated={this.state.userValidated} login={this.login.bind(this)} createNewUser={this.createNewUser.bind(this)} userCreated={this.state.userCreated}/>
+          <Login open={this.state.validUser !== true} validatingUser={this.state.validatingUser} validateUser={this.validateUser.bind(this)} validUser={this.state.validUser} login={this.login.bind(this)} createNewUser={this.createNewUser.bind(this)} logout={this.logout.bind(this)}/>
           <Snackbar
             open={this.state.snackbarOpen}
             message={this.state.snackbarMessage}
