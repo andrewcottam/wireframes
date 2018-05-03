@@ -160,6 +160,12 @@ table input {
   margin-left: 66px;
 }
 
+.runningSpinner {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+}
+
 .scenariosBtn {
   margin: 5px;
 }

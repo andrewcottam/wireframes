@@ -93,9 +93,10 @@ class InfoPanel extends React.Component {
           <Tabs>
             <Tab label="Inputs" className={'tab'}>
               <div className='tabPanel'>
+                <div className={'tabTitle'}>Planning area</div>
+                <SpatialDataSelector spatialLayerChanged={this.spatialLayerChanged.bind(this)} tilesets={this.props.tilesets} changeTileset={this.props.changeTileset} value={this.props.tilesetid}/>
                 <div className={'tabTitle'}>Input files</div>
                 <div className={'uploadControls'}>
-                  <SpatialDataSelector spatialLayerChanged={this.spatialLayerChanged.bind(this)}/>
                   <FileUpload parameter="SPECNAME" mandatory={true} value={this.props.files.SPECNAME} label="Species file" fileUploaded={this.validateUploads.bind(this)} user={this.props.user} scenario={this.props.scenario}/>
                   <FileUpload parameter="PUNAME" mandatory={true} value={this.props.files.PUNAME} label="Planning unit file" fileUploaded={this.validateUploads.bind(this)} user={this.props.user} scenario={this.props.scenario}/>
                   <FileUpload parameter="PUVSPRNAME" mandatory={true} value={this.props.files.PUVSPRNAME} label="Planning unit vs species file" fileUploaded={this.validateUploads.bind(this)} user={this.props.user} scenario={this.props.scenario}/>
@@ -106,10 +107,10 @@ class InfoPanel extends React.Component {
             </Tab>
             <Tab label="Params" className={'tab'}>
               <div className='tabPanel'>
-                <div className={'tabTitle'}>Input parameters</div>
+                <div className={'tabTitle'}>Run parameters</div>
                   <ParametersTable runParams={this.props.runParams}/>
               </div>
-            </Tab>
+            </Tab> 
             <Tab
               label="Log"
               data-route="/home" className={'tab'}

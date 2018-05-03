@@ -25,7 +25,7 @@ class UserMenu extends React.Component {
     this.setState({ scenariosDialogOpen: false });
   }
   loadScenario(scenario) {
-    this.props.loadScenario(scenario);
+    this.props.loadScenario(scenario); 
   }
   render() {
     return (

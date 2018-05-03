@@ -1,3 +1,4 @@
+/*global fetch*/
 import React from 'react';
 import MuiThemeProvider from 'material-ui/styles/MuiThemeProvider';
 import 'mapbox-gl/dist/mapbox-gl.css';
@@ -8,6 +9,8 @@ import Popup from './Popup.js';
 import Loading from './loading.gif';
 import Login from './login.js';
 import Snackbar from 'material-ui/Snackbar';
+import MapboxClient from 'mapbox';
+import FontAwesome from 'react-fontawesome';
 
 //CONSTANTS
 //THE MARXAN_ENDPOINT MUST ALSO BE CHANGED IN THE FILEUPLOAD.JS FILE
@@ -15,6 +18,7 @@ let MARXAN_ENDPOINT = "https://db-server-blishten.c9users.io/marxan/webAPI2/";
 let NUMBER_OF_RUNS = 10;
 
 mapboxgl.accessToken = 'pk.eyJ1IjoiYmxpc2h0ZW4iLCJhIjoiMEZrNzFqRSJ9.0QBRA2HxTb8YHErUFRMPZg';
+mapboxgl.secretAccessToken = 'sk.eyJ1IjoiYmxpc2h0ZW4iLCJhIjoiY2piNm1tOGwxMG9lajMzcXBlZDR4aWVjdiJ9.Z1Jq4UAgGpXukvnUReLO1g';
 
 class App extends React.Component {
 
@@ -38,7 +42,8 @@ class App extends React.Component {
       popup_point: { x: 0, y: 0 },
       numRuns: 10,
       snackbarOpen: false,
-      snackbarMessage: ''
+      snackbarMessage: '',
+      tilesets: []
     };
     this.verbosity = "3";
   }
@@ -46,11 +51,39 @@ class App extends React.Component {
   componentDidMount() {
     this.map = new mapboxgl.Map({
       container: this.mapContainer,
-      style: 'mapbox://styles/blishten/cjg6jk8vg3tir2spd2eatu5fd',
+      // style: 'mapbox://styles/blishten/cjg6jk8vg3tir2spd2eatu5fd',
+      style: 'mapbox://styles/blishten/cj6q75jcd39gq2rqm1d7yv5rc',
       center: [0.043476868184143314, 0.0460817578557311],
       zoom: 12
     });
     this.map.on("load", this.mapLoaded.bind(this));
+    //get the tilesets for the user
+    this.client = new MapboxClient(mapboxgl.secretAccessToken);
+    this.client.listTilesets(this.parseTilesets.bind(this));
+  }
+  //callback function with the tileset info for the user
+  parseTilesets(err, tilesets) {
+    this.setState({ tilesets: tilesets });
+  }
+  //called if the tileset select box is changed
+  changeTileset(tilesetid) {
+    this.getMetadata(tilesetid).then(this.metadataRetrieved.bind(this));
+    this.setState({ tilesetid: tilesetid });
+  }
+  //gets all of the info for the tileset
+  getMetadata(tilesetId) {
+    return fetch("https://api.mapbox.com/v4/" + tilesetId + ".json?secure&access_token=" + mapboxgl.secretAccessToken)
+      .then(response => response.json())
+      .then(function(response) {
+        return response;
+      })
+      .catch(function(error) {
+        return error;
+      });
+  }
+  //callback function for the response from the call to get the tileset metadata
+  metadataRetrieved(response) {
+    this.spatialLayerChanged(response, true);
   }
 
   componentDidUpdate(prevProps, prevState) {
@@ -135,9 +168,12 @@ class App extends React.Component {
   }
 
   parseLoadScenarioResponse(err, response) {
-    this.setState({ loadingScenario: false,loggingIn: false });
+    this.setState({ loadingScenario: false, loggingIn: false });
     if (response.error === undefined) {
       this.setState({ scenario: response.scenario, runParams: response.runParameters, files: Object.assign(response.files), metadata: response.metadata });
+      if (response.metadata.MAPID) {
+        this.changeTileset(response.metadata.MAPID);
+      }
     }
     else {
       //ui feedback
@@ -233,6 +269,19 @@ class App extends React.Component {
       this.setState({ snackbarOpen: true, snackbarMessage: response.error });
     }
   }
+
+  //updates a parameter in the input.dat file directly, e.g. for updating the MAPID after the user sets their source spatial data
+  updateParameter(parameter, value) {
+    jsonp(MARXAN_ENDPOINT + "updateParameter?user=" + this.state.user + "&scenario=" + this.state.scenario + "&parameter=" + parameter + "&value=" + value, this.parseUpdateParameterResponse.bind(this));
+  }
+  parseUpdateParameterResponse(err, response) {
+    if (response.error === undefined) {}
+    else {
+      //ui feedback
+      this.setState({ snackbarOpen: true, snackbarMessage: response.error });
+    }
+  }
+
   //run a marxan job on the server
   runMarxan(e) {
     //update the ui to reflect the fact that a job is running
@@ -308,6 +357,11 @@ class App extends React.Component {
     }
   }
 
+  setPaintProperty(expression){
+    //get the name of the render layer
+    let layer = this.map.getStyle().layers[this.map.getStyle().layers.length - 1];
+    this.map.setPaintProperty(layer.id, "fill-color", expression);
+  }
 
   //renders the sum of solutions
   renderSumSolutionMap(data) {
@@ -321,7 +375,8 @@ class App extends React.Component {
     });
     // Last value is the default, used where there is no data
     expression.push("rgba(0,0,0,0)");
-    this.map.setPaintProperty("planning-units-3857-visible-a-0vmt87", "fill-color", expression);
+    //set the render paint property
+    this.setPaintProperty(expression);
   }
 
   //renders a specific solutions data
@@ -329,13 +384,13 @@ class App extends React.Component {
     // Calculate color for each planning unit 
     var expression = ["match", ["get", "PUID"]];
     data.forEach(function(row) {
-      var red = row["solution"] * 255;
-      var color = "rgba(" + red + ", " + 0 + ", " + 0 + ", 1)";
+      var color = "rgba(255,0,136, " + row["solution"] + ")"; //1's are pink and 0's are transparent
       expression.push(row["planning_unit"], color);
     });
     // Last value is the default, used where there is no data
     expression.push("rgba(0,0,0,0)");
-    this.map.setPaintProperty("planning-units-3857-visible-a-0vmt87", "fill-color", expression);
+    //set the render paint property
+    this.setPaintProperty(expression);
   }
 
   mouseMove(e) {
@@ -363,16 +418,26 @@ class App extends React.Component {
   }
 
   spatialLayerChanged(tileset, zoomToBounds) {
+    //save the name of the layer in the input.dat file in the MAPID parameter
+    this.updateParameter("MAPID", tileset.id);
+    //remove the existing spatial layer
     this.removeSpatialLayer();
+    //add in the new one
     this.addSpatialLayer(tileset);
+    //zoom to the layers extent
     this.zoomToBounds(tileset.bounds);
+    //set the state
     this.setState({ tileset: tileset });
   }
 
   removeSpatialLayer() {
     let layers = this.map.getStyle().layers;
     let layerId = layers[layers.length - 1].id;
+    let sourceId = layers[layers.length - 1].source;
+    //remove the layer
     this.map.removeLayer(layerId);
+    //remove the source if it is not a mapbox one
+    if (sourceId !== "composite") this.map.removeSource(sourceId);
   }
 
   addSpatialLayer(tileset) {
@@ -395,9 +460,7 @@ class App extends React.Component {
     let minLat = (bounds[1] < -90) ? -90 : bounds[1];
     let maxLng = (bounds[2] > 180) ? 180 : bounds[2];
     let maxLat = (bounds[3] > 90) ? 90 : bounds[3];
-    this.map.fitBounds([minLng, minLat, maxLng, maxLat], {
-      padding: { top: 10, bottom: 10, left: 10, right: 10 }
-    });
+    this.map.fitBounds([minLng, minLat, maxLng, maxLat], {padding: { top: 10, bottom: 10, left: 10, right: 10 },easing: function(num){return 1;}}  );
   }
 
   render() {
@@ -434,8 +497,11 @@ class App extends React.Component {
             editingScenarioName={this.state.editingScenarioName}
             loadingScenarios={this.state.loadingScenarios}
             loadingScenario={this.state.loadingScenario}
+            tilesets={this.state.tilesets}
+            changeTileset={this.changeTileset.bind(this)}
+            tilesetid={this.state.tilesetid}
             />
-          <img src={Loading} id='loading' style={{'display': (this.state.running ? 'block' : 'none')}} alt='loading'/>
+          <div className="runningSpinner"><FontAwesome spin name='sync' size='2x' style={{'display': (this.state.running ? 'block' : 'none')}}/></div>
           <Popup active_pu={this.state.active_pu} xy={this.state.popup_point}/>
           <Login open={this.state.validUser !== true || this.state.loggingIn} validatingUser={this.state.validatingUser} validateUser={this.validateUser.bind(this)} validUser={this.state.validUser} login={this.login.bind(this)} loggingIn={this.state.loggingIn} createNewUser={this.createNewUser.bind(this)} logout={this.logout.bind(this)}/>
           <Snackbar
