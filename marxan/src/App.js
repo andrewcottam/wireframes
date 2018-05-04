@@ -278,6 +278,21 @@ class App extends React.Component {
     }
   }
 
+  listScenarios() {
+    this.setState({ loadingScenarios: true });
+    jsonp(MARXAN_ENDPOINT + "listScenarios?user=" + this.state.user, this.parseListScenariosResponse.bind(this));
+  }
+
+  parseListScenariosResponse(err, response) {
+    this.setState({ loadingScenarios: false });
+    if (response.error === undefined) {
+      this.setState({ scenarios: response.scenarios });
+    }
+    else {
+      this.setState({ scenarios: undefined });
+    }
+  }
+
   //updates a parameter in the input.dat file directly, e.g. for updating the MAPID after the user sets their source spatial data
   updateParameter(parameter, value) {
     jsonp(MARXAN_ENDPOINT + "updateParameter?user=" + this.state.user + "&scenario=" + this.state.scenario + "&parameter=" + parameter + "&value=" + value, this.parseUpdateParameterResponse.bind(this));
@@ -312,7 +327,7 @@ class App extends React.Component {
       //if we have some data to map then set the state to reflect this
       (this.runMarxanResponse.ssoln) ? this.setState({ dataAvailable: true }): this.setState({ dataAvailable: false });
       //render the sum solution map
-      this.renderSumSolutionMap(this.runMarxanResponse.ssoln);
+      this.renderSolution(this.runMarxanResponse.ssoln, true);
       //create the array of solutions to pass to the InfoPanels table
       solutions = response.sum;
       //the array data are in the format "Run_Number","Score","Cost","Planning_Units" - so create an array of objects to pass to the outputs table
@@ -337,14 +352,14 @@ class App extends React.Component {
   loadSolution(solution) {
     if (solution === "Sum") {
       //load the sum of solutions which will already be loaded
-      this.renderSumSolutionMap(this.runMarxanResponse.ssoln);
+      this.renderSolution(this.runMarxanResponse.ssoln, true);
     }
     else {
       //see if the data are already loaded
       if (this.returnall === 'true') {
         //get the name of the REST response object which holds the data for the specific solution
         let _name = 'output_r' + this.pad(solution, 5);
-        this.renderSolution(this.runMarxanResponse[_name]);
+        this.renderSolution(this.runMarxanResponse[_name], false);
       }
       else {
         //request the data for the specific solution
@@ -354,22 +369,7 @@ class App extends React.Component {
   }
 
   parseLoadSolutionResponse(err, response) {
-    (response.error) ? console.error("Marxan: " + response.error): this.renderSolution(response.solution);
-  }
-
-  listScenarios() {
-    this.setState({ loadingScenarios: true });
-    jsonp(MARXAN_ENDPOINT + "listScenarios?user=" + this.state.user, this.parseListScenariosResponse.bind(this));
-  }
-
-  parseListScenariosResponse(err, response) {
-    this.setState({ loadingScenarios: false });
-    if (response.error === undefined) {
-      this.setState({ scenarios: response.scenarios });
-    }
-    else {
-      this.setState({ scenarios: undefined });
-    }
+    (response.error) ? console.error("Marxan: " + response.error): this.renderSolution(response.solution, false);
   }
 
   setPaintProperty(expression) {
@@ -377,75 +377,18 @@ class App extends React.Component {
     if (this.state.marxanLayer) this.map.setPaintProperty(this.state.marxanLayer.id, "fill-color", expression);
   }
 
-  //renders the sum of solutions
-  renderSumSolutionMap(data) {
-    this.changeRenderer("render2")
-  }
-
-  changeRenderer(event, value) {
-    switch (value) {
-      case "render1":
-        this.render_1(this.runMarxanResponse.ssoln);
-        break;
-      case "render2":
-        this.render_2(this.runMarxanResponse.ssoln);
-        break;
-      case "render3":
-        this.render_1(this.runMarxanResponse.ssoln);
-        break;
-      case "render4":
-        this.render_1(this.runMarxanResponse.ssoln);
-        break;
-      default:
-    }
-  }
-
-  //renders the sum of solutions by matching the PUID with each value from the data array and setting the paint property for each cell
-  render_1(data) {
-    // Calculate color for each planning unit based on the total number of selections in the marxan runs
+  //renders the sum of solutions - data is the REST response and sum is a flag to indicate if the data is the summed solution (true) or an individual solution (false)
+  renderSolution(data, sum) {
+    //build an expression to get the matching puids with different numbers of 'numbers' in the marxan results
     var expression = ["match", ["get", "PUID"]];
     data.forEach(function(row) {
-      //set the opacity according to the number of solutions - the data are in the order PUID, Number
-      var color = "rgba(255, 0, 136," + (row[1] / NUMBER_OF_RUNS) + ")";
-      expression.push(row[0], color);
-    });
-    // Last value is the default, used where there is no data
-    expression.push("rgba(0,0,0,0)");
-    //set the render paint property
-    this.setPaintProperty(expression);
-  }
-
-  render_2(data) {
-    // this.map.setPaintProperty(this.state.marxanLayer.id, "fill-color", ["match", ["get", "PUID"],[35, 36, 37], "rgba(255, 0, 136,1)", "rgba(255, 0, 136,0)"]);
-    var expression = ["match", ["get", "PUID"]];
-    data.forEach(function(row) {
-      expression.push(row[1], "rgba(255, 0, 136," + (row[0] / NUMBER_OF_RUNS) + ")");
-    });
-    // Last value is the default, used where there is no data
-    expression.push("rgba(0,0,0,0)");
-    //set the render paint property
-    this.setPaintProperty(expression);
-  }
-
-  render_3(data) {
-    // this.map.setPaintProperty(this.state.marxanLayer.id, "fill-color", ["rgb",["get", "PUID"],0,["-", 100, ["get", "PUID"]]]);
-    this.map.setPaintProperty(this.state.marxanLayer.id, "fill-color", [
-      ["in", "PUID", 35, 36, 37], "red"
-    ]);
-  }
-
-  render_4(data) {
-
-  }
-
-  //renders a specific solutions data
-  renderSolution(data) {
-    // Calculate color for each planning unit 
-    var expression = ["match", ["get", "PUID"]];
-    data.forEach(function(row) {
-      //the data are in the order PUID, Number
-      var color = "rgba(255,0,136, " + row[1] + ")"; //1's are pink and 0's are transparent
-      expression.push(row[0], color);
+      if (sum) {
+        //for each row add the puids and the color to the expression, e.g. [35,36,37],"rgba(255, 0, 136,0.1)"
+        expression.push(row[1], "rgba(255, 0, 136," + (row[0] / NUMBER_OF_RUNS) + ")");
+      }
+      else {
+        expression.push(row[1], "rgba(255, 0, 136,1)");
+      }
     });
     // Last value is the default, used where there is no data
     expression.push("rgba(0,0,0,0)");
@@ -454,26 +397,37 @@ class App extends React.Component {
   }
 
   mouseMove(e) {
+    //error check
     if (!this.state.showPopup || this.state.marxanLayer === undefined) return;
+    //get the features under the mouse
     var features = this.map.queryRenderedFeatures(e.point);
-    //get the planning unit features that are underneath the mouse
+    //see if there are any planning unit features under the mouse
     if ((features.length) && (features[0].layer.id === this.state.marxanLayer.id)) {
       //set the location for the popup
       if (!this.state.active_pu || (this.state.active_pu && this.state.active_pu.PUID !== features[0].properties.PUID)) this.setState({ popup_point: e.point });
-      //get the properties from the vector tiles
+      //get the properties from the vector tile
       let vector_tile_properties = features[0].properties;
-      //get the properties from the marxan results
-      let marxan_results = this.runMarxanResponse && this.runMarxanResponse.ssoln ? this.runMarxanResponse.ssoln.filter(item => item[0] === vector_tile_properties.PUID)[0] : {}; //data are - PUID, number
-      //convert the marxan results from an array to an object
-      let marxan_results_dict = { "PUID": marxan_results[0], "Number": marxan_results[1] };
-      //combine the 2 sets of properties
-      let active_pu = Object.assign(marxan_results_dict, vector_tile_properties);
-      //set the state to re-render the popup
-      this.setState({ active_pu: active_pu });
+      //get the properties from the marxan results - these will include the number of solutions that that planning unit is found in
+      let marxan_results = this.runMarxanResponse && this.runMarxanResponse.ssoln ? this.runMarxanResponse.ssoln.filter(item => item[1].indexOf(vector_tile_properties.PUID) > -1)[0] : {};
+      if (marxan_results) {
+        //convert the marxan results from an array to an object
+        let marxan_results_dict = { "PUID": vector_tile_properties.PUID, "Number": marxan_results[0] };
+        //combine the 2 sets of properties
+        let active_pu = Object.assign(marxan_results_dict, vector_tile_properties);
+        //set the state to re-render the popup
+        this.setState({ active_pu: active_pu });
+      }
+      else {
+        this.hidePopup();
+      }
     }
     else {
-      this.setState({ active_pu: undefined });
+      this.hidePopup();
     }
+  }
+
+  hidePopup() {
+    this.setState({ active_pu: undefined });
   }
 
   setNumRuns(e, v) {
@@ -580,30 +534,6 @@ class App extends React.Component {
             message={this.state.snackbarMessage}
             onRequestClose={this.closeSnackbar.bind(this)}
           />
-          <div className={'chooseRenderer'}>
-            <RadioButtonGroup name="chooseRenderer" onChange={this.changeRenderer.bind(this)}>
-              <RadioButton
-                value="render1"
-                label="render1"
-                disabled={!this.state.dataAvailable}
-              />
-              <RadioButton
-                value="render2"
-                label="render2"
-                disabled={!this.state.dataAvailable}
-              />
-              <RadioButton
-                value="render3"
-                label="render3"
-                disabled={!this.state.dataAvailable}
-              />
-              <RadioButton
-                value="render4"
-                label="render4"
-                disabled={!this.state.dataAvailable}
-              />
-            </RadioButtonGroup>
-          </div>
         </React.Fragment>
       </MuiThemeProvider>
     );
