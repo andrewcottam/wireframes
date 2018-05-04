@@ -82,7 +82,7 @@ class App extends React.Component {
         return error;
       });
   }
-  //callback function for the response from the call to get the tileset metadata
+  //callback function for the response from the call to get the tileset metadata bla bla bla
   metadataRetrieved(response) {
     this.spatialLayerChanged(response, true);
   }
