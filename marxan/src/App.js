@@ -6,11 +6,11 @@ import mapboxgl from 'mapbox-gl';
 import * as jsonp from 'jsonp';
 import InfoPanel from './InfoPanel.js';
 import Popup from './Popup.js';
-import Loading from './loading.gif';
 import Login from './login.js';
 import Snackbar from 'material-ui/Snackbar';
 import MapboxClient from 'mapbox';
 import FontAwesome from 'react-fontawesome';
+import { RadioButton, RadioButtonGroup } from 'material-ui/RadioButton';
 
 //CONSTANTS
 //THE MARXAN_ENDPOINT MUST ALSO BE CHANGED IN THE FILEUPLOAD.JS FILE
@@ -379,6 +379,29 @@ class App extends React.Component {
 
   //renders the sum of solutions
   renderSumSolutionMap(data) {
+    this.changeRenderer("render2")
+  }
+
+  changeRenderer(event, value) {
+    switch (value) {
+      case "render1":
+        this.render_1(this.runMarxanResponse.ssoln);
+        break;
+      case "render2":
+        this.render_2(this.runMarxanResponse.ssoln);
+        break;
+      case "render3":
+        this.render_1(this.runMarxanResponse.ssoln);
+        break;
+      case "render4":
+        this.render_1(this.runMarxanResponse.ssoln);
+        break;
+      default:
+    }
+  }
+
+  //renders the sum of solutions by matching the PUID with each value from the data array and setting the paint property for each cell
+  render_1(data) {
     // Calculate color for each planning unit based on the total number of selections in the marxan runs
     var expression = ["match", ["get", "PUID"]];
     data.forEach(function(row) {
@@ -390,6 +413,29 @@ class App extends React.Component {
     expression.push("rgba(0,0,0,0)");
     //set the render paint property
     this.setPaintProperty(expression);
+  }
+
+  render_2(data) {
+    // this.map.setPaintProperty(this.state.marxanLayer.id, "fill-color", ["match", ["get", "PUID"],[35, 36, 37], "rgba(255, 0, 136,1)", "rgba(255, 0, 136,0)"]);
+    var expression = ["match", ["get", "PUID"]];
+    data.forEach(function(row) {
+      expression.push(row[1], "rgba(255, 0, 136," + (row[0] / NUMBER_OF_RUNS) + ")");
+    });
+    // Last value is the default, used where there is no data
+    expression.push("rgba(0,0,0,0)");
+    //set the render paint property
+    this.setPaintProperty(expression);
+  }
+
+  render_3(data) {
+    // this.map.setPaintProperty(this.state.marxanLayer.id, "fill-color", ["rgb",["get", "PUID"],0,["-", 100, ["get", "PUID"]]]);
+    this.map.setPaintProperty(this.state.marxanLayer.id, "fill-color", [
+      ["in", "PUID", 35, 36, 37], "red"
+    ]);
+  }
+
+  render_4(data) {
+
   }
 
   //renders a specific solutions data
@@ -486,6 +532,7 @@ class App extends React.Component {
   setShowPopupOption(value) {
     this.setState({ showPopup: value, active_pu: undefined });
   }
+
   render() {
     return (
       <MuiThemeProvider>
@@ -533,6 +580,30 @@ class App extends React.Component {
             message={this.state.snackbarMessage}
             onRequestClose={this.closeSnackbar.bind(this)}
           />
+          <div className={'chooseRenderer'}>
+            <RadioButtonGroup name="chooseRenderer" onChange={this.changeRenderer.bind(this)}>
+              <RadioButton
+                value="render1"
+                label="render1"
+                disabled={!this.state.dataAvailable}
+              />
+              <RadioButton
+                value="render2"
+                label="render2"
+                disabled={!this.state.dataAvailable}
+              />
+              <RadioButton
+                value="render3"
+                label="render3"
+                disabled={!this.state.dataAvailable}
+              />
+              <RadioButton
+                value="render4"
+                label="render4"
+                disabled={!this.state.dataAvailable}
+              />
+            </RadioButtonGroup>
+          </div>
         </React.Fragment>
       </MuiThemeProvider>
     );

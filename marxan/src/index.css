@@ -169,3 +169,11 @@ table input {
 .scenariosBtn {
   margin: 5px;
 }
+
+.chooseRenderer {
+  position: absolute;
+  right: 20px;
+  top: 20px;
+  padding:10px;
+  background-color:white;
+}
