@@ -19,12 +19,12 @@ class FileUpload extends React.Component {
             //reset the file selector
             document.getElementById(this.id).value = "";
         }
-    }
+    } 
 
     fileUpload(value) {
         this.props.fileUploaded(false, '');
         this.setState({ loading: true });
-        const url = "https://db-server-blishten.c9users.io/marxan/webAPI/postFile";
+        const url = "https://db-server-blishten.c9users.io/marxan/webAPI2/postFile";
         const formData = new FormData();
         formData.append('value', value);
         formData.append('filename', value['name']);

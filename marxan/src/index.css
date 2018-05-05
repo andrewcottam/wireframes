@@ -177,3 +177,7 @@ table input {
   padding:10px;
   background-color:white;
 }
+
+.mapboxHelp{
+ cursor: pointer; 
+}

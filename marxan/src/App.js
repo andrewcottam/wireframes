@@ -10,10 +10,12 @@ import Login from './login.js';
 import Snackbar from 'material-ui/Snackbar';
 import MapboxClient from 'mapbox';
 import FontAwesome from 'react-fontawesome';
+import axios, { post } from 'axios';
 
 //CONSTANTS
 //THE MARXAN_ENDPOINT MUST ALSO BE CHANGED IN THE FILEUPLOAD.JS FILE
 let MARXAN_ENDPOINT = "https://db-server-blishten.c9users.io/marxan/webAPI2/";
+let TIMEOUT = 0; //disable timeout setting
 let NUMBER_OF_RUNS = 10;
 
 mapboxgl.accessToken = 'pk.eyJ1IjoiYmxpc2h0ZW4iLCJhIjoiMEZrNzFqRSJ9.0QBRA2HxTb8YHErUFRMPZg';
@@ -140,7 +142,7 @@ class App extends React.Component {
 
   getUsers() {
     //Get a user list
-    jsonp(MARXAN_ENDPOINT + "listUsers", this.parseGetUsersResponse.bind(this));
+    jsonp(MARXAN_ENDPOINT + "listUsers", { timeout: TIMEOUT }, this.parseGetUsersResponse.bind(this));
   }
 
   parseGetUsersResponse(err, response) {
@@ -200,7 +202,7 @@ class App extends React.Component {
 
   //the last scenario for a user is saved to the server. This REST call gets the name of the last solution
   getUsersLastScenario() {
-    jsonp(MARXAN_ENDPOINT + "getUser?user=" + this.state.user, this.parseGetUsersLastScenarioResponse.bind(this));
+    jsonp(MARXAN_ENDPOINT + "getUser?user=" + this.state.user, { timeout: TIMEOUT }, this.parseGetUsersLastScenarioResponse.bind(this));
   }
 
   //callback function to get the name of the users last loaded solution
@@ -220,7 +222,7 @@ class App extends React.Component {
     this.setState({ loadingScenario: true });
     //reset the results from any previous scenarios
     this.resetResults();
-    jsonp(MARXAN_ENDPOINT + "getScenario?user=" + this.state.user + "&scenario=" + scenario, this.parseLoadScenarioResponse.bind(this));
+    jsonp(MARXAN_ENDPOINT + "getScenario?user=" + this.state.user + "&scenario=" + scenario, { timeout: TIMEOUT }, this.parseLoadScenarioResponse.bind(this));
   }
 
   //callback function to get the files, metadata and runparameters for a specific scenario to render in the UI
@@ -247,23 +249,31 @@ class App extends React.Component {
   }
 
   //create a new user on the server
-  createNewUser(user) {
-    this.setState({ validatingUser: true });
-    jsonp(MARXAN_ENDPOINT + "createUser?user=" + user, this.parseCreateNewUserResponse.bind(this));
+  createNewUser(user, password, name, email, mapboxpk) {
+    let formData = new FormData();
+    formData.append('user', user);
+    formData.append('password', password);
+    formData.append('name', name);
+    formData.append('email', email);
+    formData.append('mapboxpk', mapboxpk);
+    formData.append('scenario', 'Sample scenario');
+    const config = {
+      headers: {
+        'content-type': 'multipart/form-data'
+      }
+    };
+    post(MARXAN_ENDPOINT + "createUser", formData, config).then((response) => this.parseCreateNewUserResponse(response.data));
   }
 
   //callback function after creating a new user
-  parseCreateNewUserResponse(err, response) {
+  parseCreateNewUserResponse(response) {
     this.setState({ validatingUser: false });
-    //check if there are no timeout errors or empty responses
-    if (!this.responseIsTimeoutOrEmpty(err, response)) {
-      //check there are no errors from the server
-      if (!this.isServerError(response)) {
-        this.setState({ validUser: true, snackbarOpen: true, snackbarMessage: response.info });
-      }
-      else {
-        this.setState({ validUser: false });
-      }
+    //check there are no errors from the server
+    if (!this.isServerError(response)) {
+      this.setState({ validUser: true, snackbarOpen: true, snackbarMessage: response.info });
+    }
+    else {
+      this.setState({ validUser: false });
     }
   }
 
@@ -271,10 +281,10 @@ class App extends React.Component {
   createNewScenario(scenario) {
     this.setState({ loadingScenarios: true });
     if (scenario.description) {
-      jsonp(MARXAN_ENDPOINT + "createScenario?user=" + this.state.user + "&scenario=" + scenario.name + "&description=" + scenario.description, this.parseCreateNewScenarioResponse.bind(this));
+      jsonp(MARXAN_ENDPOINT + "createScenario?user=" + this.state.user + "&scenario=" + scenario.name + "&description=" + scenario.description, { timeout: TIMEOUT }, this.parseCreateNewScenarioResponse.bind(this));
     }
     else {
-      jsonp(MARXAN_ENDPOINT + "createScenario?user=" + this.state.user + "&scenario=" + scenario.name, this.parseCreateNewScenarioResponse.bind(this));
+      jsonp(MARXAN_ENDPOINT + "createScenario?user=" + this.state.user + "&scenario=" + scenario.name, { timeout: TIMEOUT }, this.parseCreateNewScenarioResponse.bind(this));
     }
   }
 
@@ -298,7 +308,7 @@ class App extends React.Component {
   //REST call to delete a specific scenario
   deleteScenario(name) {
     this.setState({ loadingScenarios: true });
-    jsonp(MARXAN_ENDPOINT + "deleteScenario?user=" + this.state.user + "&scenario=" + name, this.parseDeleteScenarioResponse.bind(this));
+    jsonp(MARXAN_ENDPOINT + "deleteScenario?user=" + this.state.user + "&scenario=" + name, { timeout: TIMEOUT }, this.parseDeleteScenarioResponse.bind(this));
   }
 
   //callback function after deleting a specific scenario on the server
@@ -333,7 +343,7 @@ class App extends React.Component {
   renameScenario(newName) {
     this.setState({ editingScenarioName: false });
     if (newName !== '' && newName !== this.state.scenario) {
-      jsonp(MARXAN_ENDPOINT + "renameScenario?user=" + this.state.user + "&scenario=" + this.state.scenario + "&newName=" + newName, this.parseRenameScenarioResponse.bind(this));
+      jsonp(MARXAN_ENDPOINT + "renameScenario?user=" + this.state.user + "&scenario=" + this.state.scenario + "&newName=" + newName, { timeout: TIMEOUT }, this.parseRenameScenarioResponse.bind(this));
     }
   }
 
@@ -349,7 +359,7 @@ class App extends React.Component {
 
   listScenarios() {
     this.setState({ loadingScenarios: true });
-    jsonp(MARXAN_ENDPOINT + "listScenarios?user=" + this.state.user, this.parseListScenariosResponse.bind(this));
+    jsonp(MARXAN_ENDPOINT + "listScenarios?user=" + this.state.user, { timeout: TIMEOUT }, this.parseListScenariosResponse.bind(this));
   }
 
   parseListScenariosResponse(err, response) {
@@ -368,7 +378,7 @@ class App extends React.Component {
 
   //updates a parameter in the input.dat file directly, e.g. for updating the MAPID after the user sets their source spatial data
   updateParameter(parameter, value) {
-    jsonp(MARXAN_ENDPOINT + "updateParameter?user=" + this.state.user + "&scenario=" + this.state.scenario + "&parameter=" + parameter + "&value=" + value, this.parseUpdateParameterResponse.bind(this));
+    jsonp(MARXAN_ENDPOINT + "updateParameter?user=" + this.state.user + "&scenario=" + this.state.scenario + "&parameter=" + parameter + "&value=" + value, { timeout: TIMEOUT }, this.parseUpdateParameterResponse.bind(this));
   }
   parseUpdateParameterResponse(err, response) {
     //check if there are no timeout errors or empty responses
@@ -388,7 +398,7 @@ class App extends React.Component {
     this.returnall = this.state.numRuns > 10 ? 'false' : 'true';
     this.returnall = false; //override as the png payload is huge!
     //make the request to get the marxan data
-    jsonp(MARXAN_ENDPOINT + "runMarxan?user=" + this.state.user + "&scenario=" + this.state.scenario + "&numreps=" + this.state.numRuns + "&verbosity=" + this.verbosity + "&returnall=" + this.returnall, { timeout: 0 }, this.parseRunMarxanResponse.bind(this)); //get the data from the server and parse it
+    jsonp(MARXAN_ENDPOINT + "runMarxan?user=" + this.state.user + "&scenario=" + this.state.scenario + "&numreps=" + this.state.numRuns + "&verbosity=" + this.verbosity + "&returnall=" + this.returnall, { timeout: TIMEOUT }, this.parseRunMarxanResponse.bind(this)); //get the data from the server and parse it
   }
 
   parseRunMarxanResponse(err, response) {
@@ -443,7 +453,7 @@ class App extends React.Component {
       }
       else {
         //request the data for the specific solution
-        jsonp(MARXAN_ENDPOINT + "loadSolution?user=" + this.state.user + "&scenario=" + this.state.scenario + "&solution=" + solution, this.parseLoadSolutionResponse.bind(this));
+        jsonp(MARXAN_ENDPOINT + "loadSolution?user=" + this.state.user + "&scenario=" + this.state.scenario + "&solution=" + solution, { timeout: TIMEOUT }, this.parseLoadSolutionResponse.bind(this));
       }
     }
   }
