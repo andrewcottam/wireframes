@@ -10,7 +10,6 @@ import Login from './login.js';
 import Snackbar from 'material-ui/Snackbar';
 import MapboxClient from 'mapbox';
 import FontAwesome from 'react-fontawesome';
-import { RadioButton, RadioButtonGroup } from 'material-ui/RadioButton';
 
 //CONSTANTS
 //THE MARXAN_ENDPOINT MUST ALSO BE CHANGED IN THE FILEUPLOAD.JS FILE
@@ -62,16 +61,32 @@ class App extends React.Component {
     this.client = new MapboxClient(mapboxgl.api_token);
     this.client.listTilesets(this.parseTilesets.bind(this));
   }
+
   //callback function with the tileset info for the user
   parseTilesets(err, tilesets) {
-    this.setState({ tilesets: tilesets });
+    //check if there are no timeout errors or empty responses
+    if (!this.responseIsTimeoutOrEmpty(err, tilesets)) {
+      //sort alphabetically by name
+      tilesets.sort(function(a, b) {
+        if (a.name < b.name)
+          return -1;
+        if (a.name > b.name)
+          return 1;
+        return 0;
+      });
+      this.setState({ tilesets: tilesets });
+    }
+    else {
+      this.setState({ tilesets: [] });
+    }
   }
   //called if the tileset select box is changed
   changeTileset(tilesetid) {
     this.getMetadata(tilesetid).then(this.metadataRetrieved.bind(this));
     this.setState({ tilesetid: tilesetid });
   }
-  //gets all of the info for the tileset
+
+  //gets all of the metadata for the tileset
   getMetadata(tilesetId) {
     return fetch("https://api.mapbox.com/v4/" + tilesetId + ".json?secure&access_token=" + mapboxgl.api_token)
       .then(response => response.json())
@@ -82,7 +97,8 @@ class App extends React.Component {
         return error;
       });
   }
-  //callback function for the response from the call to get the tileset metadata bla bla bla
+
+  //callback function for the response from the call to get the tileset metadata 
   metadataRetrieved(response) {
     this.spatialLayerChanged(response, true);
   }
@@ -129,45 +145,77 @@ class App extends React.Component {
 
   parseGetUsersResponse(err, response) {
     this.setState({ validatingUser: false });
-    //the user already exists
-    if (response.users.indexOf(this.userToValidate) > -1) {
-      //user validated
-      this.setState({ validUser: true });
-    }
-    else {
-      //user not validated
-      this.setState({ validUser: false });
+    //check if there are no timeout errors or empty responses
+    if (!this.responseIsTimeoutOrEmpty(err, response)) {
+      //the user already exists
+      if (response.users.indexOf(this.userToValidate) > -1) {
+        //user validated
+        this.setState({ validUser: true });
+      }
+      else {
+        //user not validated
+        this.setState({ validUser: false });
+      }
     }
   }
 
+  //the user is validated so login
   login(user) {
     this.setState({ user: user, loggingIn: true });
   }
 
+  //log out and reset some state 
   logout() {
     this.setState({ user: 'logged out', validUser: undefined, scenario: '', scenarios: [] });
   }
 
+  //resets various variables and state in between users
   resetResults() {
     this.runMarxanResponse = {};
     this.setState({ log: 'No data', solutions: [], dataAvailable: false, outputsTabString: 'No data' });
   }
 
+  //checks the response from a REST call for timeout errors or empty responses
+  responseIsTimeoutOrEmpty(err, response) {
+    if (err || !response) {
+      let msg = err ? err.message : "No response received from server";
+      this.setState({ snackbarOpen: true, snackbarMessage: msg });
+      return true;
+    }
+    else {
+      return false;
+    }
+  }
+
+  //checks to see if the rest server raised an error and if it did then show in the snackbar
+  isServerError(response) {
+    if (response.error) {
+      this.setState({ snackbarOpen: true, snackbarMessage: response.error });
+      return true;
+    }
+    else {
+      return false;
+    }
+  }
+
+  //the last scenario for a user is saved to the server. This REST call gets the name of the last solution
   getUsersLastScenario() {
     jsonp(MARXAN_ENDPOINT + "getUser?user=" + this.state.user, this.parseGetUsersLastScenarioResponse.bind(this));
   }
 
+  //callback function to get the name of the users last loaded solution
   parseGetUsersLastScenarioResponse(err, response) {
-    if (response.error === undefined) {
-      this.setState({ scenario: response.lastScenario });
-      this.loadScenario(response.lastScenario);
-    }
-    else {
-      //ui feedback
-      this.setState({ snackbarOpen: true, snackbarMessage: response.error });
+    //check if there are no timeout errors or empty responses
+    if (!this.responseIsTimeoutOrEmpty(err, response)) {
+      //check there are no errors from the server
+      if (!this.isServerError(response)) {
+        this.setState({ scenario: response.lastScenario });
+        this.loadScenario(response.lastScenario);
+      }
     }
   }
 
+  //loads a scenario
   loadScenario(scenario) {
     this.setState({ loadingScenario: true });
     //reset the results from any previous scenarios
@@ -175,17 +223,19 @@ class App extends React.Component {
     jsonp(MARXAN_ENDPOINT + "getScenario?user=" + this.state.user + "&scenario=" + scenario, this.parseLoadScenarioResponse.bind(this));
   }
 
+  //callback function to get the files, metadata and runparameters for a specific scenario to render in the UI
   parseLoadScenarioResponse(err, response) {
     this.setState({ loadingScenario: false, loggingIn: false });
-    if (response.error === undefined) {
-      this.setState({ scenario: response.scenario, runParams: response.runParameters, files: Object.assign(response.files), metadata: response.metadata });
-      if (response.metadata.MAPID) {
-        this.changeTileset(response.metadata.MAPID);
+    //check if there are no timeout errors or empty responses
+    if (!this.responseIsTimeoutOrEmpty(err, response)) {
+      //check there are no errors from the server
+      if (!this.isServerError(response)) {
+        this.setState({ scenario: response.scenario, runParams: response.runParameters, files: Object.assign(response.files), metadata: response.metadata });
+        //if there is a mapid passed then programmatically change the select box to this map 
+        if (response.metadata.MAPID) {
+          this.changeTileset(response.metadata.MAPID);
+        }
       }
-    }
-    else {
-      //ui feedback
-      this.setState({ snackbarOpen: true, snackbarMessage: response.error });
     }
   }
 
@@ -202,16 +252,22 @@ class App extends React.Component {
     jsonp(MARXAN_ENDPOINT + "createUser?user=" + user, this.parseCreateNewUserResponse.bind(this));
   }
 
+  //callback function after creating a new user
   parseCreateNewUserResponse(err, response) {
     this.setState({ validatingUser: false });
-    if (response.error === undefined) {
-      this.setState({ validUser: true, snackbarOpen: true, snackbarMessage: response.info });
-    }
-    else {
-      this.setState({ validUser: false, snackbarOpen: true, snackbarMessage: response.error });
+    //check if there are no timeout errors or empty responses
+    if (!this.responseIsTimeoutOrEmpty(err, response)) {
+      //check there are no errors from the server
+      if (!this.isServerError(response)) {
+        this.setState({ validUser: true, snackbarOpen: true, snackbarMessage: response.info });
+      }
+      else {
+        this.setState({ validUser: false });
+      }
     }
   }
 
+  //REST call to create a new scenario for a specific user
   createNewScenario(scenario) {
     this.setState({ loadingScenarios: true });
     if (scenario.description) {
@@ -222,45 +278,58 @@ class App extends React.Component {
     }
   }
 
+  //callback function after creating a new scenario
   parseCreateNewScenarioResponse(err, response) {
-    if (response.error === undefined) {
-      //refresh the scenarios list
-      this.listScenarios();
-      this.setState({ snackbarOpen: true, snackbarMessage: response.info });
-    }
-    else {
-      //ui feedback
-      this.setState({ snackbarOpen: true, snackbarMessage: response.error, loadingScenarios: false });
+    //check if there are no timeout errors or empty responses
+    if (!this.responseIsTimeoutOrEmpty(err, response)) {
+      //check there are no errors from the server
+      if (!this.isServerError(response)) {
+        //refresh the scenarios list
+        this.listScenarios();
+        this.setState({ snackbarOpen: true, snackbarMessage: response.info });
+      }
+      else {
+        //ui feedback
+        this.setState({ loadingScenarios: false });
+      }
     }
   }
 
+  //REST call to delete a specific scenario
   deleteScenario(name) {
     this.setState({ loadingScenarios: true });
     jsonp(MARXAN_ENDPOINT + "deleteScenario?user=" + this.state.user + "&scenario=" + name, this.parseDeleteScenarioResponse.bind(this));
   }
 
+  //callback function after deleting a specific scenario on the server
   parseDeleteScenarioResponse(err, response) {
-    if (response.error === undefined) {
-      //refresh the scenarios list
-      this.listScenarios();
-      //ui feedback
-      this.setState({ snackbarOpen: true, snackbarMessage: response.info });
-      //see if the user deleted the current scenario
-      if (response.scenario === this.state.scenario) {
+    //check if there are no timeout errors or empty responses
+    if (!this.responseIsTimeoutOrEmpty(err, response)) {
+      //check there are no errors from the server
+      if (!this.isServerError(response)) {
+        //refresh the scenarios list
+        this.listScenarios();
         //ui feedback
-        this.setState({ snackbarOpen: true, snackbarMessage: "Current scenario deleted - loading next available" });
-        this.state.scenarios.map((scenario) => { if (scenario.name !== this.state.scenario) this.loadScenario(scenario.name) });
+        this.setState({ snackbarOpen: true, snackbarMessage: response.info });
+        //see if the user deleted the current scenario
+        if (response.scenario === this.state.scenario) {
+          //ui feedback
+          this.setState({ snackbarOpen: true, snackbarMessage: "Current scenario deleted - loading next available" });
+          this.state.scenarios.map((scenario) => { if (scenario.name !== this.state.scenario) this.loadScenario(scenario.name) });
+        }
       }
-    }
-    else {
-      //ui feedback
-      this.setState({ snackbarOpen: true, snackbarMessage: response.error, loadingScenarios: false });
+      else {
+        //ui feedback
+        this.setState({ loadingScenarios: false });
+      }
     }
   }
 
   startEditingScenarioName() {
     this.setState({ editingScenarioName: true });
   }
+
+  //REST call to rename a specific scenario on the server
   renameScenario(newName) {
     this.setState({ editingScenarioName: false });
     if (newName !== '' && newName !== this.state.scenario) {
@@ -269,12 +338,12 @@ class App extends React.Component {
   }
 
   parseRenameScenarioResponse(err, response) {
-    if (response.error === undefined) {
-      this.setState({ scenario: response.scenario, snackbarOpen: true, snackbarMessage: response.info });
-    }
-    else {
-      //ui feedback
-      this.setState({ snackbarOpen: true, snackbarMessage: response.error });
+    //check if there are no timeout errors or empty responses
+    if (!this.responseIsTimeoutOrEmpty(err, response)) {
+      //check there are no errors from the server
+      if (!this.isServerError(response)) {
+        this.setState({ scenario: response.scenario, snackbarOpen: true, snackbarMessage: response.info });
+      }
     }
   }
 
@@ -285,11 +354,15 @@ class App extends React.Component {
 
   parseListScenariosResponse(err, response) {
     this.setState({ loadingScenarios: false });
-    if (response.error === undefined) {
-      this.setState({ scenarios: response.scenarios });
-    }
-    else {
-      this.setState({ scenarios: undefined });
+    //check if there are no timeout errors or empty responses
+    if (!this.responseIsTimeoutOrEmpty(err, response)) {
+      //check there are no errors from the server
+      if (!this.isServerError(response)) {
+        this.setState({ scenarios: response.scenarios });
+      }
+      else {
+        this.setState({ scenarios: undefined });
+      }
     }
   }
 
@@ -298,10 +371,12 @@ class App extends React.Component {
     jsonp(MARXAN_ENDPOINT + "updateParameter?user=" + this.state.user + "&scenario=" + this.state.scenario + "&parameter=" + parameter + "&value=" + value, this.parseUpdateParameterResponse.bind(this));
   }
   parseUpdateParameterResponse(err, response) {
-    if (response.error === undefined) {}
-    else {
-      //ui feedback
-      this.setState({ snackbarOpen: true, snackbarMessage: response.error });
+    //check if there are no timeout errors or empty responses
+    if (!this.responseIsTimeoutOrEmpty(err, response)) {
+      //check there are no errors from the server
+      if (!this.isServerError(response)) {
+        //do something
+      }
     }
   }
 
@@ -313,15 +388,20 @@ class App extends React.Component {
     this.returnall = this.state.numRuns > 10 ? 'false' : 'true';
     this.returnall = false; //override as the png payload is huge!
     //make the request to get the marxan data
-    jsonp(MARXAN_ENDPOINT + "runMarxan?user=" + this.state.user + "&scenario=" + this.state.scenario + "&numreps=" + this.state.numRuns + "&verbosity=" + this.verbosity + "&returnall=" + this.returnall, this.parseRunMarxanResponse.bind(this)); //get the data from the server and parse it
+    jsonp(MARXAN_ENDPOINT + "runMarxan?user=" + this.state.user + "&scenario=" + this.state.scenario + "&numreps=" + this.state.numRuns + "&verbosity=" + this.verbosity + "&returnall=" + this.returnall, { timeout: 0 }, this.parseRunMarxanResponse.bind(this)); //get the data from the server and parse it
   }
 
   parseRunMarxanResponse(err, response) {
     var solutions;
-    if (response.error) {
-      solutions = [];
-    }
-    else {
+    //restore ui
+    this.setState({ running: false });
+    //check if there are no timeout errors or empty responses
+    if (!this.responseIsTimeoutOrEmpty(err, response)) {
+      //check there are no errors from the server
+      if (this.isServerError(response)) {
+        solutions = [];
+        return;
+      }
       //get the response and store it in this component
       this.runMarxanResponse = response;
       //if we have some data to map then set the state to reflect this
@@ -336,9 +416,9 @@ class App extends React.Component {
       });
       //add in the row for the summed solutions
       solutions.splice(0, 0, { 'Run_Number': 'Sum', 'Score': '', 'Cost': '', 'Planning_Units': '' });
+      //ui feedback
+      this.setState({ log: response.log.replace(/(\r\n|\n|\r)/g, "<br />"), outputsTabString: '', solutions: solutions });
     }
-    //ui feedback
-    this.setState({ running: false, log: response.log.replace(/(\r\n|\n|\r)/g, "<br />"), outputsTabString: '', solutions: solutions });
   }
 
   //pads a number with zeros to a specific size, e.g. pad(9,5) => 00009
@@ -369,7 +449,13 @@ class App extends React.Component {
   }
 
   parseLoadSolutionResponse(err, response) {
-    (response.error) ? console.error("Marxan: " + response.error): this.renderSolution(response.solution, false);
+    //check if there are no timeout errors or empty responses
+    if (!this.responseIsTimeoutOrEmpty(err, response)) {
+      //check there are no errors from the server
+      if (!this.isServerError(response)) {
+        this.renderSolution(response.solution, false);
+      }
+    }
   }
 
   setPaintProperty(expression) {
