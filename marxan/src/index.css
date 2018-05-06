@@ -174,10 +174,19 @@ table input {
   position: absolute;
   right: 20px;
   top: 20px;
-  padding:10px;
-  background-color:white;
+  padding: 10px;
+  background-color: white;
 }
 
-.mapboxHelp{
- cursor: pointer; 
+.mapboxHelp {
+  cursor: pointer;
+}
+
+.forgotLink {
+  cursor: pointer;
+  font-size: 12px;
+  text-decoration: underline;
+  color: cadetblue;
+  margin-left: 11px;
+  
 }

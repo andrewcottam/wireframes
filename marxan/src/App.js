@@ -26,12 +26,12 @@ class App extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      user: 'logged out',
+      user: '',
+      password: '',
       loggingIn: false,
+      loggedIn: false,
       scenario: '',
       editingScenarioName: false,
-      validatingUser: false,
-      validUser: undefined,
       runParams: [],
       files: {},
       running: false,
@@ -106,10 +106,6 @@ class App extends React.Component {
   }
 
   componentDidUpdate(prevProps, prevState) {
-    //if the user has logged in and the state has been set we can now load the scenario
-    if (this.state.user !== 'logged out' && prevState.user === 'logged out') {
-      this.getUsersLastScenario();
-    }
     //if any files have been uploaded then check to see if we have all of the mandatory file inputs - if so, set the state to being runnable
     if (this.state.files !== prevState.files) {
       (this.state.files.SPECNAME !== '' && this.state.files.PUNAME !== '' && this.state.files.PUVSPRNAME !== '') ? this.setState({ runnable: true }): this.setState({ runnable: false });
@@ -125,56 +121,6 @@ class App extends React.Component {
 
   closeSnackbar() {
     this.setState({ snackbarOpen: false });
-  }
-
-  setVerbosity(value) {
-    this.verbosity = value;
-  }
-
-  validateUser(user) {
-    //set the state that we are validating the user
-    this.setState({ validatingUser: true });
-    //set the user trying to log in
-    this.userToValidate = user;
-    //get a list of existing users
-    this.getUsers();
-  }
-
-  getUsers() {
-    //Get a user list
-    jsonp(MARXAN_ENDPOINT + "listUsers", { timeout: TIMEOUT }, this.parseGetUsersResponse.bind(this));
-  }
-
-  parseGetUsersResponse(err, response) {
-    this.setState({ validatingUser: false });
-    //check if there are no timeout errors or empty responses
-    if (!this.responseIsTimeoutOrEmpty(err, response)) {
-      //the user already exists
-      if (response.users.indexOf(this.userToValidate) > -1) {
-        //user validated
-        this.setState({ validUser: true });
-      }
-      else {
-        //user not validated
-        this.setState({ validUser: false });
-      }
-    }
-  }
-
-  //the user is validated so login
-  login(user) {
-    this.setState({ user: user, loggingIn: true });
-  }
-
-  //log out and reset some state 
-  logout() {
-    this.setState({ user: 'logged out', validUser: undefined, scenario: '', scenarios: [] });
-  }
-
-  //resets various variables and state in between users
-  resetResults() {
-    this.runMarxanResponse = {};
-    this.setState({ log: 'No data', solutions: [], dataAvailable: false, outputsTabString: 'No data' });
   }
 
   //checks the response from a REST call for timeout errors or empty responses
@@ -197,6 +143,86 @@ class App extends React.Component {
     }
     else {
       return false;
+    }
+  }
+
+  setVerbosity(value) {
+    this.verbosity = value;
+  }
+
+  changeUserName(user) {
+    this.setState({ user: user });
+  }
+
+  changePassword(password) {
+    this.setState({ password: password });
+  }
+
+  validateUser() {
+    this.setState({ loggingIn: true });
+    //get a list of existing users 
+    jsonp(MARXAN_ENDPOINT + "validateUser?user=" + this.state.user + "&password=" + this.state.password, { timeout: TIMEOUT }, this.parseValidateUserResponse.bind(this));
+  }
+
+  parseValidateUserResponse(err, response) {
+    //check if there are no timeout errors or empty responses
+    if (!this.responseIsTimeoutOrEmpty(err, response)) {
+      //check there are no errors from the server
+      if (!this.isServerError(response)) {
+        //user validated - log them in
+        this.login();
+      }
+      else {
+        this.setState({ loggingIn: false });
+      }
+    }
+  }
+
+  getUsers() {
+    //Get a user list
+    jsonp(MARXAN_ENDPOINT + "listUsers", { timeout: TIMEOUT }, this.parseGetUsersResponse.bind(this));
+  }
+
+  parseGetUsersResponse(err, response) {
+    //check if there are no timeout errors or empty responses
+    if (!this.responseIsTimeoutOrEmpty(err, response)) {
+      //the user already exists
+      if (response.users.indexOf(this.state.user) > -1) {
+        //user validated - log them in
+        this.login();
+      }
+      else {
+        //ui feedback
+        this.setState({ loggingIn: false, snackbarOpen: true, snackbarMessage: "Invalid login" });
+      }
+    }
+  }
+
+  //the user is validated so login
+  login() {
+    //get the users data
+    this.getUsersLastScenario();
+  }
+
+  //log out and reset some state 
+  logout() {
+    this.setState({ loggedIn: false, user: '' });
+  }
+
+  resendPassword() {
+    this.setState({ resending: true });
+    jsonp(MARXAN_ENDPOINT + "resendPassword?user=" + this.state.user, { timeout: TIMEOUT }, this.parseResendPasswordResponse.bind(this));
+  }
+
+  //callback function after resending the users password
+  parseResendPasswordResponse(err, response) {
+    this.setState({ resending: false });
+    //check if there are no timeout errors or empty responses
+    if (!this.responseIsTimeoutOrEmpty(err, response)) {
+      //check there are no errors from the server
+      if (!this.isServerError(response)) {
+        this.setState({ snackbarOpen: true, snackbarMessage: "Password resent" });
+      }
     }
   }
 
@@ -232,13 +258,19 @@ class App extends React.Component {
     if (!this.responseIsTimeoutOrEmpty(err, response)) {
       //check there are no errors from the server
       if (!this.isServerError(response)) {
-        this.setState({ scenario: response.scenario, runParams: response.runParameters, files: Object.assign(response.files), metadata: response.metadata });
+        this.setState({ loggedIn: true, scenario: response.scenario, runParams: response.runParameters, files: Object.assign(response.files), metadata: response.metadata });
         //if there is a mapid passed then programmatically change the select box to this map 
         if (response.metadata.MAPID) {
           this.changeTileset(response.metadata.MAPID);
         }
       }
     }
+  }
+
+  //resets various variables and state in between users
+  resetResults() {
+    this.runMarxanResponse = {};
+    this.setState({ log: 'No data', solutions: [], dataAvailable: false, outputsTabString: 'No data' });
   }
 
   //called after a file has been uploaded
@@ -267,13 +299,12 @@ class App extends React.Component {
 
   //callback function after creating a new user
   parseCreateNewUserResponse(response) {
-    this.setState({ validatingUser: false });
     //check there are no errors from the server
     if (!this.isServerError(response)) {
-      this.setState({ validUser: true, snackbarOpen: true, snackbarMessage: response.info });
+      this.setState({ snackbarOpen: true, snackbarMessage: response.info });
     }
     else {
-      this.setState({ validUser: false });
+      this.setState({ snackbarOpen: true, snackbarMessage: response.error });
     }
   }
 
@@ -624,7 +655,15 @@ class App extends React.Component {
             />
           <div className="runningSpinner"><FontAwesome spin name='sync' size='2x' style={{'display': (this.state.running ? 'block' : 'none')}}/></div>
           <Popup active_pu={this.state.active_pu} xy={this.state.popup_point}/>
-          <Login open={this.state.validUser !== true || this.state.loggingIn} validatingUser={this.state.validatingUser} validateUser={this.validateUser.bind(this)} validUser={this.state.validUser} login={this.login.bind(this)} loggingIn={this.state.loggingIn} createNewUser={this.createNewUser.bind(this)} logout={this.logout.bind(this)}/>
+          <Login open={!this.state.loggedIn} 
+            changeUserName={this.changeUserName.bind(this)} 
+            changePassword={this.changePassword.bind(this)} 
+            user={this.state.user} 
+            validateUser={this.validateUser.bind(this)} 
+            loggingIn={this.state.loggingIn} 
+            createNewUser={this.createNewUser.bind(this)}
+            resendPassword={this.resendPassword.bind(this)}
+            resending={this.state.resending}/>
           <Snackbar
             open={this.state.snackbarOpen}
             message={this.state.snackbarMessage}
