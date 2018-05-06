@@ -160,6 +160,20 @@ table input {
   margin-left: 66px;
 }
 
+.resendSpinner {
+  position: absolute;
+  top: 31px;
+  margin-left: 145px;
+
+}
+
+.newUserSpinner {
+  position: absolute;
+  top: 31px;
+  margin-left: 100px;
+
+}
+
 .runningSpinner {
   position: fixed;
   top: 50%;
@@ -180,6 +194,7 @@ table input {
 
 .mapboxHelp {
   cursor: pointer;
+  margin-left: 10px;
 }
 
 .forgotLink {
@@ -188,5 +203,5 @@ table input {
   text-decoration: underline;
   color: cadetblue;
   margin-left: 11px;
-  
+
 }

@@ -40,10 +40,10 @@ class UserMenu extends React.Component {
       <React.Fragment>
               <FlatButton
                 onClick={this.props.showUserMenu.bind(this)}
-                label={this.props.user} 
+                label={this.props.user ? this.props.user : 'not logged in'} 
                 primary={true}
                 labelStyle={{color:'white',textTransform:'',fontWeight:'400'}}
-                style={{marginTop:'7px'}}
+                style={{marginTop:'7px', display: this.props.user ? 'block' : 'none'}}
                 onMouseEnter={this.props.onMouseEnter}
               />
               <Popover

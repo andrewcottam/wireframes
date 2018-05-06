@@ -75,6 +75,7 @@ class ScenariosDialog extends React.Component {
         let listitems = this.props.scenarios && this.props.scenarios.map((scenario) => {
             return (<ListItem key={scenario.name} value={scenario.name} primaryText={scenario.name} secondaryText={scenario.description + " (created: " + scenario.createdate + ")"}/>);
         });
+        if (!listitems) listitems = <div></div>; //to stop console warnings
 
         let c = <React.Fragment>
             <SelectableList defaultValue ={0} children={listitems} changeScenario={this.changeScenario.bind(this)}/>

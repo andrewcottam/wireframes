@@ -201,12 +201,12 @@ class App extends React.Component {
   //the user is validated so login
   login() {
     //get the users data
-    this.getUsersLastScenario();
+    this.getUserInfo();
   }
 
   //log out and reset some state 
   logout() {
-    this.setState({ loggedIn: false, user: '' });
+    this.setState({ loggedIn: false, user: '', password: '', scenario: '' });
   }
 
   resendPassword() {
@@ -226,19 +226,19 @@ class App extends React.Component {
     }
   }
 
-  //the last scenario for a user is saved to the server. This REST call gets the name of the last solution
-  getUsersLastScenario() {
-    jsonp(MARXAN_ENDPOINT + "getUser?user=" + this.state.user, { timeout: TIMEOUT }, this.parseGetUsersLastScenarioResponse.bind(this));
+  //gets all the information for the user that is logging in
+  getUserInfo() {
+    jsonp(MARXAN_ENDPOINT + "getUser?user=" + this.state.user, { timeout: TIMEOUT }, this.parseGetUserInfoResponse.bind(this));
   }
 
-  //callback function to get the name of the users last loaded solution
-  parseGetUsersLastScenarioResponse(err, response) {
+  //callback function to get the information for the user that is logging in
+  parseGetUserInfoResponse(err, response) {
     //check if there are no timeout errors or empty responses
     if (!this.responseIsTimeoutOrEmpty(err, response)) {
       //check there are no errors from the server
       if (!this.isServerError(response)) {
-        this.setState({ scenario: response.lastScenario });
-        this.loadScenario(response.lastScenario);
+        this.setState({ scenario: response.userData.LASTSCENARIO });
+        this.loadScenario(response.userData.LASTSCENARIO);
       }
     }
   }
@@ -282,6 +282,7 @@ class App extends React.Component {
 
   //create a new user on the server
   createNewUser(user, password, name, email, mapboxpk) {
+    this.setState({ creatingNewUser: true });
     let formData = new FormData();
     formData.append('user', user);
     formData.append('password', password);
@@ -299,9 +300,10 @@ class App extends React.Component {
 
   //callback function after creating a new user
   parseCreateNewUserResponse(response) {
+    this.setState({ creatingNewUser: false });
     //check there are no errors from the server
     if (!this.isServerError(response)) {
-      this.setState({ snackbarOpen: true, snackbarMessage: response.info });
+      this.setState({ snackbarOpen: true, snackbarMessage: response.info + ". Close and login"});
     }
     else {
       this.setState({ snackbarOpen: true, snackbarMessage: response.error });
@@ -659,9 +661,11 @@ class App extends React.Component {
             changeUserName={this.changeUserName.bind(this)} 
             changePassword={this.changePassword.bind(this)} 
             user={this.state.user} 
+            password={this.state.password} 
             validateUser={this.validateUser.bind(this)} 
             loggingIn={this.state.loggingIn} 
             createNewUser={this.createNewUser.bind(this)}
+            creatingNewUser={this.state.creatingNewUser}
             resendPassword={this.resendPassword.bind(this)}
             resending={this.state.resending}/>
           <Snackbar
