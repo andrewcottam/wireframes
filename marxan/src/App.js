@@ -623,6 +623,7 @@ class App extends React.Component {
           <div ref={el => this.mapContainer = el} className="absolute top right left bottom" />
           <InfoPanel
             user={this.state.user}
+            loggedIn={this.state.loggedIn}
             listScenarios={this.listScenarios.bind(this)}
             scenarios={this.state.scenarios}
             scenario={this.state.scenario}

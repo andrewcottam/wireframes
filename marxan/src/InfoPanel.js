@@ -13,11 +13,11 @@ import ParametersTable from './ParametersTable.js';
 
 class InfoPanel extends React.Component {
   constructor(props) {
-    super(props);
+    super(props); 
     this.state = { 'allFilesUploaded': true, editingScenarioName: false };
     this.nUploading = 0;
   }
-  componentDidUpdate(prevProps, prevState) {
+  componentDidUpdate(prevProps, prevState, snapshot) {
     //if the input box for renaming the scenario has been made visible and it has no value, then initialise it with the scenario name and focus it
     if (prevProps.editingScenarioName === false && this.props.editingScenarioName) {
       document.getElementById("scenarioName").value = this.props.scenario;
@@ -76,6 +76,7 @@ class InfoPanel extends React.Component {
           <AppBar title={this.props.scenario} showMenuIconButton={false} onClick={this.startEditingScenarioName.bind(this)}
           iconElementRight={
           <UserMenu user={ this.props.user} 
+                    loggedIn={this.props.loggedIn}
                     onMouseEnter={this.showUserMenu.bind(this)} 
                     showUserMenu={this.showUserMenu.bind(this)} 
                     userMenuOpen={this.state.userMenuOpen} 

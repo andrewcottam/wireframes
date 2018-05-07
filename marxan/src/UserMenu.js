@@ -43,7 +43,7 @@ class UserMenu extends React.Component {
                 label={this.props.user ? this.props.user : 'not logged in'} 
                 primary={true}
                 labelStyle={{color:'white',textTransform:'',fontWeight:'400'}}
-                style={{marginTop:'7px', display: this.props.user ? 'block' : 'none'}}
+                style={{marginTop:'7px', display: this.props.loggedIn ? 'block' : 'none'}}
                 onMouseEnter={this.props.onMouseEnter}
               />
               <Popover
