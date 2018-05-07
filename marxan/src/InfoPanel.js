@@ -70,7 +70,7 @@ class InfoPanel extends React.Component {
   }
   render() {
     return (
-      <div style={{'position':'absolute'}}>
+      <div style={{'position':'absolute', display: this.props.loggedIn ? 'block' : 'none'}}>
         <Paper zDepth={2} className='InfoPanelPaper'>
           <input id="scenarioName" style={{'display': (this.props.editingScenarioName) ? 'block' : 'none'}} className={'scenarioNameEditBox'} onKeyPress={this.onKeyPress.bind(this)} onBlur={this.onBlur.bind(this)}/>
           <AppBar title={this.props.scenario} showMenuIconButton={false} onClick={this.startEditingScenarioName.bind(this)}

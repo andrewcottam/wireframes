@@ -1,5 +1,7 @@
 import React from 'react';
+/*eslint-disable no-unused-vars*/
 import axios, { post } from 'axios';
+/*eslint-enable no-unused-vars*/
 import FontAwesome from 'react-fontawesome';
 
 //From AshikNesin https://gist.github.com/AshikNesin/e44b1950f6a24cfcd85330ffc1713513

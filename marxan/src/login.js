@@ -52,7 +52,7 @@ class Login extends React.Component {
                 <NewUserDialog 
                     open={this.state.newUserDialogOpen} 
                     closeNewUserDialog={this.closeNewUserDialog.bind(this)} 
-                    createNewUser={this.props.createNewUser.bind(this)} 
+                    createNewUser={this.props.createNewUser} 
                     creatingNewUser={this.props.creatingNewUser}/>
                 <ResendPassword 
                     open={this.state.resendPasswordDialogOpen} 

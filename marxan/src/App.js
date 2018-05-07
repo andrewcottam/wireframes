@@ -10,16 +10,18 @@ import Login from './login.js';
 import Snackbar from 'material-ui/Snackbar';
 import MapboxClient from 'mapbox';
 import FontAwesome from 'react-fontawesome';
+/*eslint-disable no-unused-vars*/
 import axios, { post } from 'axios';
+/*eslint-enable no-unused-vars*/
 
 //CONSTANTS
 //THE MARXAN_ENDPOINT MUST ALSO BE CHANGED IN THE FILEUPLOAD.JS FILE
 let MARXAN_ENDPOINT = "https://db-server-blishten.c9users.io/marxan/webAPI2/";
 let TIMEOUT = 0; //disable timeout setting
 let NUMBER_OF_RUNS = 10;
-
-mapboxgl.accessToken = 'pk.eyJ1IjoiYmxpc2h0ZW4iLCJhIjoiMEZrNzFqRSJ9.0QBRA2HxTb8YHErUFRMPZg';
-mapboxgl.api_token = 'sk.eyJ1IjoiYmxpc2h0ZW4iLCJhIjoiY2piNm1tOGwxMG9lajMzcXBlZDR4aWVjdiJ9.Z1Jq4UAgGpXukvnUReLO1g';
+let SAMPLE_TILESET_ID = "blishten.3ogmvag8";
+let SAMPLE_TILESET_NAME = "Marxan Sample Planning Area";
+mapboxgl.accessToken = 'pk.eyJ1IjoiYmxpc2h0ZW4iLCJhIjoiMEZrNzFqRSJ9.0QBRA2HxTb8YHErUFRMPZg'; //this is my public access token for using in the Mapbox GL client - TODO change this to the logged in users public access token
 
 class App extends React.Component {
 
@@ -53,56 +55,11 @@ class App extends React.Component {
   componentDidMount() {
     this.map = new mapboxgl.Map({
       container: this.mapContainer,
-      // style: 'mapbox://styles/blishten/cjg6jk8vg3tir2spd2eatu5fd',
-      style: 'mapbox://styles/blishten/cj6q75jcd39gq2rqm1d7yv5rc',
+      style: 'mapbox://styles/blishten/cj6q75jcd39gq2rqm1d7yv5rc', //north star
       center: [0.043476868184143314, 0.0460817578557311],
       zoom: 12
     });
     this.map.on("load", this.mapLoaded.bind(this));
-    //get the tilesets for the user
-    this.client = new MapboxClient(mapboxgl.api_token);
-    this.client.listTilesets(this.parseTilesets.bind(this));
-  }
-
-  //callback function with the tileset info for the user
-  parseTilesets(err, tilesets) {
-    //check if there are no timeout errors or empty responses
-    if (!this.responseIsTimeoutOrEmpty(err, tilesets)) {
-      //sort alphabetically by name
-      tilesets.sort(function(a, b) {
-        if (a.name < b.name)
-          return -1;
-        if (a.name > b.name)
-          return 1;
-        return 0;
-      });
-      this.setState({ tilesets: tilesets });
-    }
-    else {
-      this.setState({ tilesets: [] });
-    }
-  }
-  //called if the tileset select box is changed
-  changeTileset(tilesetid) {
-    this.getMetadata(tilesetid).then(this.metadataRetrieved.bind(this));
-    this.setState({ tilesetid: tilesetid });
-  }
-
-  //gets all of the metadata for the tileset
-  getMetadata(tilesetId) {
-    return fetch("https://api.mapbox.com/v4/" + tilesetId + ".json?secure&access_token=" + mapboxgl.api_token)
-      .then(response => response.json())
-      .then(function(response) {
-        return response;
-      })
-      .catch(function(error) {
-        return error;
-      });
-  }
-
-  //callback function for the response from the call to get the tileset metadata 
-  metadataRetrieved(response) {
-    this.spatialLayerChanged(response, true);
   }
 
   componentDidUpdate(prevProps, prevState) {
@@ -237,10 +194,64 @@ class App extends React.Component {
     if (!this.responseIsTimeoutOrEmpty(err, response)) {
       //check there are no errors from the server
       if (!this.isServerError(response)) {
-        this.setState({ scenario: response.userData.LASTSCENARIO });
-        this.loadScenario(response.userData.LASTSCENARIO);
+        this.setState({ scenario: response.userData.LASTSCENARIO, userData: response.userData });
+        //get the users tilesets from mapbox
+        this.getTilesets();
       }
     }
+  }
+
+  //gets all of the tilesets from mapbox using the access token for the currently logged on user - this access token must have the TILESETS:LIST scope
+  getTilesets() {
+    //get the tilesets for the user
+    let client = new MapboxClient(this.state.userData.MAPBOXACCESSTOKEN);
+    client.listTilesets(this.parseTilesets.bind(this));
+  }
+
+  //callback function with the tileset info for the user
+  parseTilesets(err, tilesets) {
+    //check if there are no timeout errors or empty responses
+    if (!this.responseIsTimeoutOrEmpty(err, tilesets)) {
+      //append the sample tileset onto the list of tilesets
+      tilesets.push({ id: SAMPLE_TILESET_ID, name: SAMPLE_TILESET_NAME });
+      //sort alphabetically by name
+      tilesets.sort(function(a, b) {
+        if (a.name < b.name)
+          return -1;
+        if (a.name > b.name)
+          return 1;
+        return 0;
+      });
+      //set the state
+      this.setState({ tilesets: tilesets });
+      //now the tilesets are loaded from mapbox we can get the users last scenario and load it - this is only relevant if the user is not currently logged in - if they are logged in they are simply refreshing the list of tilesets
+      if (!this.state.loggedIn) this.loadScenario(this.state.userData.LASTSCENARIO);
+    }
+    else {
+      this.setState({ tilesets: [] });
+    }
+  }
+  //called if the tileset select box is changed
+  changeTileset(tilesetid) {
+    this.getMetadata(tilesetid).then(this.metadataRetrieved.bind(this));
+    this.setState({ tilesetid: tilesetid });
+  }
+
+  //gets all of the metadata for the tileset
+  getMetadata(tilesetId) {
+    return fetch("https://api.mapbox.com/v4/" + tilesetId + ".json?secure&access_token=" + this.state.userData.MAPBOXACCESSTOKEN)
+      .then(response => response.json())
+      .then(function(response) {
+        return response;
+      })
+      .catch(function(error) {
+        return error;
+      });
+  }
+
+  //callback function for the response from the call to get the tileset metadata 
+  metadataRetrieved(response) {
+    this.spatialLayerChanged(response, true);
   }
 
   //loads a scenario
@@ -281,14 +292,14 @@ class App extends React.Component {
   }
 
   //create a new user on the server
-  createNewUser(user, password, name, email, mapboxpk) {
+  createNewUser(user, password, name, email, mapboxaccesstoken) {
     this.setState({ creatingNewUser: true });
     let formData = new FormData();
     formData.append('user', user);
     formData.append('password', password);
     formData.append('name', name);
     formData.append('email', email);
-    formData.append('mapboxpk', mapboxpk);
+    formData.append('mapboxaccesstoken', mapboxaccesstoken);
     formData.append('scenario', 'Sample scenario');
     const config = {
       headers: {
@@ -303,7 +314,7 @@ class App extends React.Component {
     this.setState({ creatingNewUser: false });
     //check there are no errors from the server
     if (!this.isServerError(response)) {
-      this.setState({ snackbarOpen: true, snackbarMessage: response.info + ". Close and login"});
+      this.setState({ snackbarOpen: true, snackbarMessage: response.info + ". Close and login" });
     }
     else {
       this.setState({ snackbarOpen: true, snackbarMessage: response.error });
@@ -358,7 +369,7 @@ class App extends React.Component {
         if (response.scenario === this.state.scenario) {
           //ui feedback
           this.setState({ snackbarOpen: true, snackbarMessage: "Current scenario deleted - loading next available" });
-          this.state.scenarios.map((scenario) => { if (scenario.name !== this.state.scenario) this.loadScenario(scenario.name) });
+          this.state.scenarios.map((scenario) => { if (scenario.name !== this.state.scenario) this.loadScenario(scenario.name); return undefined; });
         }
       }
       else {
