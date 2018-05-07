@@ -8,13 +8,6 @@ class OptionsDialog extends React.Component {
         super(props);
         this.state = { checked: true };
     }
-    closeOptionsDialog() {
-        this.props.closeOptionsDialog();
-    }
-    buttonClick() {
-
-    }
-
     updateCheck() {
         this.setState((oldState) => {
             this.props.setShowPopupOption(!oldState.checked);
@@ -26,7 +19,8 @@ class OptionsDialog extends React.Component {
 
     render() {
         const actions = [
-            <RaisedButton label="Close" primary={true} onClick={this.closeOptionsDialog.bind(this)} className="scenariosBtn"/>,
+            <RaisedButton label="Close" primary={true} onClick={this.props.closeOptionsDialog.bind(this)} className="scenariosBtn"/>,
+            <RaisedButton label="Update" primary={true} onClick={this.props.closeOptionsDialog.bind(this)} className="scenariosBtn"/>
         ];
         let c = <div>
                 <Checkbox

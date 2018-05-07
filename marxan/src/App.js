@@ -201,6 +201,57 @@ class App extends React.Component {
     }
   }
 
+  appendToFormData(formData, obj) {
+    //iterate through the object and add each key/value pair to the formData to post to the server
+    for (var key in obj) {
+      //only add non-prototype objects
+      if (obj.hasOwnProperty(key)) {
+        formData.append(key, obj[key]);
+      }
+    }
+    return formData;
+  }
+
+  //removes the keys from the object
+  removeKeys(obj, keys) {
+    keys.map(function(key) {
+      delete obj[key];
+    });
+    return obj;
+  }
+
+  //updates all parameter in the user.dat file then updates the state (in userData)
+  updateUser(parameters) {
+    //remove the keys that are not part of the users information
+    parameters = this.removeKeys(parameters, ["updated", "validEmail"]);
+    //initialise the form data
+    let formData = new FormData();
+    //add the current user
+    formData.append("user", this.state.user);
+    //append all the key/value pairs
+    this.appendToFormData(formData, parameters);
+    const config = {
+      headers: {
+        'content-type': 'multipart/form-data'
+      }
+    };
+    //post to the server
+    post(MARXAN_ENDPOINT + "updateUser", formData, config).then((response) => this.parseUpdateUserParametersResponse(response.data));
+    //update the state
+    this.setState({ userData: Object.assign(this.state.userData,parameters) });
+  }
+
+  //callback function after updating the user.dat file with the passed parameters
+  parseUpdateUserParametersResponse(response) {
+    //check if there are no timeout errors or empty responses
+    if (!this.responseIsTimeoutOrEmpty(undefined, response)) {
+      //check there are no errors from the server
+      if (!this.isServerError(response)) {
+        this.setState({ snackbarOpen: true, snackbarMessage: response.info });
+      }
+    }
+  }
+
   //gets all of the tilesets from mapbox using the access token for the currently logged on user - this access token must have the TILESETS:LIST scope
   getTilesets() {
     //get the tilesets for the user
@@ -634,6 +685,7 @@ class App extends React.Component {
           <div ref={el => this.mapContainer = el} className="absolute top right left bottom" />
           <InfoPanel
             user={this.state.user}
+            userData={this.state.userData}
             loggedIn={this.state.loggedIn}
             listScenarios={this.listScenarios.bind(this)}
             scenarios={this.state.scenarios}
@@ -666,6 +718,7 @@ class App extends React.Component {
             changeTileset={this.changeTileset.bind(this)}
             tilesetid={this.state.tilesetid}
             setShowPopupOption={this.setShowPopupOption.bind(this)}
+            updateUser={this.updateUser.bind(this)}
             />
           <div className="runningSpinner"><FontAwesome spin name='sync' size='2x' style={{'display': (this.state.running ? 'block' : 'none')}}/></div>
           <Popup active_pu={this.state.active_pu} xy={this.state.popup_point}/>

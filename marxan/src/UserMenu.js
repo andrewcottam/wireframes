@@ -6,11 +6,12 @@ import FlatButton from 'material-ui/FlatButton';
 import FontAwesome from 'react-fontawesome';
 import ScenariosDialog from './ScenariosDialog.js';
 import OptionsDialog from './OptionsDialog.js';
+import UserDialog from './UserDialog.js';
 
 class UserMenu extends React.Component {
   constructor(props) {
     super(props);
-    this.state = { scenariosDialogOpen: false, optionsDialogOpen: false };
+    this.state = { scenariosDialogOpen: false, optionsDialogOpen: false ,optionsUserOpen:false};
   }
   componentDidUpdate(prevProps) {
     if (prevProps.loadingScenario && this.props.loadingScenario === false) {
@@ -32,6 +33,13 @@ class UserMenu extends React.Component {
   closeOptionsDialog() {
     this.setState({ optionsDialogOpen: false });
   }
+  openUserDialog() {
+    this.setState({ optionsUserOpen: true });
+    this.props.hideUserMenu();
+  }
+  closeUserDialog() {
+    this.setState({ optionsUserOpen: false });
+  }
   loadScenario(scenario) {
     this.props.loadScenario(scenario);
   }
@@ -43,7 +51,7 @@ class UserMenu extends React.Component {
                 label={this.props.user ? this.props.user : 'not logged in'} 
                 primary={true}
                 labelStyle={{color:'white',textTransform:'',fontWeight:'400'}}
-                style={{marginTop:'7px', display: this.props.loggedIn ? 'block' : 'none'}}
+                style={{marginTop:'7px'}}
                 onMouseEnter={this.props.onMouseEnter}
               />
               <Popover
@@ -55,7 +63,8 @@ class UserMenu extends React.Component {
               >
                 <Menu desktop={true} menuItemStyle={{backgroundColor:'rgb(0, 188, 212)', color:'white'}} listStyle={{width:'120px',backgroundColor:'rgb(0, 188, 212)'}} selectedMenuItemStyle={{color:'rgb(24,24,24)'}} width={'102px'}>
                   <MenuItem primaryText="Scenarios" onClick={this.openScenariosDialog.bind(this)} leftIcon={<FontAwesome name='list-alt' style={{top:'8px'}}/>}/>
-                  <MenuItem primaryText="Options" onClick={this.openOptionsDialog.bind(this)} leftIcon={<FontAwesome name='list-alt' style={{top:'8px'}}/>}/>
+                  <MenuItem primaryText="Options" onClick={this.openOptionsDialog.bind(this)} leftIcon={<FontAwesome name='cog' style={{top:'8px'}}/>}/>
+                  <MenuItem primaryText="Profile" onClick={this.openUserDialog.bind(this)} leftIcon={<FontAwesome name='user' style={{top:'8px'}}/>}/>
                   <MenuItem primaryText="Log out" onClick={this.props.logout.bind(this)} leftIcon={<FontAwesome name='sign-out-alt' style={{top:'8px'}}/>}/>
                 </Menu>
               </Popover>
@@ -73,6 +82,12 @@ class UserMenu extends React.Component {
                 open={this.state.optionsDialogOpen}
                 closeOptionsDialog={this.closeOptionsDialog.bind(this)}
                 setShowPopupOption={this.props.setShowPopupOption}
+              />
+              <UserDialog 
+                userData={this.props.userData}
+                open={this.state.optionsUserOpen}
+                closeOptionsDialog={this.closeUserDialog.bind(this)}
+                updateUser={this.props.updateUser}
               />
             </React.Fragment>
     );

@@ -13,7 +13,7 @@ import ParametersTable from './ParametersTable.js';
 
 class InfoPanel extends React.Component {
   constructor(props) {
-    super(props); 
+    super(props);
     this.state = { 'allFilesUploaded': true, editingScenarioName: false };
     this.nUploading = 0;
   }
@@ -27,7 +27,7 @@ class InfoPanel extends React.Component {
   changeVerbosity(e, value) {
     this.props.setVerbosity(value);
   }
-  loadSolution(solution) { 
+  loadSolution(solution) {
     this.props.loadSolution(solution);
   }
   validateUploads(validated, parameter, filename) {
@@ -76,6 +76,7 @@ class InfoPanel extends React.Component {
           <AppBar title={this.props.scenario} showMenuIconButton={false} onClick={this.startEditingScenarioName.bind(this)}
           iconElementRight={
           <UserMenu user={ this.props.user} 
+                    userData={this.props.userData}
                     loggedIn={this.props.loggedIn}
                     onMouseEnter={this.showUserMenu.bind(this)} 
                     showUserMenu={this.showUserMenu.bind(this)} 
@@ -91,6 +92,7 @@ class InfoPanel extends React.Component {
                     deleteScenario={this.props.deleteScenario}
                     loadScenario={this.props.loadScenario}
                     setShowPopupOption={this.props.setShowPopupOption}
+                    updateUser={this.props.updateUser}
                     />}/>
           <Tabs>
             <Tab label="Inputs" className={'tab'}>
