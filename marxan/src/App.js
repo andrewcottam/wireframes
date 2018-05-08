@@ -238,7 +238,7 @@ class App extends React.Component {
     //post to the server
     post(MARXAN_ENDPOINT + "updateUser", formData, config).then((response) => this.parseUpdateUserParametersResponse(response.data));
     //update the state
-    this.setState({ userData: Object.assign(this.state.userData,parameters) });
+    this.newUserData = Object.assign(this.state.userData, parameters) ;
   }
 
   //callback function after updating the user.dat file with the passed parameters
@@ -247,7 +247,8 @@ class App extends React.Component {
     if (!this.responseIsTimeoutOrEmpty(undefined, response)) {
       //check there are no errors from the server
       if (!this.isServerError(response)) {
-        this.setState({ snackbarOpen: true, snackbarMessage: response.info });
+        //if succesfull write the state back to the userData key
+        this.setState({ snackbarOpen: true, snackbarMessage: response.info, userData: this.newUserData });
       }
     }
   }

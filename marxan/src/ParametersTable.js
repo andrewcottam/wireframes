@@ -2,30 +2,51 @@ import React from 'react';
 import ReactTable from "react-table";
 
 class ParametersTable extends React.Component {
+    constructor(props) {
+        super(props);
+        this.state = { data: [] };
+        this.renderEditable = this.renderEditable.bind(this);
+    }
+    componentDidUpdate(prevProps) {
+        if (prevProps.runParams !== this.props.runParams) {
+            this.setState({ data: this.props.runParams });
+        }
+    }
+    renderEditable(cellInfo) {
+        return (
+            <div
+                style={{ backgroundColor: "#fafafa" }}
+                contentEditable
+                suppressContentEditableWarning
+                dangerouslySetInnerHTML={{
+                    __html: this.state.data[cellInfo.index]["value"]
+                }}
+              />
+        );
+    }
     render() {
-        // let c = this.props.runParams && this.props.runParams.map((param) => {
-        //     return (<TableRow displayBorder={false}><TableRowColumn style={{height:'12px'}}>{param.key}</TableRowColumn><TableRowColumn><TextField id={param.key + "_value"} style={{height:'12px'}} inputStyle={{height:'12px'}} value={param.value}/></TableRowColumn></TableRow>);
-        // });
+        const { data } = this.state;
         return (
             <div id="paramsTable">
                 <ReactTable
-                showPagination={false}
-                className={'summary_infoTable'}
-                minRows={0}
-                pageSize={200}
-                noDataText=''
-                data={this.props.runParams}
-                columns={[{
-                   Header: 'Parameter', 
-                   accessor: 'key',
-                   width:100,
-                   headerStyle:{'textAlign':'left'}                             
-                },{
-                   Header: 'Value',
-                   accessor: 'value',
-                   width:140,
-                  headerStyle:{'textAlign':'left'}
-                }]}
+                    showPagination={false} 
+                    className={'summary_infoTable'}
+                    minRows={0}
+                    pageSize={200}
+                    data={data}
+                    noDataText=''
+                    columns={[{
+                       Header: 'Parameter', 
+                       accessor: 'key',
+                       width:100,
+                       headerStyle:{'textAlign':'left'},
+                    },{
+                       Header: 'Value',
+                       accessor: 'value',
+                       width:140,
+                       headerStyle:{'textAlign':'left'},
+                       Cell: this.renderEditable
+                    }]}
               />
           </div>
         );

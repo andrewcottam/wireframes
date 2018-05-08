@@ -205,3 +205,7 @@ table input {
   margin-left: 11px;
 
 }
+
+div.rt-tbody > div > div > div > div{
+  background-color: rgba(0,0,0,0) !important;
+}
