@@ -112,7 +112,9 @@ class InfoPanel extends React.Component {
             <Tab label="Params" className={'tab'}>
               <div className='tabPanel'>
                 <div className={'tabTitle'}>Run parameters</div>
-                  <ParametersTable runParams={this.props.runParams}/>
+                  <ParametersTable 
+                    runParams={this.props.runParams}
+                    updateRunParams={this.props.updateRunParams}/>
               </div>
             </Tab> 
             <Tab

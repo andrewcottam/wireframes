@@ -238,7 +238,7 @@ class App extends React.Component {
     //post to the server
     post(MARXAN_ENDPOINT + "updateUser", formData, config).then((response) => this.parseUpdateUserParametersResponse(response.data));
     //update the state
-    this.newUserData = Object.assign(this.state.userData, parameters) ;
+    this.newUserData = Object.assign(this.state.userData, parameters);
   }
 
   //callback function after updating the user.dat file with the passed parameters
@@ -249,6 +249,42 @@ class App extends React.Component {
       if (!this.isServerError(response)) {
         //if succesfull write the state back to the userData key
         this.setState({ snackbarOpen: true, snackbarMessage: response.info, userData: this.newUserData });
+      }
+    }
+  }
+
+  //updates the parameters for the current scenario back to the server
+  updateRunParams(array) {
+    //convert the parameters array into an object
+    let parameters = {};
+    array.map((obj)=> {parameters[obj.key] = obj.value});
+    //initialise the form data
+    let formData = new FormData();
+    //add the current user
+    formData.append("user", this.state.user);
+    //add the current scenario
+    formData.append("scenario", this.state.scenario);
+    //append all the key/value pairs
+    this.appendToFormData(formData, parameters);
+    const config = {
+      headers: {
+        'content-type': 'multipart/form-data'
+      }
+    };
+    //post to the server
+    post(MARXAN_ENDPOINT + "updateRunParams", formData, config).then((response) => this.parseUpdateRunParametersResponse(response.data));
+    //update the state
+    this.runParams = Object.assign(this.state.runParams, formData);
+  }
+
+  //callback function after updating the run parameters for this scenario
+  parseUpdateRunParametersResponse(response) {
+    //check if there are no timeout errors or empty responses
+    if (!this.responseIsTimeoutOrEmpty(undefined, response)) {
+      //check there are no errors from the server
+      if (!this.isServerError(response)) {
+        //if succesfull write the state back to the userData key
+        this.setState({ snackbarOpen: true, snackbarMessage: response.info, runParams: this.runParams });
       }
     }
   }
@@ -720,6 +756,7 @@ class App extends React.Component {
             tilesetid={this.state.tilesetid}
             setShowPopupOption={this.setShowPopupOption.bind(this)}
             updateUser={this.updateUser.bind(this)}
+            updateRunParams={this.updateRunParams.bind(this)}
             />
           <div className="runningSpinner"><FontAwesome spin name='sync' size='2x' style={{'display': (this.state.running ? 'block' : 'none')}}/></div>
           <Popup active_pu={this.state.active_pu} xy={this.state.popup_point}/>

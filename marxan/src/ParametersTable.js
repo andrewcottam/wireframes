@@ -12,12 +12,29 @@ class ParametersTable extends React.Component {
             this.setState({ data: this.props.runParams });
         }
     }
+    //posts the results back to the server
+    updateRunParams(){
+        try {
+            console.log("Need to do some validation of parameters here!");
+        }
+        //any errors will not create a new user
+        catch (err) { 
+            return;
+        }
+        this.props.updateRunParams(this.state.data);
+    }
     renderEditable(cellInfo) {
         return (
             <div
                 style={{ backgroundColor: "#fafafa" }}
                 contentEditable
                 suppressContentEditableWarning
+                onBlur={e => {
+                  const data = [...this.state.data];
+                  data[cellInfo.index][cellInfo.column.id] = e.target.innerHTML;
+                  this.setState({ data });
+                  this.updateRunParams();
+                }}
                 dangerouslySetInnerHTML={{
                     __html: this.state.data[cellInfo.index]["value"]
                 }}
