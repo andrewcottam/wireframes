@@ -4,17 +4,17 @@ import Paper from 'material-ui/Paper';
 import AppBar from 'material-ui/AppBar';
 import { Tabs, Tab } from 'material-ui/Tabs';
 import RaisedButton from 'material-ui/RaisedButton';
-import { RadioButton, RadioButtonGroup } from 'material-ui/RadioButton';
 import ReactTable from "react-table";
 import FileUpload from './FileUpload.js';
 import UserMenu from './UserMenu.js';
 import SpatialDataSelector from './SpatialDataSelector.js';
 import ParametersTable from './ParametersTable.js';
+import LogDialog from './LogDialog.js';
 
 class InfoPanel extends React.Component {
   constructor(props) {
     super(props);
-    this.state = { 'allFilesUploaded': true, editingScenarioName: false };
+    this.state = { 'allFilesUploaded': true, editingScenarioName: false, logDialogOpen: false };
     this.nUploading = 0;
   }
   componentDidUpdate(prevProps, prevState, snapshot) {
@@ -68,6 +68,14 @@ class InfoPanel extends React.Component {
       this.props.startEditingScenarioName();
     }
   }
+
+  openLogDialog() {
+    this.setState({ logDialogOpen: true });
+  }
+  closeLogDialog() {
+    this.setState({ logDialogOpen: false });
+  }
+
   render() {
     return (
       <div style={{'position':'absolute', display: this.props.loggedIn ? 'block' : 'none'}}>
@@ -117,41 +125,6 @@ class InfoPanel extends React.Component {
                     updateRunParams={this.props.updateRunParams}/>
               </div>
             </Tab> 
-            <Tab
-              label="Log"
-              data-route="/home" className={'tab'}
-            >
-              <div className='tabPanel'>
-                <div className={'tabTitle'}>Processing Log</div>
-                <RadioButtonGroup name="logOptions" defaultSelected="2" style={{ display: 'flex',margin:'17px 0px 5px 9px' }} onChange={this.changeVerbosity.bind(this)}>
-                  <RadioButton
-                    value="0"
-                    label="Silent"
-                    iconStyle={{marginRight:'3px',width: 18, height: 18,'marginTop': '1px'}}
-                    labelStyle={{'fontSize':'13px'}}
-                  />
-                  <RadioButton
-                    value="1"
-                    label="Results"
-                    iconStyle={{marginRight:'3px',width: 18, height: 18,'marginTop': '1px'}}
-                    labelStyle={{'fontSize':'13px'}}
-                  />
-                  <RadioButton
-                    value="2"
-                    label="General"
-                    iconStyle={{marginRight:'3px',width: 18, height: 18,'marginTop': '1px'}}
-                    labelStyle={{'fontSize':'13px'}}
-                  />
-                  <RadioButton
-                    value="3"
-                    label="Detailed"
-                    iconStyle={{marginRight:'3px',width: 18, height: 18,'marginTop': '1px'}}
-                    labelStyle={{'fontSize':'13px'}}
-                  />
-                </RadioButtonGroup>
-                <div id="log" dangerouslySetInnerHTML={{__html:this.props.log}}></div>
-              </div>
-            </Tab>
             <Tab
               label="Outputs"
               data-route="/home" className={'tab'}
@@ -203,6 +176,16 @@ class InfoPanel extends React.Component {
                 </div>
                 <div style={{'paddingBottom':'8px','margin':'17px 0px 0px 10px','fontSize':'13px'}}>{this.props.outputsTabString}</div>
               </div>
+              <RaisedButton 
+                label={'Log'} 
+                secondary={true} 
+                onClick={this.openLogDialog.bind(this)} 
+                className={'logButton'}
+                disabled={!this.props.dataAvailable}/>
+              <LogDialog 
+                log={this.props.log} 
+                open={this.state.logDialogOpen}
+                closeLogDialog={this.closeLogDialog.bind(this)}/>
             </Tab>
           </Tabs>                        
           <RaisedButton label={this.props.running ? "Running" : "Run"} secondary={true} className={'run'} onClick={this.props.runMarxan} disabled={!this.props.runnable || this.props.running || (this.state && this.state.allFilesUploaded === false)}/>

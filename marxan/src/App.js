@@ -18,7 +18,6 @@ import axios, { post } from 'axios';
 //THE MARXAN_ENDPOINT MUST ALSO BE CHANGED IN THE FILEUPLOAD.JS FILE
 let MARXAN_ENDPOINT = "https://db-server-blishten.c9users.io/marxan/webAPI2/";
 let TIMEOUT = 0; //disable timeout setting
-let NUMBER_OF_RUNS = 10;
 let SAMPLE_TILESET_ID = "blishten.3ogmvag8";
 let SAMPLE_TILESET_NAME = "Marxan Sample Planning Area";
 mapboxgl.accessToken = 'pk.eyJ1IjoiYmxpc2h0ZW4iLCJhIjoiMEZrNzFqRSJ9.0QBRA2HxTb8YHErUFRMPZg'; //this is my public access token for using in the Mapbox GL client - TODO change this to the logged in users public access token
@@ -43,7 +42,6 @@ class App extends React.Component {
       dataAvailable: false,
       outputsTabString: 'No data',
       popup_point: { x: 0, y: 0 },
-      numRuns: 10,
       snackbarOpen: false,
       snackbarMessage: '',
       tilesets: [],
@@ -56,8 +54,9 @@ class App extends React.Component {
     this.map = new mapboxgl.Map({
       container: this.mapContainer,
       style: 'mapbox://styles/blishten/cj6q75jcd39gq2rqm1d7yv5rc', //north star
-      center: [0.043476868184143314, 0.0460817578557311],
-      zoom: 12
+      // center: [0.043476868184143314, 0.0460817578557311],
+      center: [0, 0],
+      zoom: 2
     });
     this.map.on("load", this.mapLoaded.bind(this));
   }
@@ -257,7 +256,7 @@ class App extends React.Component {
   updateRunParams(array) {
     //convert the parameters array into an object
     let parameters = {};
-    array.map((obj)=> {parameters[obj.key] = obj.value});
+    array.map((obj) => { parameters[obj.key] = obj.value });
     //initialise the form data
     let formData = new FormData();
     //add the current user
@@ -527,10 +526,10 @@ class App extends React.Component {
     //update the ui to reflect the fact that a job is running
     this.setState({ running: true, log: 'Running...', active_pu: undefined, outputsTabString: 'Running...' });
     //if we are requesting more than 10 solutions, then we should not load all of them in the REST call - they can be requested asynchronously as and when they are needed
-    this.returnall = this.state.numRuns > 10 ? 'false' : 'true';
+    this.returnall = this.state.runParams.NUMREPS > 10 ? 'false' : 'true';
     this.returnall = false; //override as the png payload is huge!
     //make the request to get the marxan data
-    jsonp(MARXAN_ENDPOINT + "runMarxan?user=" + this.state.user + "&scenario=" + this.state.scenario + "&numreps=" + this.state.numRuns + "&verbosity=" + this.verbosity + "&returnall=" + this.returnall, { timeout: TIMEOUT }, this.parseRunMarxanResponse.bind(this)); //get the data from the server and parse it
+    jsonp(MARXAN_ENDPOINT + "runMarxan?user=" + this.state.user + "&scenario=" + this.state.scenario + "&verbosity=" + this.verbosity + "&returnall=" + this.returnall, { timeout: TIMEOUT }, this.parseRunMarxanResponse.bind(this)); //get the data from the server and parse it
   }
 
   parseRunMarxanResponse(err, response) {
@@ -542,24 +541,25 @@ class App extends React.Component {
       //check there are no errors from the server
       if (this.isServerError(response)) {
         solutions = [];
-        return;
       }
-      //get the response and store it in this component
-      this.runMarxanResponse = response;
-      //if we have some data to map then set the state to reflect this
-      (this.runMarxanResponse.ssoln) ? this.setState({ dataAvailable: true }): this.setState({ dataAvailable: false });
-      //render the sum solution map
-      this.renderSolution(this.runMarxanResponse.ssoln, true);
-      //create the array of solutions to pass to the InfoPanels table
-      solutions = response.sum;
-      //the array data are in the format "Run_Number","Score","Cost","Planning_Units" - so create an array of objects to pass to the outputs table
-      solutions = solutions.map(function(item) {
-        return { "Run_Number": item[0], "Score": item[1], "Cost": item[2], "Planning_Units": item[3] };
-      });
-      //add in the row for the summed solutions
-      solutions.splice(0, 0, { 'Run_Number': 'Sum', 'Score': '', 'Cost': '', 'Planning_Units': '' });
-      //ui feedback
-      this.setState({ log: response.log.replace(/(\r\n|\n|\r)/g, "<br />"), outputsTabString: '', solutions: solutions });
+      else {
+        //get the response and store it in this component
+        this.runMarxanResponse = response;
+        //if we have some data to map then set the state to reflect this
+        (this.runMarxanResponse.ssoln) ? this.setState({ dataAvailable: true }): this.setState({ dataAvailable: false });
+        //render the sum solution map
+        this.renderSolution(this.runMarxanResponse.ssoln, true);
+        //create the array of solutions to pass to the InfoPanels table
+        solutions = response.sum;
+        //the array data are in the format "Run_Number","Score","Cost","Planning_Units" - so create an array of objects to pass to the outputs table
+        solutions = solutions.map(function(item) {
+          return { "Run_Number": item[0], "Score": item[1], "Cost": item[2], "Planning_Units": item[3] };
+        });
+        //add in the row for the summed solutions
+        solutions.splice(0, 0, { 'Run_Number': 'Sum', 'Score': '', 'Cost': '', 'Planning_Units': '' });
+        //ui feedback
+        this.setState({ log: response.log.replace(/(\r\n|\n|\r)/g, "<br />"), outputsTabString: '', solutions: solutions, snackbarOpen: true, snackbarMessage: response.info });
+      }
     }
   }
 
@@ -609,15 +609,23 @@ class App extends React.Component {
   renderSolution(data, sum) {
     //build an expression to get the matching puids with different numbers of 'numbers' in the marxan results
     var expression = ["match", ["get", "PUID"]];
+    //get the number of runs from the run parameters 
+    // let numberOfRuns = Number(this.state.runParams[3].value);
+    // let clrs = ["#032333","#0c316a","#3f349b","#694296","#8c518c","#b15d81","#d66a6c","#f2824f","#fba63d","#f7cf44","#e7fa5a"];
+    // let clrs = ["#fdedb0","#faca8e","#f5a772","#ed845d","#e16153","#ce4457","#b32e5e","#932062","#71195e","#4f1551","#2f0f3d"];
+    // let clrs = ["#ffffd9","#f1f9b9","#d5efb3","#a8dfb6","#73c9bc","#41b6c4","#1b99c2","#0773b4","#1c4ea2","#1e2f88","#081d58"];YIGn
+    let clrs = ["rgba(0,0,0,0)","rgba(0,0,0,0)","rgba(0,0,0,0)","rgba(0,0,0,0)","rgba(0,0,0,0)","rgba(0,0,0,0)","rgba(0,0,0,0)","#0773b4","#1c4ea2","#1e2f88","#081d58"];
     data.forEach(function(row) {
       if (sum) {
         //for each row add the puids and the color to the expression, e.g. [35,36,37],"rgba(255, 0, 136,0.1)"
-        expression.push(row[1], "rgba(255, 0, 136," + (row[0] / NUMBER_OF_RUNS) + ")");
+        // the rest service sends the data grouped by the 'number', e.g. [23,34,36,43,98], 2
+        // expression.push(row[1], "rgba(255, 0, 136," + (row[0] / numberOfRuns) + ")");
+        expression.push(row[1], clrs[row[0]]);
       }
       else {
         expression.push(row[1], "rgba(255, 0, 136,1)");
       }
-    });
+    }, this);
     // Last value is the default, used where there is no data
     expression.push("rgba(0,0,0,0)");
     //set the render paint property
@@ -658,10 +666,6 @@ class App extends React.Component {
     this.setState({ active_pu: undefined });
   }
 
-  setNumRuns(e, v) {
-    this.setState({ numRuns: v });
-  }
-
   spatialLayerChanged(tileset, zoomToBounds) {
     //save the name of the layer in the input.dat file in the MAPID parameter
     this.updateParameter("MAPID", tileset.id);
@@ -699,7 +703,7 @@ class App extends React.Component {
       'source-layer': tileset.vector_layers[0].id,
       'paint': {
         'fill-color': '#f08',
-        'fill-opacity': 0.4
+        'fill-opacity': 1
       }
     });
   }
@@ -738,8 +742,6 @@ class App extends React.Component {
             dataAvailable={this.state.dataAvailable} 
             setVerbosity={this.setVerbosity.bind(this)} 
             solutions={this.state.solutions}
-            setNumRuns={this.setNumRuns.bind(this)}
-            numRuns={this.state.numRuns}
             log={this.state.log} 
             runnable={this.state.runnable}
             spatialLayerChanged={this.spatialLayerChanged.bind(this)}

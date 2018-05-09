@@ -87,8 +87,8 @@ body {
 }
 
 #log {
-  height: 270px;
-  width: 353px;
+  height: 275px;
+  width: 440px;
   font-size: 12px;
   overflow: scroll;
   margin-left: 10px;
@@ -205,7 +205,15 @@ table input {
   margin-left: 11px;
 
 }
+
 /*for the cells in the run parameters table so that they do not look different to the non-editable cells */
-div.rt-tbody > div > div > div > div{
-  background-color: rgba(0,0,0,0) !important;
+
+div.rt-tbody>div>div>div>div {
+  background-color: rgba(0, 0, 0, 0) !important;
+}
+
+.logButton {
+  position:absolute;
+  top: 345px;
+  left: 23px;
 }
