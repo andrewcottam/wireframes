@@ -4,7 +4,7 @@ import Dialog from 'material-ui/Dialog';
 import RaisedButton from 'material-ui/RaisedButton';
 import { List, ListItem, makeSelectable } from 'material-ui/List';
 import NewScenarioDialog from './NewScenarioDialog.js';
-import FontAwesome from 'react-fontawesome';
+import FontAwesome from 'react-fontawesome'; 
 
 let SelectableList = makeSelectable(List);
 

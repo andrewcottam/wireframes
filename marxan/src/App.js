@@ -18,7 +18,8 @@ import axios, { post } from 'axios';
 //THE MARXAN_ENDPOINT MUST ALSO BE CHANGED IN THE FILEUPLOAD.JS FILE
 let MARXAN_ENDPOINT = "https://db-server-blishten.c9users.io/marxan/webAPI2/";
 let TIMEOUT = 0; //disable timeout setting
-let SAMPLE_TILESET_ID = "blishten.3ogmvag8";
+// let SAMPLE_TILESET_ID = "blishten.3ogmvag8";
+let SAMPLE_TILESET_ID = "blishten.pulayer_costt";
 let SAMPLE_TILESET_NAME = "Marxan Sample Planning Area";
 mapboxgl.accessToken = 'pk.eyJ1IjoiYmxpc2h0ZW4iLCJhIjoiMEZrNzFqRSJ9.0QBRA2HxTb8YHErUFRMPZg'; //this is my public access token for using in the Mapbox GL client - TODO change this to the logged in users public access token
 
@@ -45,9 +46,10 @@ class App extends React.Component {
       snackbarOpen: false,
       snackbarMessage: '',
       tilesets: [],
-      showPopup: true
+      showPopup: true,
+      parametersDialogOpen: false,
+      updatingRunParameters: false
     };
-    this.verbosity = "3";
   }
 
   componentDidMount() {
@@ -100,10 +102,6 @@ class App extends React.Component {
     else {
       return false;
     }
-  }
-
-  setVerbosity(value) {
-    this.verbosity = value;
   }
 
   changeUserName(user) {
@@ -252,8 +250,19 @@ class App extends React.Component {
     }
   }
 
+  //opens the run parameters dialog whos open state is controlled
+  openParametersDialog() {
+    this.setState({ parametersDialogOpen: true });
+  }
+  //closes the run parameters dialog whos open state is controlled
+  closeParametersDialog() {
+    this.setState({ parametersDialogOpen: false });
+  }
+
   //updates the parameters for the current scenario back to the server
   updateRunParams(array) {
+    //ui feedback
+    this.setState({ updatingRunParameters: true });
     //convert the parameters array into an object
     let parameters = {};
     array.map((obj) => { parameters[obj.key] = obj.value });
@@ -278,12 +287,14 @@ class App extends React.Component {
 
   //callback function after updating the run parameters for this scenario
   parseUpdateRunParametersResponse(response) {
+    //ui feedback
+    this.setState({ updatingRunParameters: false });
     //check if there are no timeout errors or empty responses
     if (!this.responseIsTimeoutOrEmpty(undefined, response)) {
       //check there are no errors from the server
       if (!this.isServerError(response)) {
         //if succesfull write the state back to the userData key
-        this.setState({ snackbarOpen: true, snackbarMessage: response.info, runParams: this.runParams });
+        this.setState({ snackbarOpen: true, snackbarMessage: response.info, runParams: this.runParams, parametersDialogOpen: false });
       }
     }
   }
@@ -529,7 +540,7 @@ class App extends React.Component {
     this.returnall = this.state.runParams.NUMREPS > 10 ? 'false' : 'true';
     this.returnall = false; //override as the png payload is huge!
     //make the request to get the marxan data
-    jsonp(MARXAN_ENDPOINT + "runMarxan?user=" + this.state.user + "&scenario=" + this.state.scenario + "&verbosity=" + this.verbosity + "&returnall=" + this.returnall, { timeout: TIMEOUT }, this.parseRunMarxanResponse.bind(this)); //get the data from the server and parse it
+    jsonp(MARXAN_ENDPOINT + "runMarxan?user=" + this.state.user + "&scenario=" + this.state.scenario + "&returnall=" + this.returnall, { timeout: TIMEOUT }, this.parseRunMarxanResponse.bind(this)); //get the data from the server and parse it
   }
 
   parseRunMarxanResponse(err, response) {
@@ -602,7 +613,10 @@ class App extends React.Component {
 
   setPaintProperty(expression) {
     //get the name of the render layer
-    if (this.state.marxanLayer) this.map.setPaintProperty(this.state.marxanLayer.id, "fill-color", expression);
+    if (this.state.marxanLayer) {
+      this.map.setPaintProperty(this.state.marxanLayer.id, "fill-color", expression);
+      this.map.setPaintProperty(this.state.marxanLayer.id, "fill-opacity", 1);
+    }
   }
 
   //renders the sum of solutions - data is the REST response and sum is a flag to indicate if the data is the summed solution (true) or an individual solution (false)
@@ -614,7 +628,7 @@ class App extends React.Component {
     // let clrs = ["#032333","#0c316a","#3f349b","#694296","#8c518c","#b15d81","#d66a6c","#f2824f","#fba63d","#f7cf44","#e7fa5a"];
     // let clrs = ["#fdedb0","#faca8e","#f5a772","#ed845d","#e16153","#ce4457","#b32e5e","#932062","#71195e","#4f1551","#2f0f3d"];
     // let clrs = ["#ffffd9","#f1f9b9","#d5efb3","#a8dfb6","#73c9bc","#41b6c4","#1b99c2","#0773b4","#1c4ea2","#1e2f88","#081d58"];YIGn
-    let clrs = ["rgba(0,0,0,0)","rgba(0,0,0,0)","rgba(0,0,0,0)","rgba(0,0,0,0)","rgba(0,0,0,0)","rgba(0,0,0,0)","rgba(0,0,0,0)","#0773b4","#1c4ea2","#1e2f88","#081d58"];
+    let clrs = ["rgba(0,0,0,0)", "rgba(0,0,0,0)", "rgba(0,0,0,0)", "rgba(0,0,0,0)", "rgba(0,0,0,0)", "rgba(0,0,0,0)", "rgba(0,0,0,0)", "#0773b4", "#1c4ea2", "#1e2f88", "#081d58"];
     data.forEach(function(row) {
       if (sum) {
         //for each row add the puids and the color to the expression, e.g. [35,36,37],"rgba(255, 0, 136,0.1)"
@@ -703,7 +717,7 @@ class App extends React.Component {
       'source-layer': tileset.vector_layers[0].id,
       'paint': {
         'fill-color': '#f08',
-        'fill-opacity': 1
+        'fill-opacity': 0.4
       }
     });
   }
@@ -740,7 +754,6 @@ class App extends React.Component {
             running={this.state.running} 
             outputsTabString={this.state.outputsTabString} 
             dataAvailable={this.state.dataAvailable} 
-            setVerbosity={this.setVerbosity.bind(this)} 
             solutions={this.state.solutions}
             log={this.state.log} 
             runnable={this.state.runnable}
@@ -759,6 +772,10 @@ class App extends React.Component {
             setShowPopupOption={this.setShowPopupOption.bind(this)}
             updateUser={this.updateUser.bind(this)}
             updateRunParams={this.updateRunParams.bind(this)}
+            openParametersDialog={this.openParametersDialog.bind(this)}
+            closeParametersDialog={this.closeParametersDialog.bind(this)}
+            parametersDialogOpen={this.state.parametersDialogOpen}
+            updatingRunParameters={this.state.updatingRunParameters}
             />
           <div className="runningSpinner"><FontAwesome spin name='sync' size='2x' style={{'display': (this.state.running ? 'block' : 'none')}}/></div>
           <Popup active_pu={this.state.active_pu} xy={this.state.popup_point}/>

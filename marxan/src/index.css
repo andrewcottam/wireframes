@@ -154,6 +154,12 @@ table input {
   margin-left: 112px;
 }
 
+.runParametersSpinner {
+  position: absolute;
+  top: 31px;
+  margin-left: 166px;
+}
+
 .loginSpinner {
   position: absolute;
   top: 31px;
@@ -213,7 +219,7 @@ div.rt-tbody>div>div>div>div {
 }
 
 .logButton {
-  position:absolute;
+  position: absolute;
   top: 345px;
   left: 23px;
 }

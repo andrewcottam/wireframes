@@ -20,7 +20,7 @@ class OptionsDialog extends React.Component {
     render() {
         const actions = [
             <RaisedButton label="Close" primary={true} onClick={this.props.closeOptionsDialog.bind(this)} className="scenariosBtn"/>,
-            <RaisedButton label="Update" primary={true} onClick={this.props.closeOptionsDialog.bind(this)} className="scenariosBtn"/>
+            <RaisedButton label="Save" primary={true} onClick={this.props.closeOptionsDialog.bind(this)} className="scenariosBtn"/>
         ];
         let c = <div>
                 <Checkbox

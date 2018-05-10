@@ -8,8 +8,8 @@ import ReactTable from "react-table";
 import FileUpload from './FileUpload.js';
 import UserMenu from './UserMenu.js';
 import SpatialDataSelector from './SpatialDataSelector.js';
-import ParametersTable from './ParametersTable.js';
 import LogDialog from './LogDialog.js';
+import ParametersDialog from './ParametersDialog.js';
 
 class InfoPanel extends React.Component {
   constructor(props) {
@@ -23,9 +23,6 @@ class InfoPanel extends React.Component {
       document.getElementById("scenarioName").value = this.props.scenario;
       document.getElementById("scenarioName").focus();
     }
-  }
-  changeVerbosity(e, value) {
-    this.props.setVerbosity(value);
   }
   loadSolution(solution) {
     this.props.loadSolution(solution);
@@ -76,6 +73,14 @@ class InfoPanel extends React.Component {
     this.setState({ logDialogOpen: false });
   }
 
+  openParametersDialog() {
+    this.props.openParametersDialog();
+  }
+  closeParametersDialog() {
+    this.props.closeParametersDialog();
+  }
+
+
   render() {
     return (
       <div style={{'position':'absolute', display: this.props.loggedIn ? 'block' : 'none'}}>
@@ -116,15 +121,19 @@ class InfoPanel extends React.Component {
                   <FileUpload parameter="BLOCKDEFNAME" value={this.props.files.BLOCKDEFNAME} label="Block definitions" fileUploaded={this.validateUploads.bind(this)} user={this.props.user} scenario={this.props.scenario}/>
                 </div>
               </div>
+              <RaisedButton 
+                label={'Run parameters'} 
+                onClick={this.openParametersDialog.bind(this)} 
+                className={'logButton'}
+              />
+              <ParametersDialog
+                open={this.props.parametersDialogOpen}
+                closeParametersDialog={this.closeParametersDialog.bind(this)}
+                runParams={this.props.runParams}
+                updateRunParams={this.props.updateRunParams}
+                updatingRunParameters={this.props.updatingRunParameters}
+              />
             </Tab>
-            <Tab label="Params" className={'tab'}>
-              <div className='tabPanel'>
-                <div className={'tabTitle'}>Run parameters</div>
-                  <ParametersTable 
-                    runParams={this.props.runParams}
-                    updateRunParams={this.props.updateRunParams}/>
-              </div>
-            </Tab> 
             <Tab
               label="Outputs"
               data-route="/home" className={'tab'}
@@ -186,6 +195,11 @@ class InfoPanel extends React.Component {
                 log={this.props.log} 
                 open={this.state.logDialogOpen}
                 closeLogDialog={this.closeLogDialog.bind(this)}/>
+            </Tab>
+            <Tab label="Map" className={'tab'}>
+              <div className='tabPanel'>
+                <div className={'tabTitle'}>Map</div>
+              </div>
             </Tab>
           </Tabs>                        
           <RaisedButton label={this.props.running ? "Running" : "Run"} secondary={true} className={'run'} onClick={this.props.runMarxan} disabled={!this.props.runnable || this.props.running || (this.state && this.state.allFilesUploaded === false)}/>
