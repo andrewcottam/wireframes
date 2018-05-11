@@ -4,6 +4,7 @@
   "private": true,
   "dependencies": {
     "axios": "^0.18.0",
+    "classybrew": "0.0.3",
     "jsonp": "^0.2.1",
     "mapbox": "^1.0.0-beta10",
     "mapbox-gl": "^0.44.2",

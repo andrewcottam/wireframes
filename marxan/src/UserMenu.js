@@ -11,7 +11,7 @@ import UserDialog from './UserDialog.js';
 class UserMenu extends React.Component {
   constructor(props) {
     super(props);
-    this.state = { scenariosDialogOpen: false, optionsDialogOpen: false ,optionsUserOpen:false};
+    this.state = { scenariosDialogOpen: false, userDialogOpen: false };
   }
   componentDidUpdate(prevProps) {
     if (prevProps.loadingScenario && this.props.loadingScenario === false) {
@@ -27,18 +27,16 @@ class UserMenu extends React.Component {
     this.setState({ scenariosDialogOpen: false });
   }
   openOptionsDialog() {
-    this.setState({ optionsDialogOpen: true });
     this.props.hideUserMenu();
-  }
-  closeOptionsDialog() {
-    this.setState({ optionsDialogOpen: false });
+    this.props.hidePopup();
+    this.props.openOptionsDialog();
   }
   openUserDialog() {
-    this.setState({ optionsUserOpen: true });
+    this.setState({ userDialogOpen: true });
     this.props.hideUserMenu();
   }
   closeUserDialog() {
-    this.setState({ optionsUserOpen: false });
+    this.setState({ userDialogOpen: false });
   }
   loadScenario(scenario) {
     this.props.loadScenario(scenario);
@@ -79,14 +77,16 @@ class UserMenu extends React.Component {
                 loadScenario={this.loadScenario.bind(this)}
               />
               <OptionsDialog 
-                open={this.state.optionsDialogOpen}
-                closeOptionsDialog={this.closeOptionsDialog.bind(this)}
-                setShowPopupOption={this.props.setShowPopupOption}
+                userData={this.props.userData}
+                open={this.props.optionsDialogOpen}
+                closeOptionsDialog={this.props.closeOptionsDialog}
+                saveOptions={this.props.saveOptions}
+                savingOptions={this.props.savingOptions}
               />
               <UserDialog 
                 userData={this.props.userData}
-                open={this.state.optionsUserOpen}
-                closeOptionsDialog={this.closeUserDialog.bind(this)}
+                open={this.state.userDialogOpen}
+                closeUserDialog={this.closeUserDialog.bind(this)}
                 updateUser={this.props.updateUser}
               />
             </React.Fragment>

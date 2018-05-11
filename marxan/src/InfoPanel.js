@@ -4,6 +4,7 @@ import Paper from 'material-ui/Paper';
 import AppBar from 'material-ui/AppBar';
 import { Tabs, Tab } from 'material-ui/Tabs';
 import RaisedButton from 'material-ui/RaisedButton';
+import {RadioButton, RadioButtonGroup} from 'material-ui/RadioButton';
 import ReactTable from "react-table";
 import FileUpload from './FileUpload.js';
 import UserMenu from './UserMenu.js';
@@ -104,10 +105,23 @@ class InfoPanel extends React.Component {
                     createNewScenario={this.props.createNewScenario}
                     deleteScenario={this.props.deleteScenario}
                     loadScenario={this.props.loadScenario}
-                    setShowPopupOption={this.props.setShowPopupOption}
+                    saveOptions={this.props.saveOptions}
+                    savingOptions={this.props.savingOptions}
+                    openOptionsDialog={this.props.openOptionsDialog}
+                    closeOptionsDialog={this.props.closeOptionsDialog}
+                    optionsDialogOpen={this.props.optionsDialogOpen}
+                    hidePopup={this.props.hidePopup}
                     updateUser={this.props.updateUser}
                     />}/>
-          <Tabs>
+          <Tabs tabTemplateStyle={{paddingLeft:'10px'}}>
+            <Tab label="Scenario" className={'tab'}>
+              <div className='tabPanel'>
+                <div className={'tabTitle'}>Description</div>
+                <div>{this.props.metadata.DESCRIPTION}</div>
+                <div className={'tabTitle'}>Created</div>
+                <div>{this.props.metadata.CREATEDATE}</div>
+              </div>
+            </Tab>
             <Tab label="Inputs" className={'tab'}>
               <div className='tabPanel'>
                 <div className={'tabTitle'}>Planning area</div>
@@ -121,7 +135,8 @@ class InfoPanel extends React.Component {
                   <FileUpload parameter="BLOCKDEFNAME" value={this.props.files.BLOCKDEFNAME} label="Block definitions" fileUploaded={this.validateUploads.bind(this)} user={this.props.user} scenario={this.props.scenario}/>
                 </div>
               </div>
-              <RaisedButton 
+              <RaisedButton
+                title="Click to change the run parameters"
                 label={'Run parameters'} 
                 onClick={this.openParametersDialog.bind(this)} 
                 className={'logButton'}
@@ -134,10 +149,7 @@ class InfoPanel extends React.Component {
                 updatingRunParameters={this.props.updatingRunParameters}
               />
             </Tab>
-            <Tab
-              label="Outputs"
-              data-route="/home" className={'tab'}
-            >
+            <Tab label="Outputs" className={'tab'}>
               <div className='tabPanel'>
                 <div className="tabTitle">Solutions</div>
                 <div id="solutionsPanel" style={{'display': (this.props.dataAvailable && !this.props.running ? 'block' : 'none')}}>
@@ -186,8 +198,8 @@ class InfoPanel extends React.Component {
                 <div style={{'paddingBottom':'8px','margin':'17px 0px 0px 10px','fontSize':'13px'}}>{this.props.outputsTabString}</div>
               </div>
               <RaisedButton 
+                title="Click to view the Marxan log"
                 label={'Log'} 
-                secondary={true} 
                 onClick={this.openLogDialog.bind(this)} 
                 className={'logButton'}
                 disabled={!this.props.dataAvailable}/>
@@ -199,10 +211,15 @@ class InfoPanel extends React.Component {
             <Tab label="Map" className={'tab'}>
               <div className='tabPanel'>
                 <div className={'tabTitle'}>Map</div>
-              </div>
+                  <div>renderer:{this.props.renderer.RENDERER}</div>
+                  <RadioButtonGroup name="renderer" defaultSelected={this.props.renderer.RENDERER}>
+                    <RadioButton value="default" label="Default" />
+                    <RadioButton value="opaque" label="Opaque" />
+                  </RadioButtonGroup>
+                </div>
             </Tab>
           </Tabs>                        
-          <RaisedButton label={this.props.running ? "Running" : "Run"} secondary={true} className={'run'} onClick={this.props.runMarxan} disabled={!this.props.runnable || this.props.running || (this.state && this.state.allFilesUploaded === false)}/>
+          <RaisedButton title="Click to run this scenario" label={this.props.running ? "Running" : "Run"} secondary={true} className={'run'} onClick={this.props.runMarxan} disabled={!this.props.runnable || this.props.running || (this.state && this.state.allFilesUploaded === false)}/>
           <div className='footer'>
             <div>v0.2 Feedback: <a href='mailto:andrew.cottam@ec.europa.eu' className='email'>Andrew Cottam</a></div>
             <div>Marxan 2.4.3 - Ian Ball, Matthew Watts &amp; Hugh Possingham</div>

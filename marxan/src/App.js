@@ -10,6 +10,7 @@ import Login from './login.js';
 import Snackbar from 'material-ui/Snackbar';
 import MapboxClient from 'mapbox';
 import FontAwesome from 'react-fontawesome';
+import classyBrew from 'classybrew';
 /*eslint-disable no-unused-vars*/
 import axios, { post } from 'axios';
 /*eslint-enable no-unused-vars*/
@@ -18,9 +19,6 @@ import axios, { post } from 'axios';
 //THE MARXAN_ENDPOINT MUST ALSO BE CHANGED IN THE FILEUPLOAD.JS FILE
 let MARXAN_ENDPOINT = "https://db-server-blishten.c9users.io/marxan/webAPI2/";
 let TIMEOUT = 0; //disable timeout setting
-// let SAMPLE_TILESET_ID = "blishten.3ogmvag8";
-let SAMPLE_TILESET_ID = "blishten.pulayer_costt";
-let SAMPLE_TILESET_NAME = "Marxan Sample Planning Area";
 mapboxgl.accessToken = 'pk.eyJ1IjoiYmxpc2h0ZW4iLCJhIjoiMEZrNzFqRSJ9.0QBRA2HxTb8YHErUFRMPZg'; //this is my public access token for using in the Mapbox GL client - TODO change this to the logged in users public access token
 
 class App extends React.Component {
@@ -30,9 +28,12 @@ class App extends React.Component {
     this.state = {
       user: '',
       password: '',
+      userData: {},
       loggingIn: false,
       loggedIn: false,
       scenario: '',
+      metadata: {},
+      renderer: {},
       editingScenarioName: false,
       runParams: [],
       files: {},
@@ -46,9 +47,10 @@ class App extends React.Component {
       snackbarOpen: false,
       snackbarMessage: '',
       tilesets: [],
-      showPopup: true,
       parametersDialogOpen: false,
-      updatingRunParameters: false
+      updatingRunParameters: false,
+      optionsDialogOpen: false,
+      savingOptions: false
     };
   }
 
@@ -219,6 +221,8 @@ class App extends React.Component {
 
   //updates all parameter in the user.dat file then updates the state (in userData)
   updateUser(parameters) {
+    //ui feedback
+    this.setState({ savingOptions: true });
     //remove the keys that are not part of the users information
     parameters = this.removeKeys(parameters, ["updated", "validEmail"]);
     //initialise the form data
@@ -245,11 +249,27 @@ class App extends React.Component {
       //check there are no errors from the server
       if (!this.isServerError(response)) {
         //if succesfull write the state back to the userData key
-        this.setState({ snackbarOpen: true, snackbarMessage: response.info, userData: this.newUserData });
+        this.setState({ snackbarOpen: true, snackbarMessage: response.info, userData: this.newUserData, savingOptions: false, optionsDialogOpen: false });
       }
     }
   }
+  //opens the options parameters dialog whos open state is controlled
+  openOptionsDialog() {
+    this.setState({ optionsDialogOpen: true });
+  }
+  //closes the options parameters dialog whos open state is controlled
+  closeOptionsDialog() {
+    this.setState({ optionsDialogOpen: false });
+  }
 
+  //saveOptions - the options are in the users data so we use the updateUser REST call to update them
+  saveOptions(options) {
+    this.updateUser(options);
+  }
+  //hides the popup
+  hidePopup() {
+    this.setState({ active_pu: undefined });
+  }
   //opens the run parameters dialog whos open state is controlled
   openParametersDialog() {
     this.setState({ parametersDialogOpen: true });
@@ -293,7 +313,7 @@ class App extends React.Component {
     if (!this.responseIsTimeoutOrEmpty(undefined, response)) {
       //check there are no errors from the server
       if (!this.isServerError(response)) {
-        //if succesfull write the state back to the userData key
+        //if succesfull write the state back 
         this.setState({ snackbarOpen: true, snackbarMessage: response.info, runParams: this.runParams, parametersDialogOpen: false });
       }
     }
@@ -310,8 +330,6 @@ class App extends React.Component {
   parseTilesets(err, tilesets) {
     //check if there are no timeout errors or empty responses
     if (!this.responseIsTimeoutOrEmpty(err, tilesets)) {
-      //append the sample tileset onto the list of tilesets
-      tilesets.push({ id: SAMPLE_TILESET_ID, name: SAMPLE_TILESET_NAME });
       //sort alphabetically by name
       tilesets.sort(function(a, b) {
         if (a.name < b.name)
@@ -367,7 +385,7 @@ class App extends React.Component {
     if (!this.responseIsTimeoutOrEmpty(err, response)) {
       //check there are no errors from the server
       if (!this.isServerError(response)) {
-        this.setState({ loggedIn: true, scenario: response.scenario, runParams: response.runParameters, files: Object.assign(response.files), metadata: response.metadata });
+        this.setState({ loggedIn: true, scenario: response.scenario, runParams: response.runParameters, files: Object.assign(response.files), metadata: response.metadata, renderer: response.renderer });
         //if there is a mapid passed then programmatically change the select box to this map 
         if (response.metadata.MAPID) {
           this.changeTileset(response.metadata.MAPID);
@@ -619,22 +637,55 @@ class App extends React.Component {
     }
   }
 
-  //renders the sum of solutions - data is the REST response and sum is a flag to indicate if the data is the summed solution (true) or an individual solution (false)
+  //gets the total number of planning units in the ssoln
+  getssolncount(data) {
+    let total = 0;
+    data.map(function(item) { total += item[1].length; });
+    return total;
+  }
+  //gets a sample of the data to be able to do a classification, e.g. natural breaks, jenks etc.
+  getssolnSample(data, sampleSize) {
+    let sample = [],
+      num = 0;
+    let ssolnLength = this.getssolncount(data);
+    data.map(function(item) {
+      num = Math.floor((item[1].length / ssolnLength) * sampleSize);
+      sample.push(Array(num, ).fill(item[0]));
+    });
+    return [].concat.apply([], sample);
+  }
+
+  //gets the classification and colorbrewer object for doing the rendering
+  getRenderer(data, numClasses, colorCode, classification) {
+    //get a sample of the data to make the renderer classification
+    let sample = this.getssolnSample(data, 1000);
+    //create a new classbrew to do the classification and get the symbology
+    var brew = new classyBrew();
+    //set the data 
+    brew.setSeries(sample);
+    //set the number of classes
+    brew.setNumClasses(numClasses);
+    //set the color code - see the color theory section on Joshua Tanners page here https://github.com/tannerjt/classybrew - for all the available colour codes
+    brew.setColorCode(colorCode);
+    //set the classification method - one of equal_interval, quantile, std_deviation, jenks (default)
+    brew.classify(classification);
+    return brew;
+  }
+
+  //renders the solution - data is the REST response and sum is a flag to indicate if the data is the summed solution (true) or an individual solution (false)
   renderSolution(data, sum) {
+    var color;
+    //create the renderer using Joshua Tanners excellent library classybrew - available here https://github.com/tannerjt/classybrew
+    let renderer = this.getRenderer(data, 5, "OrRd", "jenks");
     //build an expression to get the matching puids with different numbers of 'numbers' in the marxan results
     var expression = ["match", ["get", "PUID"]];
-    //get the number of runs from the run parameters 
-    // let numberOfRuns = Number(this.state.runParams[3].value);
-    // let clrs = ["#032333","#0c316a","#3f349b","#694296","#8c518c","#b15d81","#d66a6c","#f2824f","#fba63d","#f7cf44","#e7fa5a"];
-    // let clrs = ["#fdedb0","#faca8e","#f5a772","#ed845d","#e16153","#ce4457","#b32e5e","#932062","#71195e","#4f1551","#2f0f3d"];
-    // let clrs = ["#ffffd9","#f1f9b9","#d5efb3","#a8dfb6","#73c9bc","#41b6c4","#1b99c2","#0773b4","#1c4ea2","#1e2f88","#081d58"];YIGn
-    let clrs = ["rgba(0,0,0,0)", "rgba(0,0,0,0)", "rgba(0,0,0,0)", "rgba(0,0,0,0)", "rgba(0,0,0,0)", "rgba(0,0,0,0)", "rgba(0,0,0,0)", "#0773b4", "#1c4ea2", "#1e2f88", "#081d58"];
     data.forEach(function(row) {
       if (sum) {
         //for each row add the puids and the color to the expression, e.g. [35,36,37],"rgba(255, 0, 136,0.1)"
         // the rest service sends the data grouped by the 'number', e.g. [23,34,36,43,98], 2
-        // expression.push(row[1], "rgba(255, 0, 136," + (row[0] / numberOfRuns) + ")");
-        expression.push(row[1], clrs[row[0]]);
+        color = renderer.getColorInRange(row[0]);
+        //add the color to the expression
+        expression.push(row[1], color);
       }
       else {
         expression.push(row[1], "rgba(255, 0, 136,1)");
@@ -648,7 +699,7 @@ class App extends React.Component {
 
   mouseMove(e) {
     //error check
-    if (!this.state.showPopup || this.state.marxanLayer === undefined) return;
+    if (!this.state.userData.SHOWPOPUP || this.state.marxanLayer === undefined) return;
     //get the features under the mouse
     var features = this.map.queryRenderedFeatures(e.point);
     //see if there are any planning unit features under the mouse
@@ -729,10 +780,6 @@ class App extends React.Component {
     this.map.fitBounds([minLng, minLat, maxLng, maxLat], { padding: { top: 10, bottom: 10, left: 10, right: 10 }, easing: function(num) { return 1; } });
   }
 
-  setShowPopupOption(value) {
-    this.setState({ showPopup: value, active_pu: undefined });
-  }
-
   render() {
     return (
       <MuiThemeProvider>
@@ -745,6 +792,8 @@ class App extends React.Component {
             listScenarios={this.listScenarios.bind(this)}
             scenarios={this.state.scenarios}
             scenario={this.state.scenario}
+            metadata={this.state.metadata}
+            renderer={this.state.renderer}
             logout={this.logout.bind(this)}
             runParams={this.state.runParams} 
             files={this.state.files}
@@ -769,7 +818,12 @@ class App extends React.Component {
             tilesets={this.state.tilesets}
             changeTileset={this.changeTileset.bind(this)}
             tilesetid={this.state.tilesetid}
-            setShowPopupOption={this.setShowPopupOption.bind(this)}
+            saveOptions={this.saveOptions.bind(this)}
+            savingOptions={this.state.savingOptions}
+            optionsDialogOpen={this.state.optionsDialogOpen}
+            openOptionsDialog={this.openOptionsDialog.bind(this)}
+            closeOptionsDialog={this.closeOptionsDialog.bind(this)}
+            hidePopup={this.hidePopup.bind(this)}
             updateUser={this.updateUser.bind(this)}
             updateRunParams={this.updateRunParams.bind(this)}
             openParametersDialog={this.openParametersDialog.bind(this)}
