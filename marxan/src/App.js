@@ -87,7 +87,7 @@ class App extends React.Component {
   responseIsTimeoutOrEmpty(err, response) {
     if (err || !response) {
       let msg = err ? err.message : "No response received from server";
-      this.setState({ snackbarOpen: true, snackbarMessage: msg });
+      this.setState({ snackbarOpen: true, snackbarMessage: msg, loggingIn: false });
       return true;
     }
     else {
@@ -633,7 +633,8 @@ class App extends React.Component {
     //get the name of the render layer
     if (this.state.marxanLayer) {
       this.map.setPaintProperty(this.state.marxanLayer.id, "fill-color", expression);
-      this.map.setPaintProperty(this.state.marxanLayer.id, "fill-opacity", 1);
+      this.map.setPaintProperty(this.state.marxanLayer.id, "fill-opacity", 0.6);
+      // this.map.setPaintProperty(this.state.marxanLayer.id, "fill-outline-color", "#888888");
     }
   }
 
@@ -667,25 +668,71 @@ class App extends React.Component {
     brew.setNumClasses(numClasses);
     //set the color code - see the color theory section on Joshua Tanners page here https://github.com/tannerjt/classybrew - for all the available colour codes
     brew.setColorCode(colorCode);
+    //if the colorCode is opacity then I will add it manually to the classbrew colorSchemes
+    if (colorCode === 'opacity') {
+      // expression.push(row[1], "rgba(255, 0, 136," + (row[0] / this.state.runParams.NUMREPS) + ")");
+      let newBrewColorScheme = Array(Number(this.state.renderer.NUMCLASSES)).fill("rgba(255,0,136,").map(function(item, index) { return item + ((1 / this) * (index + 1)) + ")"; }, this.state.renderer.NUMCLASSES);
+      brew.colorSchemes.opacity = {
+        [this.state.renderer.NUMCLASSES]: newBrewColorScheme };
+    }
     //set the classification method - one of equal_interval, quantile, std_deviation, jenks (default)
     brew.classify(classification);
     return brew;
   }
 
+  //called when the renderer state has been updated - renders the solution and saves the renderer back to the server
+  rendererStateUpdated(parameter, value) {
+    this.renderSolution(this.runMarxanResponse.ssoln, true);
+    this.updateParameter(parameter, value);
+  }
+  //change the renderer, e.g. jenks, natural_breaks etc.
+  changeRenderer(renderer) {
+    this.setState({ renderer: Object.assign(this.state.renderer, { CLASSIFICATION: renderer }) }, function() {
+      this.rendererStateUpdated("CLASSIFICATION", renderer);
+    });
+  }
+  //change the number of classes of the renderer
+  changeNumClasses(numClasses) {
+    this.setState({ renderer: Object.assign(this.state.renderer, { NUMCLASSES: numClasses }) }, function() {
+      this.rendererStateUpdated("NUMCLASSES", numClasses);
+    });
+  }
+  //change the color code of the renderer
+  changeColorCode(colorCode) {
+    this.setState({ renderer: Object.assign(this.state.renderer, { COLORCODE: colorCode }) }, function() {
+      this.rendererStateUpdated("COLORCODE", colorCode);
+    });
+  }
+  //change how many of the top classes only to show
+  changeShowTopClasses(numClasses) {
+    this.setState({ renderer: Object.assign(this.state.renderer, { TOPCLASSES: numClasses }) }, function() {
+      this.rendererStateUpdated("TOPCLASSES", numClasses);
+    });
+  }
   //renders the solution - data is the REST response and sum is a flag to indicate if the data is the summed solution (true) or an individual solution (false)
   renderSolution(data, sum) {
-    var color;
+    if (!data) return;
+    var color, visibleValue, value;
     //create the renderer using Joshua Tanners excellent library classybrew - available here https://github.com/tannerjt/classybrew
-    let renderer = this.getRenderer(data, 5, "OrRd", "jenks");
+    let renderer = this.getRenderer(data, Number(this.state.renderer.NUMCLASSES), this.state.renderer.COLORCODE, this.state.renderer.CLASSIFICATION);
     //build an expression to get the matching puids with different numbers of 'numbers' in the marxan results
     var expression = ["match", ["get", "PUID"]];
-    data.forEach(function(row) {
+    //if only the top n classes will be rendered then get the visible value at the boundary
+    if (this.state.renderer.TOPCLASSES < this.state.renderer.NUMCLASSES) {
+      let breaks = renderer.getBreaks();
+      visibleValue = breaks[this.state.renderer.NUMCLASSES - this.state.renderer.TOPCLASSES + 1];
+    }
+    else {
+      visibleValue = 0;
+    }
+    // the rest service sends the data grouped by the 'number', e.g. [23,34,36,43,98], 2
+    data.forEach(function(row, index) {
       if (sum) {
+        value = row[0];
         //for each row add the puids and the color to the expression, e.g. [35,36,37],"rgba(255, 0, 136,0.1)"
-        // the rest service sends the data grouped by the 'number', e.g. [23,34,36,43,98], 2
-        color = renderer.getColorInRange(row[0]);
-        //add the color to the expression
-        expression.push(row[1], color);
+        color = renderer.getColorInRange(value);
+        //add the color to the expression - transparent if the value is less than the visible value
+        (value >= visibleValue) ? expression.push(row[1], color): expression.push(row[1], "rgba(0, 0, 0, 0)");
       }
       else {
         expression.push(row[1], "rgba(255, 0, 136,1)");
@@ -830,6 +877,10 @@ class App extends React.Component {
             closeParametersDialog={this.closeParametersDialog.bind(this)}
             parametersDialogOpen={this.state.parametersDialogOpen}
             updatingRunParameters={this.state.updatingRunParameters}
+            changeRenderer={this.changeRenderer.bind(this)}
+            changeNumClasses={this.changeNumClasses.bind(this)}
+            changeColorCode={this.changeColorCode.bind(this)}
+            changeShowTopClasses={this.changeShowTopClasses.bind(this)}
             />
           <div className="runningSpinner"><FontAwesome spin name='sync' size='2x' style={{'display': (this.state.running ? 'block' : 'none')}}/></div>
           <Popup active_pu={this.state.active_pu} xy={this.state.popup_point}/>

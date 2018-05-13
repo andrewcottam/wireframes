@@ -4,13 +4,18 @@ import Paper from 'material-ui/Paper';
 import AppBar from 'material-ui/AppBar';
 import { Tabs, Tab } from 'material-ui/Tabs';
 import RaisedButton from 'material-ui/RaisedButton';
-import {RadioButton, RadioButtonGroup} from 'material-ui/RadioButton';
 import ReactTable from "react-table";
 import FileUpload from './FileUpload.js';
 import UserMenu from './UserMenu.js';
 import SpatialDataSelector from './SpatialDataSelector.js';
 import LogDialog from './LogDialog.js';
 import ParametersDialog from './ParametersDialog.js';
+import RendererSelector from './RendererSelector.js';
+
+let RENDERERS = ["equal_interval", "jenks", "std_deviation", "quantile"];
+let COLORCODES = ["opacity","OrRd", "PuBu", "BuPu", "Oranges", "BuGn", "YlOrBr", "YlGn", "Reds", "RdPu", "Greens", "YlGnBu", "Purples", "GnBu", "Greys", "YlOrRd", "PuRd", "Blues", "PuBuGn", "Spectral", "RdYlGn", "RdBu", "PiYG", "PRGn", "RdYlBu", "BrBG", "RdGy", "PuOr", "Set2", "Accent", "Set1", "Set3", "Dark2", "Paired", "Pastel2", "Pastel1"];
+let NUMCLASSES = ["3","4","5","6","7","8","9"];
+let TOPCLASSES = ["1","2","3","4","5","6","7","8","9"];
 
 class InfoPanel extends React.Component {
   constructor(props) {
@@ -80,7 +85,6 @@ class InfoPanel extends React.Component {
   closeParametersDialog() {
     this.props.closeParametersDialog();
   }
-
 
   render() {
     return (
@@ -211,11 +215,10 @@ class InfoPanel extends React.Component {
             <Tab label="Map" className={'tab'}>
               <div className='tabPanel'>
                 <div className={'tabTitle'}>Map</div>
-                  <div>renderer:{this.props.renderer.RENDERER}</div>
-                  <RadioButtonGroup name="renderer" defaultSelected={this.props.renderer.RENDERER}>
-                    <RadioButton value="default" label="Default" />
-                    <RadioButton value="opaque" label="Opaque" />
-                  </RadioButtonGroup>
+                  <RendererSelector values={COLORCODES} changeValue={this.props.changeColorCode} property={this.props.renderer.COLORCODE} floatingLabelText={"Colour scheme"}/>
+                  <RendererSelector values={RENDERERS} changeValue={this.props.changeRenderer} property={this.props.renderer.CLASSIFICATION} floatingLabelText={"Classification"}/>
+                  <RendererSelector values={NUMCLASSES} changeValue={this.props.changeNumClasses} property={this.props.renderer.NUMCLASSES} floatingLabelText={"Number of classes"}/>
+                  <RendererSelector values={TOPCLASSES} changeValue={this.props.changeShowTopClasses} property={this.props.renderer.TOPCLASSES} floatingLabelText={"Show top n classes"}/>
                 </div>
             </Tab>
           </Tabs>                        
