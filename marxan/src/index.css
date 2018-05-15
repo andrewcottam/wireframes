@@ -81,8 +81,7 @@ body {
   text-decoration: underline;
 }
 
-.tabPanel {
-}
+.tabPanel {}
 
 #log {
   height: 275px;
@@ -151,12 +150,13 @@ table input {
   top: 31px;
   margin-left: 112px;
 }
-.optionsSpinner{
+
+.optionsSpinner {
   position: absolute;
   top: 31px;
   margin-left: 90px;
 }
-  
+
 .runParametersSpinner {
   position: absolute;
   top: 31px;
@@ -187,6 +187,12 @@ table input {
   position: fixed;
   top: 50%;
   left: 50%;
+}
+
+.progressSpinner {
+  position: fixed;
+  top: 31px;
+  margin-left: 100px;
 }
 
 .scenariosBtn {
@@ -225,4 +231,14 @@ div.rt-tbody>div>div>div>div {
   position: absolute;
   top: 345px;
   left: 23px;
+}
+
+.runLabel {
+  text-align: center;
+  margin: 17px;
+}
+
+.runs {
+  font-size: 10px;
+  padding: 10px;
 }

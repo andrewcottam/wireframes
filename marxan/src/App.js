@@ -7,6 +7,7 @@ import * as jsonp from 'jsonp';
 import InfoPanel from './InfoPanel.js';
 import Popup from './Popup.js';
 import Login from './login.js';
+import ProgressDialog from './ProgressDialog.js';
 import Snackbar from 'material-ui/Snackbar';
 import MapboxClient from 'mapbox';
 import FontAwesome from 'react-fontawesome';
@@ -39,6 +40,8 @@ class App extends React.Component {
       files: {},
       running: false,
       runnable: false,
+      runsCompleted: 0,
+      numReps: 0,
       active_pu: undefined,
       log: 'No data',
       dataAvailable: false,
@@ -302,7 +305,7 @@ class App extends React.Component {
     };
     //post to the server
     post(MARXAN_ENDPOINT + "updateRunParams", formData, config).then((response) => this.parseUpdateRunParametersResponse(response.data));
-    //update the state
+    //save the local state to be able to update the state on callback
     this.runParams = Object.assign(this.state.runParams, formData);
   }
 
@@ -314,8 +317,10 @@ class App extends React.Component {
     if (!this.responseIsTimeoutOrEmpty(undefined, response)) {
       //check there are no errors from the server
       if (!this.isServerError(response)) {
+        //get the number of runs from the run parameters array
+        let numReps = this.runParams.filter(function(item) { return item.key === "NUMREPS" })[0].value;
         //if succesfull write the state back 
-        this.setState({ snackbarOpen: true, snackbarMessage: response.info, runParams: this.runParams, parametersDialogOpen: false });
+        this.setState({ snackbarOpen: true, snackbarMessage: response.info, runParams: this.runParams, parametersDialogOpen: false, numReps: numReps });
       }
     }
   }
@@ -386,7 +391,9 @@ class App extends React.Component {
     if (!this.responseIsTimeoutOrEmpty(err, response)) {
       //check there are no errors from the server
       if (!this.isServerError(response)) {
-        this.setState({ loggedIn: true, scenario: response.scenario, runParams: response.runParameters, files: Object.assign(response.files), metadata: response.metadata, renderer: response.renderer });
+        //get the number of runs from the run parameters array
+        let numReps = response.runParameters.filter(function(item) { return item.key === "NUMREPS" })[0].value;
+        this.setState({ loggedIn: true, scenario: response.scenario, runParams: response.runParameters, numReps: numReps, files: Object.assign(response.files), metadata: response.metadata, renderer: response.renderer });
         //if there is a mapid passed then programmatically change the select box to this map 
         if (response.metadata.MAPID) {
           this.changeTileset(response.metadata.MAPID);
@@ -560,15 +567,13 @@ class App extends React.Component {
     this.returnall = false; //override as the png payload is huge!
     //make the request to get the marxan data
     jsonp(MARXAN_ENDPOINT + "runMarxan?user=" + this.state.user + "&scenario=" + this.state.scenario);
-    this.timer = setInterval(()=> this.pollResults(), 3000);
+    this.timer = setInterval(() => this.pollResults(), 3000);
   }
 
   //poll the server to see if the run has completed
   pollResults() {
-    //get the number of runs from the run parameters array
-    let numreps = this.state.runParams.filter(function(item) { return item.key === "NUMREPS" })[0].value;
     //make the request to get the marxan data
-    jsonp(MARXAN_ENDPOINT + "pollResults?user=" + this.state.user + "&scenario=" + this.state.scenario + "&numreps=" + numreps + "&returnall=" + this.returnall, { timeout: TIMEOUT }, this.parsePollResultsResponse.bind(this));
+    jsonp(MARXAN_ENDPOINT + "pollResults?user=" + this.state.user + "&scenario=" + this.state.scenario + "&numreps=" + this.state.numReps + "&returnall=" + this.returnall, { timeout: TIMEOUT }, this.parsePollResultsResponse.bind(this));
   }
 
   parsePollResultsResponse(err, response) {
@@ -581,7 +586,7 @@ class App extends React.Component {
           clearInterval(this.timer);
         }
         else {
-
+          this.setState({ runsCompleted: response.runsCompleted });
         }
       }
       else {
@@ -592,8 +597,6 @@ class App extends React.Component {
 
   //run completed
   runCompleted(response) {
-    //restore ui
-    this.setState({ running: false });
     //get the response and store it in this component
     this.runMarxanResponse = response;
     //if we have some data to map then set the state to reflect this
@@ -609,7 +612,7 @@ class App extends React.Component {
     //add in the row for the summed solutions
     solutions.splice(0, 0, { 'Run_Number': 'Sum', 'Score': '', 'Cost': '', 'Planning_Units': '' });
     //ui feedback
-    this.setState({ log: response.log.replace(/(\r\n|\n|\r)/g, "<br />"), outputsTabString: '', solutions: solutions, snackbarOpen: true, snackbarMessage: response.info });
+    this.setState({ running: false, runsCompleted: 0, log: response.log.replace(/(\r\n|\n|\r)/g, "<br />"), outputsTabString: '', solutions: solutions, snackbarOpen: true, snackbarMessage: response.info });
   }
 
   //pads a number with zeros to a specific size, e.g. pad(9,5) => 00009
@@ -929,6 +932,11 @@ class App extends React.Component {
             message={this.state.snackbarMessage}
             onRequestClose={this.closeSnackbar.bind(this)}
           />
+          <ProgressDialog 
+            open={this.state.running}
+            numReps={this.state.numReps}
+            runsCompleted={this.state.runsCompleted}
+            />
         </React.Fragment>
       </MuiThemeProvider>
     );
