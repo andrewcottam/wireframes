@@ -50,7 +50,8 @@ class App extends React.Component {
       parametersDialogOpen: false,
       updatingRunParameters: false,
       optionsDialogOpen: false,
-      savingOptions: false
+      savingOptions: false,
+      dataBreaks: []
     };
   }
 
@@ -558,38 +559,57 @@ class App extends React.Component {
     this.returnall = this.state.runParams.NUMREPS > 10 ? 'false' : 'true';
     this.returnall = false; //override as the png payload is huge!
     //make the request to get the marxan data
-    jsonp(MARXAN_ENDPOINT + "runMarxan?user=" + this.state.user + "&scenario=" + this.state.scenario + "&returnall=" + this.returnall, { timeout: TIMEOUT }, this.parseRunMarxanResponse.bind(this)); //get the data from the server and parse it
+    jsonp(MARXAN_ENDPOINT + "runMarxan?user=" + this.state.user + "&scenario=" + this.state.scenario);
+    this.timer = setInterval(()=> this.pollResults(), 3000);
   }
 
-  parseRunMarxanResponse(err, response) {
-    var solutions;
-    //restore ui
-    this.setState({ running: false });
-    //check if there are no timeout errors or empty responses
+  //poll the server to see if the run has completed
+  pollResults() {
+    //get the number of runs from the run parameters array
+    let numreps = this.state.runParams.filter(function(item) { return item.key === "NUMREPS" })[0].value;
+    //make the request to get the marxan data
+    jsonp(MARXAN_ENDPOINT + "pollResults?user=" + this.state.user + "&scenario=" + this.state.scenario + "&numreps=" + numreps + "&returnall=" + this.returnall, { timeout: TIMEOUT }, this.parsePollResultsResponse.bind(this));
+  }
+
+  parsePollResultsResponse(err, response) {
+    //check if there are no timeout errors from the server or empty responses from the server
     if (!this.responseIsTimeoutOrEmpty(err, response)) {
-      //check there are no errors from the server
-      if (this.isServerError(response)) {
-        solutions = [];
+      //check there are no errors from the server from my code
+      if (!this.isServerError(response)) {
+        if (response.info === "Run succeeded") {
+          this.runCompleted(response);
+          clearInterval(this.timer);
+        }
+        else {
+
+        }
       }
       else {
-        //get the response and store it in this component
-        this.runMarxanResponse = response;
-        //if we have some data to map then set the state to reflect this
-        (this.runMarxanResponse.ssoln) ? this.setState({ dataAvailable: true }): this.setState({ dataAvailable: false });
-        //render the sum solution map
-        this.renderSolution(this.runMarxanResponse.ssoln, true);
-        //create the array of solutions to pass to the InfoPanels table
-        solutions = response.sum;
-        //the array data are in the format "Run_Number","Score","Cost","Planning_Units" - so create an array of objects to pass to the outputs table
-        solutions = solutions.map(function(item) {
-          return { "Run_Number": item[0], "Score": item[1], "Cost": item[2], "Planning_Units": item[3] };
-        });
-        //add in the row for the summed solutions
-        solutions.splice(0, 0, { 'Run_Number': 'Sum', 'Score': '', 'Cost': '', 'Planning_Units': '' });
-        //ui feedback
-        this.setState({ log: response.log.replace(/(\r\n|\n|\r)/g, "<br />"), outputsTabString: '', solutions: solutions, snackbarOpen: true, snackbarMessage: response.info });
+        this.setState({ running: false });
       }
     }
+  }
+
+  //run completed
+  runCompleted(response) {
+    //restore ui
+    this.setState({ running: false });
+    //get the response and store it in this component
+    this.runMarxanResponse = response;
+    //if we have some data to map then set the state to reflect this
+    (this.runMarxanResponse.ssoln) ? this.setState({ dataAvailable: true }): this.setState({ dataAvailable: false });
+    //render the sum solution map
+    this.renderSolution(this.runMarxanResponse.ssoln, true);
+    //create the array of solutions to pass to the InfoPanels table
+    let solutions = response.sum;
+    //the array data are in the format "Run_Number","Score","Cost","Planning_Units" - so create an array of objects to pass to the outputs table
+    solutions = solutions.map(function(item) {
+      return { "Run_Number": item[0], "Score": item[1], "Cost": item[2], "Planning_Units": item[3] };
+    });
+    //add in the row for the summed solutions
+    solutions.splice(0, 0, { 'Run_Number': 'Sum', 'Score': '', 'Cost': '', 'Planning_Units': '' });
+    //ui feedback
+    this.setState({ log: response.log.replace(/(\r\n|\n|\r)/g, "<br />"), outputsTabString: '', solutions: solutions, snackbarOpen: true, snackbarMessage: response.info });
   }
 
   //pads a number with zeros to a specific size, e.g. pad(9,5) => 00009
@@ -638,10 +658,15 @@ class App extends React.Component {
     }
   }
 
-  //gets the total number of planning units in the ssoln
+  //gets the total number of planning units in the ssoln and outputs the statistics of the distribution to state, e.g. 2 PUs with a value of 1, 3 with a value of 2 etc.
   getssolncount(data) {
     let total = 0;
-    data.map(function(item) { total += item[1].length; });
+    let summaryStats = [];
+    data.map(function(item) {
+      summaryStats.push({ number: item[0], count: item[1].length });
+      total += item[1].length;
+    });
+    this.setState({ summaryStats: summaryStats });
     return total;
   }
   //gets a sample of the data to be able to do a classification, e.g. natural breaks, jenks etc.
@@ -673,10 +698,12 @@ class App extends React.Component {
       // expression.push(row[1], "rgba(255, 0, 136," + (row[0] / this.state.runParams.NUMREPS) + ")");
       let newBrewColorScheme = Array(Number(this.state.renderer.NUMCLASSES)).fill("rgba(255,0,136,").map(function(item, index) { return item + ((1 / this) * (index + 1)) + ")"; }, this.state.renderer.NUMCLASSES);
       brew.colorSchemes.opacity = {
-        [this.state.renderer.NUMCLASSES]: newBrewColorScheme };
+        [this.state.renderer.NUMCLASSES]: newBrewColorScheme
+      };
     }
     //set the classification method - one of equal_interval, quantile, std_deviation, jenks (default)
     brew.classify(classification);
+    this.setState({ dataBreaks: brew.getBreaks() });
     return brew;
   }
 
@@ -881,6 +908,8 @@ class App extends React.Component {
             changeNumClasses={this.changeNumClasses.bind(this)}
             changeColorCode={this.changeColorCode.bind(this)}
             changeShowTopClasses={this.changeShowTopClasses.bind(this)}
+            summaryStats={this.state.summaryStats}
+            dataBreaks={this.state.dataBreaks}
             />
           <div className="runningSpinner"><FontAwesome spin name='sync' size='2x' style={{'display': (this.state.running ? 'block' : 'none')}}/></div>
           <Popup active_pu={this.state.active_pu} xy={this.state.popup_point}/>

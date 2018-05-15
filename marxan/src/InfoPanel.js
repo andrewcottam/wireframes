@@ -10,17 +10,12 @@ import UserMenu from './UserMenu.js';
 import SpatialDataSelector from './SpatialDataSelector.js';
 import LogDialog from './LogDialog.js';
 import ParametersDialog from './ParametersDialog.js';
-import RendererSelector from './RendererSelector.js';
-
-let RENDERERS = ["equal_interval", "jenks", "std_deviation", "quantile"];
-let COLORCODES = ["opacity","OrRd", "PuBu", "BuPu", "Oranges", "BuGn", "YlOrBr", "YlGn", "Reds", "RdPu", "Greens", "YlGnBu", "Purples", "GnBu", "Greys", "YlOrRd", "PuRd", "Blues", "PuBuGn", "Spectral", "RdYlGn", "RdBu", "PiYG", "PRGn", "RdYlBu", "BrBG", "RdGy", "PuOr", "Set2", "Accent", "Set1", "Set3", "Dark2", "Paired", "Pastel2", "Pastel1"];
-let NUMCLASSES = ["3","4","5","6","7","8","9"];
-let TOPCLASSES = ["1","2","3","4","5","6","7","8","9"];
+import ClassificationDialog from './ClassificationDialog.js';
 
 class InfoPanel extends React.Component {
   constructor(props) {
     super(props);
-    this.state = { 'allFilesUploaded': true, editingScenarioName: false, logDialogOpen: false };
+    this.state = { 'allFilesUploaded': true, editingScenarioName: false, logDialogOpen: false, classificationDialogOpen: false };
     this.nUploading = 0;
   }
   componentDidUpdate(prevProps, prevState, snapshot) {
@@ -84,6 +79,13 @@ class InfoPanel extends React.Component {
   }
   closeParametersDialog() {
     this.props.closeParametersDialog();
+  }
+
+  openClassificationDialog() {
+    this.setState({ classificationDialogOpen: true });
+  }
+  closeClassificationDialog() {
+    this.setState({ classificationDialogOpen: false });
   }
 
   render() {
@@ -215,11 +217,24 @@ class InfoPanel extends React.Component {
             <Tab label="Map" className={'tab'}>
               <div className='tabPanel'>
                 <div className={'tabTitle'}>Map</div>
-                  <RendererSelector values={COLORCODES} changeValue={this.props.changeColorCode} property={this.props.renderer.COLORCODE} floatingLabelText={"Colour scheme"}/>
-                  <RendererSelector values={RENDERERS} changeValue={this.props.changeRenderer} property={this.props.renderer.CLASSIFICATION} floatingLabelText={"Classification"}/>
-                  <RendererSelector values={NUMCLASSES} changeValue={this.props.changeNumClasses} property={this.props.renderer.NUMCLASSES} floatingLabelText={"Number of classes"}/>
-                  <RendererSelector values={TOPCLASSES} changeValue={this.props.changeShowTopClasses} property={this.props.renderer.TOPCLASSES} floatingLabelText={"Show top n classes"}/>
+              <RaisedButton 
+                title="Click to view the classifcation"
+                label={'Custom'} 
+                onClick={this.openClassificationDialog.bind(this)} 
+                className={'logButton'}
+                disabled={!this.props.dataAvailable}/>
                 </div>
+              <ClassificationDialog 
+                open={this.state.classificationDialogOpen}
+                renderer={this.props.renderer}
+                closeClassificationDialog={this.closeClassificationDialog.bind(this)}
+                changeColorCode={this.props.changeColorCode.bind(this)}
+                changeRenderer={this.props.changeRenderer.bind(this)}
+                changeNumClasses={this.props.changeNumClasses.bind(this)}
+                changeShowTopClasses={this.props.changeShowTopClasses.bind(this)}
+                summaryStats={this.props.summaryStats}
+                dataBreaks={this.props.dataBreaks}
+                />
             </Tab>
           </Tabs>                        
           <RaisedButton title="Click to run this scenario" label={this.props.running ? "Running" : "Run"} secondary={true} className={'run'} onClick={this.props.runMarxan} disabled={!this.props.runnable || this.props.running || (this.state && this.state.allFilesUploaded === false)}/>
