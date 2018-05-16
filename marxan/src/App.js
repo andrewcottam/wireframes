@@ -18,7 +18,7 @@ import axios, { post } from 'axios';
 
 //CONSTANTS
 //THE MARXAN_ENDPOINT MUST ALSO BE CHANGED IN THE FILEUPLOAD.JS FILE
-let MARXAN_ENDPOINT = "https://db-server-blishten.c9users.io/marxan/webAPI2/";
+let MARXAN_ENDPOINT = "https://db-server-blishten.c9users.io/marxan/webAPI2.py/";
 let TIMEOUT = 0; //disable timeout setting
 mapboxgl.accessToken = 'pk.eyJ1IjoiYmxpc2h0ZW4iLCJhIjoiMEZrNzFqRSJ9.0QBRA2HxTb8YHErUFRMPZg'; //this is my public access token for using in the Mapbox GL client - TODO change this to the logged in users public access token
 
@@ -36,6 +36,7 @@ class App extends React.Component {
       metadata: {},
       renderer: {},
       editingScenarioName: false,
+      editingDescription: false,
       runParams: [],
       files: {},
       running: false,
@@ -61,7 +62,8 @@ class App extends React.Component {
   componentDidMount() {
     this.map = new mapboxgl.Map({
       container: this.mapContainer,
-      style: 'mapbox://styles/blishten/cj6q75jcd39gq2rqm1d7yv5rc', //north star
+      // style: 'mapbox://styles/blishten/cj6q75jcd39gq2rqm1d7yv5rc', //north star
+      style: 'mapbox://styles/blishten/cjg6jk8vg3tir2spd2eatu5fd', //north star + marine PAs in pacific
       // center: [0.043476868184143314, 0.0460817578557311],
       center: [0, 0],
       zoom: 2
@@ -398,6 +400,8 @@ class App extends React.Component {
         if (response.metadata.MAPID) {
           this.changeTileset(response.metadata.MAPID);
         }
+        //poll the server to see if results are available for this scenario - if there are these will be loaded
+        this.pollResults(true);
       }
     }
   }
@@ -507,6 +511,9 @@ class App extends React.Component {
     this.setState({ editingScenarioName: true });
   }
 
+  startEditingDescription() {
+    this.setState({ editingDescription: true });
+  }
   //REST call to rename a specific scenario on the server
   renameScenario(newName) {
     this.setState({ editingScenarioName: false });
@@ -521,6 +528,23 @@ class App extends React.Component {
       //check there are no errors from the server
       if (!this.isServerError(response)) {
         this.setState({ scenario: response.scenario, snackbarOpen: true, snackbarMessage: response.info });
+      }
+    }
+  }
+
+  renameDescription(newDesc) {
+    this.setState({ editingDescription: false });
+    if (newDesc !== '' && newDesc !== this.state.metadata.DESCRIPTION) {
+      jsonp(MARXAN_ENDPOINT + "renameDescription?user=" + this.state.user + "&scenario=" + this.state.scenario + "&newDesc=" + newDesc, { timeout: TIMEOUT }, this.parseRenameDescriptionResponse.bind(this));
+    }
+
+  }
+  parseRenameDescriptionResponse(err, response) {
+    //check if there are no timeout errors or empty responses
+    if (!this.responseIsTimeoutOrEmpty(err, response)) {
+      //check there are no errors from the server
+      if (!this.isServerError(response)) {
+        this.setState({ metadata: Object.assign(this.state.metadata, { DESCRIPTION: response.description }), snackbarOpen: true, snackbarMessage: response.info });
       }
     }
   }
@@ -562,18 +586,15 @@ class App extends React.Component {
   runMarxan(e) {
     //update the ui to reflect the fact that a job is running
     this.setState({ running: true, log: 'Running...', active_pu: undefined, outputsTabString: 'Running...' });
-    //if we are requesting more than 10 solutions, then we should not load all of them in the REST call - they can be requested asynchronously as and when they are needed
-    this.returnall = this.state.runParams.NUMREPS > 10 ? 'false' : 'true';
-    this.returnall = false; //override as the png payload is huge!
     //make the request to get the marxan data
     jsonp(MARXAN_ENDPOINT + "runMarxan?user=" + this.state.user + "&scenario=" + this.state.scenario);
-    this.timer = setInterval(() => this.pollResults(), 3000);
+    this.timer = setInterval(() => this.pollResults(false), 3000);
   }
 
   //poll the server to see if the run has completed
-  pollResults() {
+  pollResults(checkForExistingRun) {
     //make the request to get the marxan data
-    jsonp(MARXAN_ENDPOINT + "pollResults?user=" + this.state.user + "&scenario=" + this.state.scenario + "&numreps=" + this.state.numReps + "&returnall=" + this.returnall, { timeout: TIMEOUT }, this.parsePollResultsResponse.bind(this));
+    jsonp(MARXAN_ENDPOINT + "pollResults?user=" + this.state.user + "&scenario=" + this.state.scenario + "&numreps=" + this.state.numReps + "&checkForExistingRun=" + checkForExistingRun, { timeout: TIMEOUT }, this.parsePollResultsResponse.bind(this));
   }
 
   parsePollResultsResponse(err, response) {
@@ -581,8 +602,10 @@ class App extends React.Component {
     if (!this.responseIsTimeoutOrEmpty(err, response)) {
       //check there are no errors from the server from my code
       if (!this.isServerError(response)) {
-        if (response.info === "Run succeeded") {
+        //the response includes the summed solution so it has finished
+        if (response.ssoln) {
           this.runCompleted(response);
+          //cancel the timer which polls the server to see when the run is complete
           clearInterval(this.timer);
         }
         else {
@@ -629,16 +652,8 @@ class App extends React.Component {
       this.renderSolution(this.runMarxanResponse.ssoln, true);
     }
     else {
-      //see if the data are already loaded
-      if (this.returnall === 'true') {
-        //get the name of the REST response object which holds the data for the specific solution
-        let _name = 'output_r' + this.pad(solution, 5);
-        this.renderSolution(this.runMarxanResponse[_name], false);
-      }
-      else {
-        //request the data for the specific solution
-        jsonp(MARXAN_ENDPOINT + "loadSolution?user=" + this.state.user + "&scenario=" + this.state.scenario + "&solution=" + solution, { timeout: TIMEOUT }, this.parseLoadSolutionResponse.bind(this));
-      }
+      //request the data for the specific solution
+      jsonp(MARXAN_ENDPOINT + "loadSolution?user=" + this.state.user + "&scenario=" + this.state.scenario + "&solution=" + solution, { timeout: TIMEOUT }, this.parseLoadSolutionResponse.bind(this));
     }
   }
 
@@ -828,10 +843,11 @@ class App extends React.Component {
     let layers = this.map.getStyle().layers;
     let layerId = layers[layers.length - 1].id;
     let sourceId = layers[layers.length - 1].source;
-    //remove the layer
-    this.map.removeLayer(layerId);
-    //remove the source if it is not a mapbox one
-    if (sourceId !== "composite") this.map.removeSource(sourceId);
+    //remove the layer and source if it is not from the mapbox map, i.e. added manually in spatialLayerChanged
+    if (sourceId !== "composite") {
+      this.map.removeLayer(layerId);
+      this.map.removeSource(sourceId);
+    }
   }
 
   addSpatialLayer(tileset) {
@@ -888,8 +904,11 @@ class App extends React.Component {
             deleteScenario={this.deleteScenario.bind(this)}
             loadScenario={this.loadScenario.bind(this)}
             renameScenario={this.renameScenario.bind(this)}
+            renameDescription={this.renameDescription.bind(this)}
             startEditingScenarioName={this.startEditingScenarioName.bind(this)}
+            startEditingDescription={this.startEditingDescription.bind(this)}
             editingScenarioName={this.state.editingScenarioName}
+            editingDescription={this.state.editingDescription}
             loadingScenarios={this.state.loadingScenarios}
             loadingScenario={this.state.loadingScenario}
             tilesets={this.state.tilesets}
@@ -915,7 +934,10 @@ class App extends React.Component {
             dataBreaks={this.state.dataBreaks}
             />
           <div className="runningSpinner"><FontAwesome spin name='sync' size='2x' style={{'display': (this.state.running ? 'block' : 'none')}}/></div>
-          <Popup active_pu={this.state.active_pu} xy={this.state.popup_point}/>
+          <Popup
+            active_pu={this.state.active_pu} 
+            xy={this.state.popup_point}
+          />
           <Login open={!this.state.loggedIn} 
             changeUserName={this.changeUserName.bind(this)} 
             changePassword={this.changePassword.bind(this)} 
@@ -926,7 +948,8 @@ class App extends React.Component {
             createNewUser={this.createNewUser.bind(this)}
             creatingNewUser={this.state.creatingNewUser}
             resendPassword={this.resendPassword.bind(this)}
-            resending={this.state.resending}/>
+            resending={this.state.resending}
+          />
           <Snackbar
             open={this.state.snackbarOpen}
             message={this.state.snackbarMessage}
@@ -936,7 +959,7 @@ class App extends React.Component {
             open={this.state.running}
             numReps={this.state.numReps}
             runsCompleted={this.state.runsCompleted}
-            />
+          />
         </React.Fragment>
       </MuiThemeProvider>
     );

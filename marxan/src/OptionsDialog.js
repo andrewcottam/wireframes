@@ -27,7 +27,7 @@ class OptionsDialog extends React.Component {
                     <div id="spinner"><FontAwesome spin name='sync' style={{'display': (this.props.savingOptions ? 'inline-block' : 'none')}} className={'optionsSpinner'}/></div>
                 </div>;
         return (
-            <Dialog title="Options" children={c} actions={actions} open={this.props.open} onRequestClose={this.props.closeOptionsDialog} contentStyle={{width:'308px'}}/>
+            <Dialog overlayStyle={{display:'none'}} className={'dialog'} title="Options" children={c} actions={actions} open={this.props.open} onRequestClose={this.props.closeOptionsDialog} contentStyle={{width:'500px'}}/>
         );
     }
 }

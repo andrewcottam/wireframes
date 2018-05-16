@@ -13,7 +13,7 @@ class SpatialDataSelector extends React.Component {
         });
         return (
             <div>
-                <SelectField floatingLabelText="Mapbox layer" floatingLabelFixed={true} children={c} maxHeight={200} style={{width:'335px','marginLeft':'10px','marginBottom':'22px'}} menuItemStyle={{fontSize:'13px'}} labelStyle={{fontSize:'13px'}} value={this.props.value} onChange={this.changeTileset.bind(this)}>
+                <SelectField floatingLabelText="Mapbox layer" floatingLabelFixed={true} children={c} maxHeight={200} style={{width:'345px'}} menuItemStyle={{fontSize:'13px'}} labelStyle={{fontSize:'13px'}} value={this.props.value} onChange={this.changeTileset.bind(this)}>
                 </SelectField>
             </div>);
     }

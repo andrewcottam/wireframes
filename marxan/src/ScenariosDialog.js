@@ -33,7 +33,7 @@ function wrapState(ComposedComponent) {
                 <ComposedComponent
                   value={this.state.selectedIndex}
                   onChange={this.handleRequestChange}
-                  style={{'height':'150px','overflow':'auto'}}
+                  style={{'height':'235px','overflow':'auto'}}
                 >
           {this.props.children}
         </ComposedComponent>
@@ -78,13 +78,13 @@ class ScenariosDialog extends React.Component {
         if (!listitems) listitems = <div></div>; //to stop console warnings
 
         let c = <React.Fragment>
-            <SelectableList defaultValue ={0} children={listitems} changeScenario={this.changeScenario.bind(this)}/>
+            <SelectableList defaultValue ={0} children={listitems} changeScenario={this.changeScenario.bind(this)} style={{'height':'600px'}}/>
             <div id="spinner"><FontAwesome spin name='sync' style={{'display': (this.props.loadingScenarios || this.props.loadingScenario ? 'inline-block' : 'none')}} className={'scenarioSpinner'}/></div>
         </React.Fragment>;
 
         return (
             <React.Fragment>
-                <Dialog children={c} title="Scenarios" actions={actions} open={this.props.open} onRequestClose={this.props.closeScenariosDialog} contentStyle={{width:'566px'}}/>
+                <Dialog overlayStyle={{display:'none'}} className={'dialog'} children={c} title="Scenarios" actions={actions} open={this.props.open} onRequestClose={this.props.closeScenariosDialog} contentStyle={{width:'566px'}}/>
                 <NewScenarioDialog 
                 newScenarioDialogOpen={this.state.newScenarioDialogOpen} 
                 closeNewScenarioDialog={this.closeNewScenarioDialog.bind(this)}

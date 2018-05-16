@@ -83,7 +83,7 @@ class ParametersDialog extends React.Component {
         </React.Fragment>;
 
         return (
-            <Dialog title="Run parameters" children={c} actions={actions} open={this.props.open} onRequestClose={this.props.closeParametersDialog} contentStyle={{width:'500px'}}/>
+            <Dialog overlayStyle={{display:'none'}} className={'dialog'} title="Run parameters" children={c} actions={actions} open={this.props.open} onRequestClose={this.props.closeParametersDialog} contentStyle={{width:'500px'}}/>
         );
     }
 }

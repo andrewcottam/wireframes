@@ -15,7 +15,7 @@ import ClassificationDialog from './ClassificationDialog.js';
 class InfoPanel extends React.Component {
   constructor(props) {
     super(props);
-    this.state = { 'allFilesUploaded': true, editingScenarioName: false, logDialogOpen: false, classificationDialogOpen: false };
+    this.state = { 'allFilesUploaded': true,  logDialogOpen: false, classificationDialogOpen: false };
     this.nUploading = 0;
   }
   componentDidUpdate(prevProps, prevState, snapshot) {
@@ -23,6 +23,11 @@ class InfoPanel extends React.Component {
     if (prevProps.editingScenarioName === false && this.props.editingScenarioName) {
       document.getElementById("scenarioName").value = this.props.scenario;
       document.getElementById("scenarioName").focus();
+    }
+    //if the input box for renaming the description has been made visible and it has no value, then initialise it with the description and focus it
+    if (prevProps.editingDescription === false && this.props.editingDescription) {
+      document.getElementById("descriptionEdit").value = this.props.metadata.DESCRIPTION;
+      document.getElementById("descriptionEdit").focus();
     }
   }
   loadSolution(solution) {
@@ -53,12 +58,16 @@ class InfoPanel extends React.Component {
 
   onKeyPress(e) {
     if (e.nativeEvent.keyCode === 13 || e.nativeEvent.keyCode === 27) {
-      document.getElementById("scenarioName").blur(); //call the onBlur event which will call the REST service to rename the scenario
+      document.getElementById(e.nativeEvent.target.id).blur(); //call the onBlur event which will call the REST service to rename the scenario
     }
   }
 
   onBlur(e) {
-    this.props.renameScenario(e.target.value);
+    if (e.nativeEvent.target.id === 'scenarioName'){
+      this.props.renameScenario(e.target.value);
+    }else{
+      this.props.renameDescription(e.target.value);
+    }
   }
 
   startEditingScenarioName() {
@@ -66,7 +75,11 @@ class InfoPanel extends React.Component {
       this.props.startEditingScenarioName();
     }
   }
-
+  startEditingDescription() {
+    if (this.props.scenario) { //a scenario may not be loaded
+      this.props.startEditingDescription();
+    }
+  }
   openLogDialog() {
     this.setState({ logDialogOpen: true });
   }
@@ -119,20 +132,21 @@ class InfoPanel extends React.Component {
                     hidePopup={this.props.hidePopup}
                     updateUser={this.props.updateUser}
                     />}/>
-          <Tabs tabTemplateStyle={{paddingLeft:'10px'}}>
-            <Tab label="Scenario" className={'tab'}>
-              <div className='tabPanel'>
+          <Tabs contentContainerStyle={{'margin':'20px'}}>
+            <Tab label="Scenario">
+              <div>
                 <div className={'tabTitle'}>Description</div>
-                <div>{this.props.metadata.DESCRIPTION}</div>
-                <div className={'tabTitle'}>Created</div>
-                <div>{this.props.metadata.CREATEDATE}</div>
+                <input id="descriptionEdit" style={{'display': (this.props.editingDescription) ? 'block' : 'none'}} className={'descriptionEditBox'} onKeyPress={this.onKeyPress.bind(this)} onBlur={this.onBlur.bind(this)}/>
+                <div className={'description'} onClick={this.startEditingDescription.bind(this)} style={{'display': (!this.props.editingDescription) ? 'block' : 'none'}}>{this.props.metadata.DESCRIPTION}</div>
+                <div className={'tabTitle'} style={{marginTop:'10px'}}>Created</div>
+                <div className={'createDate'}>{this.props.metadata.CREATEDATE}</div>
               </div>
             </Tab>
-            <Tab label="Inputs" className={'tab'}>
-              <div className='tabPanel'>
+            <Tab label="Inputs">
+              <div>
                 <div className={'tabTitle'}>Planning area</div>
                 <SpatialDataSelector spatialLayerChanged={this.spatialLayerChanged.bind(this)} tilesets={this.props.tilesets} changeTileset={this.props.changeTileset} value={this.props.tilesetid}/>
-                <div className={'tabTitle'}>Input files</div>
+                <div className={'tabTitle'} style={{marginTop:'10px'}}>Input files</div>
                 <div className={'uploadControls'}>
                   <FileUpload parameter="SPECNAME" mandatory={true} value={this.props.files.SPECNAME} label="Species file" fileUploaded={this.validateUploads.bind(this)} user={this.props.user} scenario={this.props.scenario}/>
                   <FileUpload parameter="PUNAME" mandatory={true} value={this.props.files.PUNAME} label="Planning unit file" fileUploaded={this.validateUploads.bind(this)} user={this.props.user} scenario={this.props.scenario}/>
@@ -140,23 +154,18 @@ class InfoPanel extends React.Component {
                   <FileUpload parameter="BOUNDNAME" value={this.props.files.BOUNDNAME} label="Boundary length file" fileUploaded={this.validateUploads.bind(this)} user={this.props.user} scenario={this.props.scenario}/>
                   <FileUpload parameter="BLOCKDEFNAME" value={this.props.files.BLOCKDEFNAME} label="Block definitions" fileUploaded={this.validateUploads.bind(this)} user={this.props.user} scenario={this.props.scenario}/>
                 </div>
+                <RaisedButton
+                  title="Click to change the run parameters"
+                  label={'Params'} 
+                  style={{minWidth: '66px',width: '30px',height: '23px'}}
+                  labelStyle={{'fontSize':'12px','paddingLeft':'11px'}}
+                  onClick={this.openParametersDialog.bind(this)} 
+                  className={'logButton'}
+                />
               </div>
-              <RaisedButton
-                title="Click to change the run parameters"
-                label={'Run parameters'} 
-                onClick={this.openParametersDialog.bind(this)} 
-                className={'logButton'}
-              />
-              <ParametersDialog
-                open={this.props.parametersDialogOpen}
-                closeParametersDialog={this.closeParametersDialog.bind(this)}
-                runParams={this.props.runParams}
-                updateRunParams={this.props.updateRunParams}
-                updatingRunParameters={this.props.updatingRunParameters}
-              />
             </Tab>
-            <Tab label="Outputs" className={'tab'}>
-              <div className='tabPanel'>
+            <Tab label="Outputs">
+              <div>
                 <div className="tabTitle">Solutions</div>
                 <div id="solutionsPanel" style={{'display': (this.props.dataAvailable && !this.props.running ? 'block' : 'none')}}>
                   <ReactTable
@@ -201,45 +210,52 @@ class InfoPanel extends React.Component {
                     }]}
                   />
                 </div>
-                <div style={{'paddingBottom':'8px','margin':'17px 0px 0px 10px','fontSize':'13px'}}>{this.props.outputsTabString}</div>
+                <div style={{'paddingBottom':'8px',marginTop:'17px','fontSize':'13px'}}>{this.props.outputsTabString}</div>
+                <RaisedButton 
+                  title="Click to view the Marxan log"
+                  label={'Log'} 
+                  style={{minWidth: '66px',width: '30px',height: '23px'}}
+                  labelStyle={{'fontSize':'12px'}}
+                  onClick={this.openLogDialog.bind(this)} 
+                  className={'logButton'}
+                  disabled={!this.props.dataAvailable}/>
+                <RaisedButton 
+                  title="Click to view the classifcation"
+                  label={'Classify'} 
+                  style={{minWidth: '66px',width: '30px',height: '23px'}}
+                  labelStyle={{'fontSize':'12px','paddingLeft':'7px'}}
+                  onClick={this.openClassificationDialog.bind(this)} 
+                  className={'classificationButton'}
+                  disabled={!this.props.dataAvailable}/>
               </div>
-              <RaisedButton 
-                title="Click to view the Marxan log"
-                label={'Log'} 
-                onClick={this.openLogDialog.bind(this)} 
-                className={'logButton'}
-                disabled={!this.props.dataAvailable}/>
-              <LogDialog 
-                log={this.props.log} 
-                open={this.state.logDialogOpen}
-                closeLogDialog={this.closeLogDialog.bind(this)}/>
-            </Tab>
-            <Tab label="Map" className={'tab'}>
-              <div className='tabPanel'>
-                <div className={'tabTitle'}>Map</div>
-              <RaisedButton 
-                title="Click to view the classifcation"
-                label={'Custom'} 
-                onClick={this.openClassificationDialog.bind(this)} 
-                className={'logButton'}
-                disabled={!this.props.dataAvailable}/>
-                </div>
-              <ClassificationDialog 
-                open={this.state.classificationDialogOpen}
-                renderer={this.props.renderer}
-                closeClassificationDialog={this.closeClassificationDialog.bind(this)}
-                changeColorCode={this.props.changeColorCode.bind(this)}
-                changeRenderer={this.props.changeRenderer.bind(this)}
-                changeNumClasses={this.props.changeNumClasses.bind(this)}
-                changeShowTopClasses={this.props.changeShowTopClasses.bind(this)}
-                summaryStats={this.props.summaryStats}
-                dataBreaks={this.props.dataBreaks}
-                />
             </Tab>
           </Tabs>                        
           <RaisedButton title="Click to run this scenario" label={this.props.running ? "Running" : "Run"} secondary={true} className={'run'} onClick={this.props.runMarxan} disabled={!this.props.runnable || this.props.running || (this.state && this.state.allFilesUploaded === false)}/>
+          <ParametersDialog
+            open={this.props.parametersDialogOpen}
+            closeParametersDialog={this.closeParametersDialog.bind(this)}
+            runParams={this.props.runParams}
+            updateRunParams={this.props.updateRunParams}
+            updatingRunParameters={this.props.updatingRunParameters}
+          />
+          <LogDialog 
+            log={this.props.log} 
+            open={this.state.logDialogOpen}
+            closeLogDialog={this.closeLogDialog.bind(this)}
+          />
+          <ClassificationDialog 
+            open={this.state.classificationDialogOpen}
+            renderer={this.props.renderer}
+            closeClassificationDialog={this.closeClassificationDialog.bind(this)}
+            changeColorCode={this.props.changeColorCode.bind(this)}
+            changeRenderer={this.props.changeRenderer.bind(this)}
+            changeNumClasses={this.props.changeNumClasses.bind(this)}
+            changeShowTopClasses={this.props.changeShowTopClasses.bind(this)}
+            summaryStats={this.props.summaryStats}
+            dataBreaks={this.props.dataBreaks}
+          />
           <div className='footer'>
-            <div>v0.2 Feedback: <a href='mailto:andrew.cottam@ec.europa.eu' className='email'>Andrew Cottam</a></div>
+            <div>v0.9 Feedback: <a href='mailto:andrew.cottam@ec.europa.eu' className='email'>Andrew Cottam</a></div>
             <div>Marxan 2.4.3 - Ian Ball, Matthew Watts &amp; Hugh Possingham</div>
           </div>
         </Paper>

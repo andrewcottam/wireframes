@@ -7,7 +7,7 @@ class ProgressDialog extends React.Component {
     render() {
         let percent = ((this.props.runsCompleted / this.props.numReps) * 100);
         let c = <div>
-                    <div className="runLabel">Number of runs completed:</div>
+                    <div className="runLabel">Number of runs completed</div>
                     <span className='runs'>0</span><Line style={{width:'200px'}} percent={percent} strokeWidth="4" strokeColor="#00BCD4" trailWidth="4"/><span className='runs'>{this.props.numReps}</span>
                     <div id="spinner"><FontAwesome spin name='sync' style={{'display': (this.props.open ? 'inline-block' : 'none')}} className={'progressSpinner'}/></div>
                 </div>;
