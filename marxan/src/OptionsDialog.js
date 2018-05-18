@@ -23,11 +23,11 @@ class OptionsDialog extends React.Component {
             <RaisedButton label="Save" primary={true} onClick={this.updateOptions.bind(this)} className="scenariosBtn" disabled={!this.state.saveEnabled}/>
         ];
         let c = <div>
-                    <Checkbox label="Show planning unit popup" defaultChecked={this.props.userData.SHOWPOPUP} onCheck={(e, isInputChecked)=>this.setOption("SHOWPOPUP",isInputChecked)} />
+                    <Checkbox label="Show planning unit popup" defaultChecked={this.props.userData.SHOWPOPUP} onCheck={(e, isInputChecked)=>this.setOption("SHOWPOPUP",isInputChecked)} style={{fontSize:'13px'}}/>
                     <div id="spinner"><FontAwesome spin name='sync' style={{'display': (this.props.savingOptions ? 'inline-block' : 'none')}} className={'optionsSpinner'}/></div>
                 </div>;
         return (
-            <Dialog overlayStyle={{display:'none'}} className={'dialog'} title="Options" children={c} actions={actions} open={this.props.open} onRequestClose={this.props.closeOptionsDialog} contentStyle={{width:'500px'}}/>
+            <Dialog overlayStyle={{display:'none'}} className={'dialog'} title="Options" children={c} actions={actions} open={this.props.open} onRequestClose={this.props.closeOptionsDialog} contentStyle={{width:'350px'}}/>
         );
     }
 }

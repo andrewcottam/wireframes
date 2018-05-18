@@ -73,7 +73,9 @@ class ScenariosDialog extends React.Component {
             <RaisedButton label="New" primary={true} keyboardFocused={true} onClick={this._new.bind(this)} disabled={this.props.loadingScenarios || this.props.loadingScenario} className="scenariosBtn"/>,
         ];
         let listitems = this.props.scenarios && this.props.scenarios.map((scenario) => {
-            return (<ListItem key={scenario.name} value={scenario.name} primaryText={scenario.name} secondaryText={scenario.description + " (created: " + scenario.createdate + ")"}/>);
+            let primary = <div style={{fontSize:'13px'}}>{scenario.name}</div>;
+            let secondary = <div style={{fontSize:'12px'}}>{scenario.description + " (created: " + scenario.createdate + ")"}</div>;
+            return (<ListItem key={scenario.name} value={scenario.name} primaryText={primary} secondaryText={secondary} />);
         });
         if (!listitems) listitems = <div></div>; //to stop console warnings
 

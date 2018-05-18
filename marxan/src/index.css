@@ -287,3 +287,7 @@ div.rt-tbody>div>div>div>div {
   margin-left: 34px;
   margin-top: 20px;
 }
+
+input:-webkit-autofill {
+    -webkit-box-shadow: 0 0 0 50px white inset;
+}

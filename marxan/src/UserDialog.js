@@ -46,8 +46,8 @@ class UserDialog extends React.Component {
             <RaisedButton label="Save" primary={true} onClick={this.updateUser.bind(this)} className="scenariosBtn" disabled={!this.state.updated}/>,
         ];
         let c = <div>
-                    <TextField floatingLabelText="Full name" floatingLabelFixed={true} onChange = {(event,newValue) => this.updateState("NAME",newValue)} defaultValue ={this.props.userData && this.props.userData.NAME} onKeyPress={this.handleKeyPress.bind(this)} />
-                    <TextField floatingLabelText="Email address" floatingLabelFixed={true} errorText={this.state.validEmail ?  '' : "Invalid email address"} onChange = {(event,newValue) => this.updateState("EMAIL",newValue)} defaultValue={this.props.userData && this.props.userData.EMAIL} onKeyPress={this.handleKeyPress.bind(this)}/>
+                    <TextField floatingLabelText="Full name" floatingLabelFixed={true} onChange = {(event,newValue) => this.updateState("NAME",newValue)} defaultValue ={this.props.userData && this.props.userData.NAME} onKeyPress={this.handleKeyPress.bind(this)} floatingLabelShrinkStyle={{fontSize:'16px'}} floatingLabelFocusStyle={{fontSize:'16px'}} style={{fontSize:'13px'}} />
+                    <TextField floatingLabelText="Email address" floatingLabelFixed={true} errorText={this.state.validEmail ?  '' : "Invalid email address"} onChange = {(event,newValue) => this.updateState("EMAIL",newValue)} defaultValue={this.props.userData && this.props.userData.EMAIL} onKeyPress={this.handleKeyPress.bind(this)} floatingLabelShrinkStyle={{fontSize:'16px'}} floatingLabelFocusStyle={{fontSize:'16px'}} style={{fontSize:'13px'}} />
                     <span>
                     <TextField floatingLabelText="Mapbox Access Token" floatingLabelFixed={true} type="password" errorText={this.state.mapboxAccessTokenError} onChange = {(event,newValue) => this.updateState("MAPBOXACCESSTOKEN",newValue)} defaultValue={this.props.userData && this.props.userData.MAPBOXACCESSTOKEN} onKeyPress={this.handleKeyPress.bind(this)}/>
                     </span><span>
@@ -55,7 +55,7 @@ class UserDialog extends React.Component {
                     </span>
                 </div>;
         return (
-            <Dialog overlayStyle={{display:'none'}} className={'dialog'} title="Profile" children={c} actions={actions} open={this.props.open} onRequestClose={this.closeUserDialog.bind(this)} contentStyle={{width:'500px'}}/>
+            <Dialog overlayStyle={{display:'none'}} className={'dialog'} title="Profile" children={c} actions={actions} open={this.props.open} onRequestClose={this.closeUserDialog.bind(this)} contentStyle={{width:'350px'}}/>
         );
     }
 }
