@@ -69,6 +69,8 @@ class App extends React.Component {
       zoom: 2
     });
     this.map.on("load", this.mapLoaded.bind(this));
+    //instantiate the classybrew to get the color ramps for the renderers
+      this.setState({ brew: new classyBrew() });
   }
 
   componentDidUpdate(prevProps, prevState) {
@@ -700,29 +702,26 @@ class App extends React.Component {
   }
 
   //gets the classification and colorbrewer object for doing the rendering
-  getRenderer(data, numClasses, colorCode, classification) {
+  classifyData(data, numClasses, colorCode, classification) {
     //get a sample of the data to make the renderer classification
     let sample = this.getssolnSample(data, 1000);
-    //create a new classbrew to do the classification and get the symbology
-    var brew = new classyBrew();
     //set the data 
-    brew.setSeries(sample);
+    this.state.brew.setSeries(sample);
     //set the number of classes
-    brew.setNumClasses(numClasses);
+    this.state.brew.setNumClasses(numClasses);
     //set the color code - see the color theory section on Joshua Tanners page here https://github.com/tannerjt/classybrew - for all the available colour codes
-    brew.setColorCode(colorCode);
+    this.state.brew.setColorCode(colorCode);
     //if the colorCode is opacity then I will add it manually to the classbrew colorSchemes
     if (colorCode === 'opacity') {
       // expression.push(row[1], "rgba(255, 0, 136," + (row[0] / this.state.runParams.NUMREPS) + ")");
       let newBrewColorScheme = Array(Number(this.state.renderer.NUMCLASSES)).fill("rgba(255,0,136,").map(function(item, index) { return item + ((1 / this) * (index + 1)) + ")"; }, this.state.renderer.NUMCLASSES);
-      brew.colorSchemes.opacity = {
+      this.state.brew.colorSchemes.opacity = {
         [this.state.renderer.NUMCLASSES]: newBrewColorScheme
       };
     }
     //set the classification method - one of equal_interval, quantile, std_deviation, jenks (default)
-    brew.classify(classification);
-    this.setState({ dataBreaks: brew.getBreaks() });
-    return brew;
+    this.state.brew.classify(classification);
+    this.setState({ dataBreaks: this.state.brew.getBreaks() });
   }
 
   //called when the renderer state has been updated - renders the solution and saves the renderer back to the server
@@ -759,12 +758,12 @@ class App extends React.Component {
     if (!data) return;
     var color, visibleValue, value;
     //create the renderer using Joshua Tanners excellent library classybrew - available here https://github.com/tannerjt/classybrew
-    let renderer = this.getRenderer(data, Number(this.state.renderer.NUMCLASSES), this.state.renderer.COLORCODE, this.state.renderer.CLASSIFICATION);
+    this.classifyData(data, Number(this.state.renderer.NUMCLASSES), this.state.renderer.COLORCODE, this.state.renderer.CLASSIFICATION);
     //build an expression to get the matching puids with different numbers of 'numbers' in the marxan results
     var expression = ["match", ["get", "PUID"]];
     //if only the top n classes will be rendered then get the visible value at the boundary
     if (this.state.renderer.TOPCLASSES < this.state.renderer.NUMCLASSES) {
-      let breaks = renderer.getBreaks();
+      let breaks = this.state.brew.getBreaks();
       visibleValue = breaks[this.state.renderer.NUMCLASSES - this.state.renderer.TOPCLASSES + 1];
     }
     else {
@@ -775,7 +774,7 @@ class App extends React.Component {
       if (sum) {
         value = row[0];
         //for each row add the puids and the color to the expression, e.g. [35,36,37],"rgba(255, 0, 136,0.1)"
-        color = renderer.getColorInRange(value);
+        color = this.state.brew.getColorInRange(value);
         //add the color to the expression - transparent if the value is less than the visible value
         (value >= visibleValue) ? expression.push(row[1], color): expression.push(row[1], "rgba(0, 0, 0, 0)");
       }
@@ -931,6 +930,7 @@ class App extends React.Component {
             changeColorCode={this.changeColorCode.bind(this)}
             changeShowTopClasses={this.changeShowTopClasses.bind(this)}
             summaryStats={this.state.summaryStats}
+            brew={this.state.brew}
             dataBreaks={this.state.dataBreaks}
             />
           <div className="runningSpinner"><FontAwesome spin name='sync' size='2x' style={{'display': (this.state.running ? 'block' : 'none')}}/></div>

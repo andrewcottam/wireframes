@@ -252,6 +252,7 @@ class InfoPanel extends React.Component {
             changeNumClasses={this.props.changeNumClasses.bind(this)}
             changeShowTopClasses={this.props.changeShowTopClasses.bind(this)}
             summaryStats={this.props.summaryStats}
+            brew={this.props.brew}
             dataBreaks={this.props.dataBreaks}
           />
           <div className='footer'>

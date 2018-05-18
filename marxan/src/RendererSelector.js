@@ -18,7 +18,7 @@ class RendererSelector extends React.Component {
             return <MenuItem value={item} key={item} primaryText={primaryText}/>;
         });
         return (
-            <SelectField menuItemStyle={{fontSize:'13px'}} labelStyle={{fontSize:'13px'}} listStyle={{fontSize:'13px'}} style={{width:'150px', margin: '0px 20px'}} autoWidth={true} floatingLabelText={this.props.floatingLabelText} floatingLabelFixed={true} children={c} onChange={this.handleChange.bind(this)} value={this.props.property}/>
+            <SelectField selectionRenderer={this.props.selectionRenderer} menuItemStyle={{fontSize:'13px'}} labelStyle={{fontSize:'13px'}} listStyle={{fontSize:'13px'}} style={{width:'150px', margin: '0px 20px'}} autoWidth={true} floatingLabelText={this.props.floatingLabelText} floatingLabelFixed={true} children={c} onChange={this.handleChange.bind(this)} value={this.props.property}/>
         );
     }
 }

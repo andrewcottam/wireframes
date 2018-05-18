@@ -3,6 +3,7 @@ import 'react-table/react-table.css';
 import Dialog from 'material-ui/Dialog';
 import RaisedButton from 'material-ui/RaisedButton';
 import RendererSelector from './RendererSelector.js';
+import ColorSelector from './ColorSelector.js';
 import { BarChart, ReferenceLine, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Label } from 'recharts';
 
 let RENDERERS = ["equal_interval", "jenks", "std_deviation", "quantile"];
@@ -23,12 +24,13 @@ const AxisLabel = ({ axisType, x, y, width, height, stroke, children }) => {
 };
 
 class ClassificationDialog extends React.Component {
-    render() {
-        const actions = [
-            <RaisedButton label="Close" primary={true} onClick={this.props.closeClassificationDialog} className="scenariosBtn"/>
-        ];
-        let breaks = this.props.dataBreaks.map((item, index) => { return <ReferenceLine x={item} key={index} stroke="#00BCD4" /> });
-        let c = <div>
+
+  render() {
+    const actions = [
+      <RaisedButton label="Close" primary={true} onClick={this.props.closeClassificationDialog} className="scenariosBtn"/>
+    ];
+    let breaks = this.props.dataBreaks.map((item, index) => { return <ReferenceLine x={item} key={index} stroke="#00BCD4" /> });
+    let c = <div>
                     <BarChart width={400} height={250} data={this.props.summaryStats}>
                       <CartesianGrid strokeDasharray="3 3" />
                       <XAxis dataKey="number" tick={{fontSize:11}}>
@@ -40,16 +42,16 @@ class ClassificationDialog extends React.Component {
                       {breaks}
                     </BarChart>
                     <div className={'renderers'}>
-                      <RendererSelector values={COLORCODES} changeValue={this.props.changeColorCode} property={this.props.renderer.COLORCODE} floatingLabelText={"Colour scheme"} />
+                      <ColorSelector values={COLORCODES} changeValue={this.props.changeColorCode} property={this.props.renderer.COLORCODE} floatingLabelText={"Colour scheme"} brew={this.props.brew} />
                       <RendererSelector values={RENDERERS} changeValue={this.props.changeRenderer} property={this.props.renderer.CLASSIFICATION} floatingLabelText={"Classification"}/>
                       <RendererSelector values={NUMCLASSES} changeValue={this.props.changeNumClasses} property={this.props.renderer.NUMCLASSES} floatingLabelText={"Number of classes"} />
                       <RendererSelector values={TOPCLASSES} changeValue={this.props.changeShowTopClasses} property={this.props.renderer.TOPCLASSES} floatingLabelText={"Show top n classes"}/>
                     </div>
                 </div>;
-        return (
-            <Dialog overlayStyle={{display:'none'}} className={'dialog'} title="Classification" children={c} actions={actions} open={this.props.open} onRequestClose={this.props.closeClassificationDialog} contentStyle={{width:'500px'}}/>
-        );
-    }
+    return (
+      <Dialog overlayStyle={{display:'none'}} className={'dialog'} title="Classification" children={c} actions={actions} open={this.props.open} onRequestClose={this.props.closeClassificationDialog} contentStyle={{width:'500px'}}/>
+    );
+  }
 }
 
 export default ClassificationDialog;
