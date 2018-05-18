@@ -15,6 +15,7 @@ import classyBrew from 'classybrew';
 /*eslint-disable no-unused-vars*/
 import axios, { post } from 'axios';
 /*eslint-enable no-unused-vars*/
+import * as utilities from './utilities.js';
 
 //CONSTANTS
 //THE MARXAN_ENDPOINT MUST ALSO BE CHANGED IN THE FILEUPLOAD.JS FILE
@@ -70,7 +71,7 @@ class App extends React.Component {
     });
     this.map.on("load", this.mapLoaded.bind(this));
     //instantiate the classybrew to get the color ramps for the renderers
-      this.setState({ brew: new classyBrew() });
+    this.setState({ brew: new classyBrew() });
   }
 
   componentDidUpdate(prevProps, prevState) {
@@ -707,10 +708,19 @@ class App extends React.Component {
     let sample = this.getssolnSample(data, 1000);
     //set the data 
     this.state.brew.setSeries(sample);
-    //set the number of classes
-    this.state.brew.setNumClasses(numClasses);
     //set the color code - see the color theory section on Joshua Tanners page here https://github.com/tannerjt/classybrew - for all the available colour codes
     this.state.brew.setColorCode(colorCode);
+    //get the maximum number of colors in this scheme
+    let colorSchemeLength = utilities.getMaxNumberOfClasses(this.state.brew, colorCode);
+    //check the color scheme supports the passed number of classes
+    if (numClasses > colorSchemeLength) {
+      //set the numClasses to the max for the color scheme
+      numClasses = colorSchemeLength;
+      //reset the renderer
+      this.setState({ renderer: Object.assign(this.state.renderer, { NUMCLASSES: numClasses }) });
+    }
+    //set the number of classes
+    this.state.brew.setNumClasses(numClasses);
     //if the colorCode is opacity then I will add it manually to the classbrew colorSchemes
     if (colorCode === 'opacity') {
       // expression.push(row[1], "rgba(255, 0, 136," + (row[0] / this.state.runParams.NUMREPS) + ")");
@@ -743,6 +753,10 @@ class App extends React.Component {
   }
   //change the color code of the renderer
   changeColorCode(colorCode) {
+    //set the maximum number of classes that can be selected in the other select boxes
+    if (this.state.renderer.NUMCLASSES > this.state.brew.getNumClasses()) {
+      this.setState({ renderer: Object.assign(this.state.renderer, { NUMCLASSES: this.state.brew.getNumClasses() }) });
+    }
     this.setState({ renderer: Object.assign(this.state.renderer, { COLORCODE: colorCode }) }, function() {
       this.rendererStateUpdated("COLORCODE", colorCode);
     });
