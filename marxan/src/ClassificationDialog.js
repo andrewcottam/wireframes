@@ -17,11 +17,14 @@ class ClassificationDialog extends React.Component {
     const actions = [
       <RaisedButton label="Close" primary={true} onClick={this.props.closeClassificationDialog} className="scenariosBtn"/>
     ];
-    let breaks = this.props.dataBreaks.map((item, index) => { return <ReferenceLine x={item} key={index} stroke="#00BCD4" /> });
+    let breaks = this.props.dataBreaks.map((item, index) => {
+      //dont include the bottom line as we will use the y axis
+      if (index>0) return <ReferenceLine x={item} key={index} stroke="#00BCD4" />;
+    });
     let c = <div>
                     <BarChart width={400} height={250} data={this.props.summaryStats}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="number" tick={{fontSize:11}}>
+                      <CartesianGrid strokeDasharray="1" stroke="#f4f4f4"/>
+                      <XAxis dataKey="number" tick={{fontSize:11}} type={'number'}>
                         <Label value="Sum solutions" offset={0} position="insideBottom" style={{fontSize:'11px',color:'#222222'}} />
                       </XAxis>
                       <YAxis tick={{fontSize:11}}>
