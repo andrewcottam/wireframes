@@ -3,13 +3,13 @@
 ## hosts
 ### Cloud9 
 https://node-js-blishten.c9users.io:8081/wireframes/   
-https://node-js-blishten.c9users.io/wireframes/<app>/build/
+https://node-js-blishten.c9users.io/wireframes/acp/build/
 
 ### GitHub
-https://andrewcottam.github.io/wireframes/'<app>'/build  
+https://andrewcottam.github.io/wireframes/acp/build  
 
 ### beta.biopama.org
-http://beta.biopama.org/wireframes/\<app\>/build/   
+http://beta.biopama.org/wireframes/acp/build/   
 
 ## apps
 acp - ACP Conservation Knowledge Centre - a reporting tool aimed at high level funders and policy makers   
