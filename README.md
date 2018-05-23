@@ -1,19 +1,17 @@
 # biopama-wireframes
-Biopama wireframes using react and node-js  
-### On beta.biopama.org:  
-#### ACP Knowledge Hub
-Development site: http://beta.biopama.org:8081/wireframes/acp/  
-Production site:  http://beta.biopama.org/wireframes/acp/build/   
-#### Regional Conservation Tools  
-Development site: http://beta.biopama.org:8081/wireframes/regional/  
-Production site:  http://beta.biopama.org/wireframes/regional/build/   
 
-### On andrewcottam.github.io:  
-#### ACP Knowledge Hub
-Production site:  https://andrewcottam.github.io/wireframes/acp/build  
-#### Regional Conservation Tools  
-Production site:  https://andrewcottam.github.io/wireframes/regional/build 
-#### Marxan
-Production site:  https://andrewcottam.github.io/wireframes/marxan/build 
+## hosts
+### Cloud9 
+https://node-js-blishten.c9users.io:8081/wireframes/
+https://node-js-blishten.c9users.io/wireframes/&lt;app&gt;/build/
 
+### GitHub
+https://andrewcottam.github.io/wireframes/&lt;app&gt;/build  
 
+### beta.biopama.org
+http://beta.biopama.org/wireframes/&lt;app&gt;/build/   
+
+## apps
+acp - ACP Conservation Knowledge Centre - a reporting tool aimed at high level funders and policy makers
+marxan - Web version of the Systematic Conservation Planning Software
+regional - Regional Conservation Planning Tools - a tool for the regional observatories
