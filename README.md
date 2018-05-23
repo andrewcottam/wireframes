@@ -3,10 +3,10 @@
 ## hosts
 ### Cloud9 
 https://node-js-blishten.c9users.io:8081/wireframes/   
-https://node-js-blishten.c9users.io/wireframes/\<app\>/build/
+https://node-js-blishten.c9users.io/wireframes/<app>/build/
 
 ### GitHub
-https://andrewcottam.github.io/wireframes/\<app\>/build  
+https://andrewcottam.github.io/wireframes/<app>/build  
 
 ### beta.biopama.org
 http://beta.biopama.org/wireframes/\<app\>/build/   
