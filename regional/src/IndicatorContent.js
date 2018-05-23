@@ -7,6 +7,9 @@ import logo_g1 from './logo-g1.png';
 import logo_r1 from './logo-r1.png';
 import Avatar from 'material-ui/Avatar';
 import { Route } from "react-router-dom";
+import * as jsonp from 'jsonp';
+
+let REST_SERVICES_ENDPOINT = "https://db-server-blishten.c9users.io/cgi-bin/services.py/"
 
 class IndicatorContent extends React.Component {
     onClick(e) {
@@ -17,6 +20,16 @@ class IndicatorContent extends React.Component {
     configureMap(style, center, zoom) {
         this.props.map.setStyle(style);
         this.props.map.flyTo({center: center,zoom: zoom});
+    }
+    zoomToCountry(iso3){
+        jsonp(REST_SERVICES_ENDPOINT + "biopama/services/get_country_extent_by_iso?a_iso=" + iso3, this.parseGetCountryExtent.bind(this));
+    }
+    parseGetCountryExtent(err, response){
+        if (err){
+            //do something
+        }else{
+            this.props.map.fitBounds(eval(response.records[0].extent));
+        }
     }
     render() {
         var children, policyTitle, avatar, targetTitle, targetSubtitle, backgroundImage;
@@ -29,11 +42,12 @@ class IndicatorContent extends React.Component {
                     targetTitle = "CBD Target 11";
                     targetSubtitle = "By 2020, at least 17 per cent of terrestrial and inland water areas, especially areas of particular importance for biodiversity and ecosystem services, are conserved through effectively and equitably managed, ecologically representative and well-connected systems of protected areas and other effective area-based conservation measures, and integrated into the wider landscape and seascape.";
                     let country = this.props.match.params.iso3 ? this.props.match.params.iso3 : "TZA";
+                    this.zoomToCountry(country);
                     children = <TerrestrialCoverageIndicator {...this.props} country={country}/>;
                     backgroundImage = intactForest;
                     break;
                 case 1:
-                    this.configureMap('mapbox://styles/blishten/cjdvudwue0nvt2stb8vfiv03c', [39.554, -7.602], 7); //marine style
+                    this.configureMap('mapbox://styles/blishten/cjdvudwue0nvt2stb8vfiv03c', [39.554, -7.602], 7); //marine style 
                     policyTitle = "Convention on Biological Diversity";
                     avatar = <Avatar src={logo_g1}/>;
                     targetTitle = "CBD Target 11";
