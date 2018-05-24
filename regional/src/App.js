@@ -2,7 +2,6 @@ import React, { Component } from 'react';
 import './App.css';
 import MuiThemeProvider from 'material-ui/styles/MuiThemeProvider';
 import AppBar from 'material-ui/AppBar';
-import MapToolbar from './MapToolbar.js';
 import PoliciesDrawer from './PoliciesDrawer.js';
 import ActionsDrawer from './ActionsDrawer.js';
 import IndicatorCard from './IndicatorCard.js';
@@ -30,7 +29,6 @@ class App extends Component {
                   <PoliciesDrawer map={this.state.map} {...props}/>
                   <IndicatorCard map={this.state.map}/>
                   <Map onStyleLoad={this.mapLoaded.bind(this)} {...props}/>
-                  <MapToolbar map={this.state.map}/>
                   <ActionsDrawer map={this.state.map}/>
                 </React.Fragment>
               }/>

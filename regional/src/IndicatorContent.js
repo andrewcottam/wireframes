@@ -2,6 +2,7 @@ import * as React from 'react';
 import { CardHeader, CardMedia, CardTitle, } from 'material-ui/Card';
 import IntactForestIndicator from './IntactForestIndicator.js';
 import TerrestrialCoverageIndicator from './TerrestrialCoverageIndicator.js';
+import TerrestrialCoverageIndicatorGlobal from './TerrestrialCoverageIndicatorGlobal.js';
 import intactForest from './intactForest.png';
 import logo_g1 from './logo-g1.png';
 import logo_r1 from './logo-r1.png';
@@ -19,24 +20,28 @@ class IndicatorContent extends React.Component {
     }
     configureMap(style, center, zoom) {
         this.props.map.setStyle(style);
-        this.props.map.flyTo({center: center,zoom: zoom});
+        if (center) this.props.map.flyTo({ center: center, zoom: zoom });
     }
-    zoomToCountry(iso3){
+    zoomToCountry(iso3) {
         jsonp(REST_SERVICES_ENDPOINT + "biopama/services/get_country_extent_by_iso?a_iso=" + iso3, this.parseGetCountryExtent.bind(this));
     }
-    parseGetCountryExtent(err, response){
-        if (err){
+    parseGetCountryExtent(err, response) {
+        if (err) {
             //do something
-        }else{
-            this.props.map.fitBounds(eval(response.records[0].extent));
+        }
+        else {
+            this.props.map.fitBounds(eval(response.records[0].extent), {
+                padding: { top: 10, bottom: 10, left: 490, right: 10 },
+                linear: true
+            });
         }
     }
     render() {
         var children, policyTitle, avatar, targetTitle, targetSubtitle, backgroundImage;
         if (this.props.map) {
             switch (Number(this.props.match.params.id)) {
-                case 0:             
-                    this.configureMap('mapbox://styles/blishten/cjckavkjc9xui2snvo09hqpfs', [35.607, -6.273], 6); //terrestrial style
+                case 0:
+                    this.configureMap('mapbox://styles/blishten/cjckavkjc9xui2snvo09hqpfs'); //terrestrial style
                     policyTitle = "Convention on Biological Diversity";
                     avatar = <Avatar src={logo_g1}/>;
                     targetTitle = "CBD Target 11";
@@ -47,7 +52,7 @@ class IndicatorContent extends React.Component {
                     backgroundImage = intactForest;
                     break;
                 case 1:
-                    this.configureMap('mapbox://styles/blishten/cjdvudwue0nvt2stb8vfiv03c', [39.554, -7.602], 7); //marine style 
+                    this.configureMap('mapbox://styles/blishten/cjdvudwue0nvt2stb8vfiv03c'); //marine style 
                     policyTitle = "Convention on Biological Diversity";
                     avatar = <Avatar src={logo_g1}/>;
                     targetTitle = "CBD Target 11";
@@ -55,7 +60,7 @@ class IndicatorContent extends React.Component {
                     backgroundImage = intactForest;
                     break;
                 case 2:
-                    this.configureMap('mapbox://styles/blishten/cj6f4n2j026qf2rnunkauikjm', [162,-13], 4);
+                    this.configureMap('mapbox://styles/blishten/cj6f4n2j026qf2rnunkauikjm', [162, -13], 4);
                     this.props.map.once("styledata", function() {
                         this.addLayer({
                             'id': 'GlobalForestWatch',
@@ -84,6 +89,15 @@ class IndicatorContent extends React.Component {
                     targetSubtitle = "Identify, conserve, sustainably manage and restore priority sites, habitats and ecosystems, including cultural sites";
                     children = <IntactForestIndicator {...this.props} indicatorTitle="Number of countries logging intact forests" desc="This indicator shows the number of countries that have logged Intact Forest Areas during the last 25 years."/>;
                     backgroundImage = intactForest;
+                    break;
+                case 11:
+                    this.configureMap('mapbox://styles/blishten/cjhkj85g106fe2so2r7e4kvkb',[4.97,19.57], 4.52); //global view
+                    policyTitle = "Convention on Biological Diversity";
+                    avatar = <Avatar src={logo_g1}/>;
+                    targetTitle = "CBD Target 11";
+                    targetSubtitle = "By 2020, at least 10 per cent of coastal and marine areas, especially areas of particular importance for biodiversity and ecosystem services, are conserved through effectively and equitably managed, ecologically representative and well-connected systems of protected areas and other effective area-based conservation measures, and integrated into the wider landscape and seascape.";
+                    backgroundImage = intactForest;
+                    children = <TerrestrialCoverageIndicatorGlobal {...this.props} country={country}/>;
                     break;
                 default:
             }
