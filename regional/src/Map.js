@@ -23,7 +23,7 @@ class Map extends React.Component {
       <ReactMap {...this.props} style= {INITIAL_STYLE} center={INITIAL_CENTER} zoom={INITIAL_ZOOM} containerStyle={CONTAINER_STYLE} ref={(elem)=>{this.reactMap=elem}}>              
         <MapPopup reactMap={this.reactMap} showPopup="mapClick" {...this.props}/>
         <ZoomControl/>
-        <ScaleControl/>
+        <ScaleControl style={{bottom:'80px',right:'20px'}}/>
         <RotationControl/>
       </ReactMap>
     );
