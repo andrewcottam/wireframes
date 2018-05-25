@@ -33,7 +33,7 @@ class PanelLowerToolbar extends React.Component {
   requestClose(e) {
     this.setState({ open: false });
   }
-  render() {
+  render() { 
     return (
       <Paper className="panelLowerPaper" zDepth={1}>
           <FloatingActionButton mini={true} secondary={true} className="addDrupalItem" title="Add indicator">

@@ -27,37 +27,37 @@ class TerrestrialCoverageIndicator extends React.Component {
       let filterExpressions = [{
           layer: "terrestrial-pas",
           expression: ["all", ["<", "STATUS_YR", yr],
-            ["==", "PARENT_ISO", this.props.country]
+            ["==", "PARENT_ISO", this.props.country], ["!=", "DESIG", "UNESCO-MAB Biosphere Reserve"]
           ]
         },
         {
           layer: "terrestrial-pas-active",
           expression: ["all", ["==", "STATUS_YR", yr],
-            ["==", "PARENT_ISO", this.props.country]
+            ["==", "PARENT_ISO", this.props.country], ["!=", "DESIG", "UNESCO-MAB Biosphere Reserve"]
           ]
         },
         {
           layer: "terrestrial-pas-labels",
           expression: ["all", ["==", "STATUS_YR", yr],
-            ["==", "PARENT_ISO", this.props.country]
+            ["==", "PARENT_ISO", this.props.country], ["!=", "DESIG", "UNESCO-MAB Biosphere Reserve"]
           ]
         },
         {
           layer: "marine-pas",
           expression: ["all", ["<", "STATUS_YR", yr],
-            ["==", "PARENT_ISO", this.props.country]
+            ["==", "PARENT_ISO", this.props.country], ["!=", "DESIG", "UNESCO-MAB Biosphere Reserve"]
           ]
         },
         {
           layer: "marine-pas-active",
           expression: ["all", ["==", "STATUS_YR", yr],
-            ["==", "PARENT_ISO", this.props.country]
+            ["==", "PARENT_ISO", this.props.country], ["!=", "DESIG", "UNESCO-MAB Biosphere Reserve"]
           ]
         },
         {
           layer: "marine-pas-labels",
           expression: ["all", ["==", "STATUS_YR", yr],
-            ["==", "PARENT_ISO", this.props.country]
+            ["==", "PARENT_ISO", this.props.country], ["!=", "DESIG", "UNESCO-MAB Biosphere Reserve"]
           ]
         }
       ];
