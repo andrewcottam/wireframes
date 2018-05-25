@@ -60,7 +60,8 @@ class PoliciesPanel extends React.Component {
                         <div key="t11" primaryText="CBD Target 11" secondaryText="By 2020, at least 17 per cent of terrestrial and inland water areas and 10 per cent of coastal and marine areas, especially areas of particular importance for biodiversity and ecosystem services, are conserved through effectively and equitably managed, ecologically representative and well-connected systems of protected areas and other effective area-based conservation measures, and integrated into the wider landscape and seascape." indicators={[
                           <div id="0" key="0" primaryText="Terrestrial protected area coverage" secondaryText="The total non-overlapping area of terrestrial protected areas"/>,
                           <div id="1" key="1" primaryText="Marine protected area coverage" secondaryText="The total non-overlapping area of marine protected areas"/>,
-                          <div id="11" key="11" primaryText="Countries who have achieved the CBD 11 Terrestrial Coverage Target" secondaryText="Countries who have achieved the CBD 11 Terrestrial Coverage Target"/>
+                          <div id="11" key="11" primaryText="Countries who have achieved the CBD 11 Terrestrial Coverage Target" secondaryText=">17% of terrestrial and inland water areas protected"/>,
+                          <div id="12" key="12" primaryText="Countries who have achieved the CBD 11 Marine Coverage Target" secondaryText=">10% of coastal and marine areas protected"/>
                           ]}/>
                       ]}/>,
                       <PolicyListItem {...this.props} key="g2" primaryText="Sustainable Development Goals" secondaryText="This is a fantastic groovy thing" leftAvatarSrc={logo_g2} onIndicatorSelected={this.indicatorSelected.bind(this)}/>

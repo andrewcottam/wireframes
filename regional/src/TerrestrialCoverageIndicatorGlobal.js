@@ -8,9 +8,10 @@ class TerrestrialCoverageIndicatorGlobal extends React.Component {
     constructor(props) {
         super(props);
         this.state = { data: [], xdomain: [], alldata: [] };
-        let ENDPOINT = "https://db-server-blishten.c9users.io/cgi-bin/services.py/biopama/services/get_terrestrial_coverage_analysis?format=json";
+        let domain = this.props.terrestrial ? "terrestrial" : "marine";
+        let ENDPOINT = "https://db-server-blishten.c9users.io/cgi-bin/services.py/biopama/services/get_" + domain + "_coverage_analysis?format=json";
         jsonp(ENDPOINT, this.parseData.bind(this)); //get the data from the server and parse it
-        ENDPOINT = "https://db-server-blishten.c9users.io/cgi-bin/services.py/biopama/services/get_terrestrial_coverage_analysis2?format=json";
+        ENDPOINT = "https://db-server-blishten.c9users.io/cgi-bin/services.py/biopama/services/get_" + domain + "_coverage_analysis2?format=json";
         jsonp(ENDPOINT, this.parseAllData.bind(this)); //get the data including the country iso3 code and the year
     }
     parseData(err, response) {

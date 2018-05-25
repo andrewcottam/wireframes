@@ -95,9 +95,18 @@ class IndicatorContent extends React.Component {
                     policyTitle = "Convention on Biological Diversity";
                     avatar = <Avatar src={logo_g1}/>;
                     targetTitle = "CBD Target 11";
+                    targetSubtitle = "By 2020, at least 17 per cent of terrestrial and inland water areas, especially areas of particular importance for biodiversity and ecosystem services, are conserved through effectively and equitably managed, ecologically representative and well-connected systems of protected areas and other effective area-based conservation measures, and integrated into the wider landscape and seascape.";
+                    backgroundImage = intactForest;
+                    children = <TerrestrialCoverageIndicatorGlobal {...this.props} country={country} terrestrial={true}/>;
+                    break;
+                case 12:
+                    this.configureMap('mapbox://styles/blishten/cjhkj85g106fe2so2r7e4kvkb',[4.97,19.57], 4.52); //global view
+                    policyTitle = "Convention on Biological Diversity";
+                    avatar = <Avatar src={logo_g1}/>;
+                    targetTitle = "CBD Target 11";
                     targetSubtitle = "By 2020, at least 10 per cent of coastal and marine areas, especially areas of particular importance for biodiversity and ecosystem services, are conserved through effectively and equitably managed, ecologically representative and well-connected systems of protected areas and other effective area-based conservation measures, and integrated into the wider landscape and seascape.";
                     backgroundImage = intactForest;
-                    children = <TerrestrialCoverageIndicatorGlobal {...this.props} country={country}/>;
+                    children = <TerrestrialCoverageIndicatorGlobal {...this.props} country={country} terrestrial={false}/>;
                     break;
                 default:
             }

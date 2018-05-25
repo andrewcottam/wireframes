@@ -50,10 +50,11 @@ class TimeSeriesChart3 extends React.Component {
     filterMap(yr) {
         if (this.props.alldata) {
             let countriesFilter = this.props.alldata.filter(function(item) {
-                return (item.yr < yr);
+                return (item.yr <= yr);
             });
             let countriesFilterArray = countriesFilter.map((item) => { return item.iso3 });
             this.props.map.setFilter("gaul", ["in", "iso3"].concat(countriesFilterArray));
+            this.props.map.setFilter("gaul-2015-simplified", ["in", "iso3"].concat(countriesFilterArray));
         }
     }
     render() {
