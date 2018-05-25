@@ -91,7 +91,7 @@ class IndicatorContent extends React.Component {
                     backgroundImage = intactForest;
                     break;
                 case 11:
-                    this.configureMap('mapbox://styles/blishten/cjhkj85g106fe2so2r7e4kvkb',[4.97,19.57], 4.52); //global view
+                    this.configureMap('mapbox://styles/blishten/cjhkj85g106fe2so2r7e4kvkb',[0,0], 4); //global view
                     policyTitle = "Convention on Biological Diversity";
                     avatar = <Avatar src={logo_g1}/>;
                     targetTitle = "CBD Target 11";
@@ -100,7 +100,7 @@ class IndicatorContent extends React.Component {
                     children = <TerrestrialCoverageIndicatorGlobal {...this.props} country={country} terrestrial={true}/>;
                     break;
                 case 12:
-                    this.configureMap('mapbox://styles/blishten/cjhkj85g106fe2so2r7e4kvkb',[4.97,19.57], 4.52); //global view
+                    this.configureMap('mapbox://styles/blishten/cjhkj85g106fe2so2r7e4kvkb',[0,0], 4); //global view
                     policyTitle = "Convention on Biological Diversity";
                     avatar = <Avatar src={logo_g1}/>;
                     targetTitle = "CBD Target 11";

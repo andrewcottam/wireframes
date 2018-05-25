@@ -7,22 +7,67 @@ import * as jsonp from 'jsonp';
 class TerrestrialCoverageIndicator extends React.Component {
   constructor(props) {
     super(props);
-    this.state = { data: [], xdomain: [] }; 
-    let ENDPOINT = "https://db-server-blishten.c9users.io/cgi-bin/services.py/biopama/services/get_wdpa_terrestrial_coverage_statistics?iso3code="  + this.props.country;
+    this.state = { data: [], xdomain: [] };
+    let ENDPOINT = "https://db-server-blishten.c9users.io/cgi-bin/services.py/biopama/services/get_wdpa_terrestrial_coverage_statistics?iso3code=" + this.props.country;
     jsonp(ENDPOINT, this.parseData.bind(this)); //get the data from the server and parse it
   }
   parseData(err, response) {
     if (err) throw err;
     let countryArea = response.records && response.records[0] && response.records[0].country_area;
     let allyears = response.records.map((item) => {
-      return { x: item.yr, cum_area: item.cum_area, percent: (item.cum_area / (countryArea/100000000)), threshold: 17 };
+      return { x: item.yr, cum_area: item.cum_area, percent: (item.cum_area / (countryArea / 100000000)), threshold: 17 };
     });
     let xstart = (allyears[0].x === 0) ? allyears[1].x : allyears[0].x;
     let xend = 2018;
     allyears = (allyears[0].x === 0) ? allyears.slice(1) : allyears;
     this.setState({ data: allyears, xdomain: [xstart, xend] });
   }
-  
+  getFilterExpressions(yr) {
+    if (this.state.data) {
+      let filterExpressions = [{
+          layer: "terrestrial-pas",
+          expression: ["all", ["<", "STATUS_YR", yr],
+            ["==", "PARENT_ISO", this.props.country]
+          ]
+        },
+        {
+          layer: "terrestrial-pas-active",
+          expression: ["all", ["==", "STATUS_YR", yr],
+            ["==", "PARENT_ISO", this.props.country]
+          ]
+        },
+        {
+          layer: "terrestrial-pas-labels",
+          expression: ["all", ["==", "STATUS_YR", yr],
+            ["==", "PARENT_ISO", this.props.country]
+          ]
+        },
+        {
+          layer: "marine-pas",
+          expression: ["all", ["<", "STATUS_YR", yr],
+            ["==", "PARENT_ISO", this.props.country]
+          ]
+        },
+        {
+          layer: "marine-pas-active",
+          expression: ["all", ["==", "STATUS_YR", yr],
+            ["==", "PARENT_ISO", this.props.country]
+          ]
+        },
+        {
+          layer: "marine-pas-labels",
+          expression: ["all", ["==", "STATUS_YR", yr],
+            ["==", "PARENT_ISO", this.props.country]
+          ]
+        }
+      ];
+      return filterExpressions;
+    }
+    else {
+      return null;
+    }
+  }
+
   render() {
     return (
       <Tabs        
@@ -56,7 +101,17 @@ class TerrestrialCoverageIndicator extends React.Component {
             {this.props.country}  terrestrial protected area coverage
           </div> : null }
           <React.Fragment>
-            <TimeSeriesChart width={400} height={200} data={this.state.data} margin={{ top: 25, right: 15, bottom: 25, left: 15 }} {...this.props} xdomain={this.state.xdomain} xDataKey={'x'} yDataKey={'percent'} scale={'linear'}/>
+            <TimeSeriesChart 
+              width={400} 
+              height={200} 
+              data={this.state.data} 
+              margin={{ top: 25, right: 15, bottom: 25, left: 15 }} {...this.props} 
+              xdomain={this.state.xdomain} 
+              xDataKey={'x'} 
+              yDataKey={'percent'} 
+              scale={'linear'}
+              getFilterExpressions={this.getFilterExpressions.bind(this)}
+            />
             <CardText 
               style={{padding:'12px',fontSize:'13px'}}>{this.props.desc ? this.props.desc : "Move the mouse over the chart to see the change in protection through time."}
             </CardText>
