@@ -70,6 +70,7 @@ class TerrestrialCoverageIndicatorGlobal extends React.Component {
                       xdomain={this.state.xdomain} 
                       xDataKey={'yr'} 
                       yDataKey={'num'} 
+                      yAxisLabel={'Number of countries'}
                       scale={'linear'} 
                       alldata={this.state.alldata}
                       getFilterExpressions={this.getFilterExpressions.bind(this)}
