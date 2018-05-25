@@ -10,7 +10,7 @@ import MetChart from './MetChart.js';
 class Region extends React.Component {
     onClickMetChart(e) {
         this.props.history.push({
-            pathname: window.basepath + "Country/" + e.props.title
+            pathname: window.basepath + "Country/" + e.props.iso3
         });
     }
     render() {
@@ -49,7 +49,7 @@ class Region extends React.Component {
                 </div>
                 <Header2 title="Proportion of Country targets met"/>
                 <div style={{margin:'20px'}}>
-                    {countries.map((item,index)=><MetChart percentMet={window.percentages[index]} color={window.colors[index]} title={item} onClick={this.onClickMetChart.bind(this)} key={index} drillTo={'Country'}/>)}
+                    {countries.map((item,index)=><MetChart percentMet={window.percentages[index]} color={window.colors[index]} title={item.name} onClick={this.onClickMetChart.bind(this)} key={index} drillTo={'Country'} iso3={item.iso3}/>)}
                 </div>
             </React.Fragment>
         );

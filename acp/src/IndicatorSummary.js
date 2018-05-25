@@ -10,7 +10,7 @@ class IndicatorSummary extends React.Component {
     }
     onClick(e) {
         window.open(
-            window.basepath.replace("acp", "regional") + "indicator/" + this.props.id, '_blank'
+            window.basepath.replace("acp", "regional") + "indicator/" + this.props.id + "/" + this.props.iso3, '_blank'
         );
     }
     favorite(e) {
