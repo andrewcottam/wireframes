@@ -1,8 +1,8 @@
 import * as React from 'react';
 import { CardHeader, CardMedia, CardTitle, } from 'material-ui/Card';
 import IntactForestIndicator from './IntactForestIndicator.js';
-import TerrestrialCoverageIndicator from './TerrestrialCoverageIndicator.js';
-import TerrestrialCoverageIndicatorGlobal from './TerrestrialCoverageIndicatorGlobal.js';
+import CoverageIndicator from './CoverageIndicator.js';
+import CoverageIndicatorGlobal from './CoverageIndicatorGlobal.js';
 import intactForest from './intactForest.png';
 import logo_g1 from './logo-g1.png';
 import logo_r1 from './logo-r1.png';
@@ -37,7 +37,7 @@ class IndicatorContent extends React.Component {
         }
     }
     render() {
-        var children, policyTitle, avatar, targetTitle, targetSubtitle, backgroundImage;
+        var children, policyTitle, avatar, targetTitle, targetSubtitle, backgroundImage, country;
         if (this.props.map) {
             switch (Number(this.props.match.params.id)) {
                 case 0:
@@ -46,9 +46,9 @@ class IndicatorContent extends React.Component {
                     avatar = <Avatar src={logo_g1}/>;
                     targetTitle = "CBD Target 11";
                     targetSubtitle = "By 2020, at least 17 per cent of terrestrial and inland water areas, especially areas of particular importance for biodiversity and ecosystem services, are conserved through effectively and equitably managed, ecologically representative and well-connected systems of protected areas and other effective area-based conservation measures, and integrated into the wider landscape and seascape.";
-                    let country = this.props.match.params.iso3 ? this.props.match.params.iso3 : "TZA";
+                    country = this.props.match.params.iso3 ? this.props.match.params.iso3 : "TZA";
                     this.zoomToCountry(country);
-                    children = <TerrestrialCoverageIndicator {...this.props} country={country}/>; 
+                    children = <CoverageIndicator {...this.props} country={country} marine={false}/>; 
                     backgroundImage = intactForest;
                     break;
                 case 1:
@@ -57,6 +57,9 @@ class IndicatorContent extends React.Component {
                     avatar = <Avatar src={logo_g1}/>;
                     targetTitle = "CBD Target 11";
                     targetSubtitle = "By 2020, at least 10 per cent of coastal and marine areas, especially areas of particular importance for biodiversity and ecosystem services, are conserved through effectively and equitably managed, ecologically representative and well-connected systems of protected areas and other effective area-based conservation measures, and integrated into the wider landscape and seascape.";
+                    country = this.props.match.params.iso3 ? this.props.match.params.iso3 : "TZA";
+                    this.zoomToCountry(country);
+                    children = <CoverageIndicator {...this.props} country={country} marine={true}/>; 
                     backgroundImage = intactForest;
                     break;
                 case 2:
@@ -97,7 +100,7 @@ class IndicatorContent extends React.Component {
                     targetTitle = "CBD Target 11";
                     targetSubtitle = "By 2020, at least 17 per cent of terrestrial and inland water areas, especially areas of particular importance for biodiversity and ecosystem services, are conserved through effectively and equitably managed, ecologically representative and well-connected systems of protected areas and other effective area-based conservation measures, and integrated into the wider landscape and seascape.";
                     backgroundImage = intactForest;
-                    children = <TerrestrialCoverageIndicatorGlobal {...this.props} country={country} terrestrial={true}/>;
+                    children = <CoverageIndicatorGlobal {...this.props} country={country} terrestrial={true}/>;
                     break;
                 case 12:
                     this.configureMap('mapbox://styles/blishten/cjhkj85g106fe2so2r7e4kvkb',[0,0], 4); //global view
@@ -106,7 +109,7 @@ class IndicatorContent extends React.Component {
                     targetTitle = "CBD Target 11";
                     targetSubtitle = "By 2020, at least 10 per cent of coastal and marine areas, especially areas of particular importance for biodiversity and ecosystem services, are conserved through effectively and equitably managed, ecologically representative and well-connected systems of protected areas and other effective area-based conservation measures, and integrated into the wider landscape and seascape.";
                     backgroundImage = intactForest;
-                    children = <TerrestrialCoverageIndicatorGlobal {...this.props} country={country} terrestrial={false}/>;
+                    children = <CoverageIndicatorGlobal {...this.props} country={country} terrestrial={false}/>;
                     break;
                 default:
             }

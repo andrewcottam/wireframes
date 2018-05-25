@@ -7,6 +7,7 @@ import logo_r1 from './logo-r1.png';
 import logo_fji from './logo-fji.png';
 import logo_slb from './logo-slb.png';
 import logo_l1 from './logo-l1.png';
+import logo_png from './logo-png.png';
 import greenListLogo from './Green-List-logo-1.png';
 import { List, ListItem } from 'material-ui/List';
 import PolicyListItem from './PolicyListItem.js';
@@ -58,10 +59,8 @@ class PoliciesPanel extends React.Component {
                     <PolicyGroupHeader primaryText="Global" nestedItems={[
                       <PolicyListItem {...this.props} key="g1" primaryText="Convention on Biological Diversity" secondaryText="Strategic Plan for Biodiversity 2011-2020" leftAvatarSrc={logo_g1} onIndicatorSelected={this.indicatorSelected.bind(this)} targets={[
                         <div key="t11" primaryText="CBD Target 11" secondaryText="By 2020, at least 17 per cent of terrestrial and inland water areas and 10 per cent of coastal and marine areas, especially areas of particular importance for biodiversity and ecosystem services, are conserved through effectively and equitably managed, ecologically representative and well-connected systems of protected areas and other effective area-based conservation measures, and integrated into the wider landscape and seascape." indicators={[
-                          <div id="0" key="0" primaryText="Terrestrial protected area coverage" secondaryText="The total non-overlapping area of terrestrial protected areas"/>,
-                          <div id="1" key="1" primaryText="Marine protected area coverage" secondaryText="The total non-overlapping area of marine protected areas"/>,
-                          <div id="11" key="11" primaryText="Countries who have achieved the CBD 11 Terrestrial Coverage Target" secondaryText=">17% of terrestrial and inland water areas protected"/>,
-                          <div id="12" key="12" primaryText="Countries who have achieved the CBD 11 Marine Coverage Target" secondaryText=">10% of coastal and marine areas protected"/>
+                          <div id="11" key="11" primaryText="Countries who have achieved the Terrestrial Coverage Target" secondaryText=">17% of terrestrial and inland water areas protected"/>,
+                          <div id="12" key="12" primaryText="Countries who have achieved the Marine Coverage Target" secondaryText=">10% of coastal and marine areas protected"/>
                           ]}/>
                       ]}/>,
                       <PolicyListItem {...this.props} key="g2" primaryText="Sustainable Development Goals" secondaryText="This is a fantastic groovy thing" leftAvatarSrc={logo_g2} onIndicatorSelected={this.indicatorSelected.bind(this)}/>
@@ -83,6 +82,12 @@ class PoliciesPanel extends React.Component {
                         <div key="t11" primaryText="CBD Target 11" secondaryText="By 2020, at least 17 per cent of terrestrial and inland water areas and 10 per cent of coastal and marine areas, especially areas of particular importance for biodiversity and ecosystem services, are conserved through effectively and equitably managed, ecologically representative and well-connected systems of protected areas and other effective area-based conservation measures, and integrated into the wider landscape and seascape." indicators={[
                           <div id="0" key="0" iso3={'FJI'} primaryText="Terrestrial protected area coverage" secondaryText="The total non-overlapping area of terrestrial protected areas"/>,
                           <div id="1" key="1" iso3={'FJI'} primaryText="Marine protected area coverage" secondaryText="The total non-overlapping area of marine protected areas"/>
+                          ]}/>
+                      ]}/>,
+                      <PolicyListItem {...this.props} key="n3" primaryText="Papua New Guinea National Biodiversity Strategy and Action Plan" secondaryText="2017-2030" leftAvatarSrc={logo_png} onIndicatorSelected={this.indicatorSelected.bind(this)} targets={[
+                        <div key="t11" primaryText="CBD Target 11" secondaryText="By 2020, at least 17 per cent of terrestrial and inland water areas and 10 per cent of coastal and marine areas, especially areas of particular importance for biodiversity and ecosystem services, are conserved through effectively and equitably managed, ecologically representative and well-connected systems of protected areas and other effective area-based conservation measures, and integrated into the wider landscape and seascape." indicators={[
+                          <div id="0" key="0" iso3={'PNG'} primaryText="Terrestrial protected area coverage" secondaryText="The total non-overlapping area of terrestrial protected areas"/>,
+                          <div id="1" key="1" iso3={'PNG'} primaryText="Marine protected area coverage" secondaryText="The total non-overlapping area of marine protected areas"/>
                           ]}/>
                       ]}/>,
                       <PolicyListItem {...this.props} key="n2" primaryText="Solomon Islands National Biodiversity Strategy and Action Plan" secondaryText="This is a fantastic groovy thing" leftAvatarSrc={logo_slb} onIndicatorSelected={this.indicatorSelected.bind(this)} targets={[
