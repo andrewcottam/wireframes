@@ -4,8 +4,9 @@ import { ListItem } from 'material-ui/List';
 class IndicatorListItem extends React.Component {
     indicatorSelected(e) {
         this.props.onClick(this);
+        let path = this.props.iso3 ? "indicator/" + this.props.id + "/" + this.props.iso3 : "indicator/" + this.props.id;
         this.props.history.push({
-            pathname: window.basepath + "indicator/" + this.props.id
+            pathname: window.basepath + path
         });
     }
     render() {

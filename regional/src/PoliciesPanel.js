@@ -79,7 +79,12 @@ class PoliciesPanel extends React.Component {
                     ]}
                     />
                     <PolicyGroupHeader primaryText="National" nestedItems={[
-                      <PolicyListItem {...this.props} key="n1" primaryText="Fiji National Biodiversity Strategy and Action Plan" secondaryText="2017-2030" leftAvatarSrc={logo_fji} onIndicatorSelected={this.indicatorSelected.bind(this)}/>,
+                      <PolicyListItem {...this.props} key="n1" primaryText="Fiji National Biodiversity Strategy and Action Plan" secondaryText="2017-2030" leftAvatarSrc={logo_fji} onIndicatorSelected={this.indicatorSelected.bind(this)} targets={[
+                        <div key="t11" primaryText="CBD Target 11" secondaryText="By 2020, at least 17 per cent of terrestrial and inland water areas and 10 per cent of coastal and marine areas, especially areas of particular importance for biodiversity and ecosystem services, are conserved through effectively and equitably managed, ecologically representative and well-connected systems of protected areas and other effective area-based conservation measures, and integrated into the wider landscape and seascape." indicators={[
+                          <div id="0" key="0" iso3={'FJI'} primaryText="Terrestrial protected area coverage" secondaryText="The total non-overlapping area of terrestrial protected areas"/>,
+                          <div id="1" key="1" iso3={'FJI'} primaryText="Marine protected area coverage" secondaryText="The total non-overlapping area of marine protected areas"/>
+                          ]}/>
+                      ]}/>,
                       <PolicyListItem {...this.props} key="n2" primaryText="Solomon Islands National Biodiversity Strategy and Action Plan" secondaryText="This is a fantastic groovy thing" leftAvatarSrc={logo_slb} onIndicatorSelected={this.indicatorSelected.bind(this)}/>
                     ]}
                     />
