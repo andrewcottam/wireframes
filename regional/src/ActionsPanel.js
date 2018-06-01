@@ -64,6 +64,9 @@ class ActionsPanel extends React.Component {
                 <ActionListItem primaryText="Contact provincial body" onClick={()=>this.setState({action:'contactProvincialBody'})}/>
                 <ActionListItem primaryText="Report incident" onClick={()=>this.setState({action:'reportIncident'})}/>
                 <ActionsHeader text="Reports"/>
+                <ActionListItem primaryText="Progress Report"/>
+                <ActionsHeader text="Direct Action"/>
+                <ActionListItem primaryText="Buy barbed wire" onClick={()=> window.open('https://www.amazon.com/OrangeA-Razor-Galvanized-Barbed-Ribbon/dp/B06WRSZW1F/ref=sr_1_1_sspa?ie=UTF8&qid=1527684681&sr=8-1-spons&keywords=barbed+wire&psc=1','_blank')}/>
                 <Dialog title="Spatial data" open={this.state.action==='spatialData'} actions={<ActionSpatialData closeDialog={this.handleClose.bind(this)}/>} overlayStyle={{backgroundColor: 'transparent'}} onRequestClose={this.handleClose.bind(this)} modal={false} />
                 <Dialog title="Species observations" open={this.state.action==='speciesObservations'} actions={<ActionSpeciesObservations closeDialog={this.handleClose.bind(this)}/>} overlayStyle={{backgroundColor: 'transparent'}} onRequestClose={this.handleClose.bind(this)} modal={false} />
                 <Dialog title="Photos" open={this.state.action==='photos'} actions={<ActionPhotos closeDialog={this.handleClose.bind(this)}/>} overlayStyle={{backgroundColor: 'transparent'}} onRequestClose={this.handleClose.bind(this)} modal={false} />

@@ -26,15 +26,6 @@ class MapPopup extends React.Component {
     var features = e.target.queryRenderedFeatures(e.point);
     this.setState({ mouseFeatures: features, mouseCentre: [e.lngLat.lng, e.lngLat.lat] });
   }
-  getText() {
-    const txt = this.state.mouseFeatures.filter((f) => ['terrestrial-pas', 'terrestrial-pas-active'].indexOf(f.layer.id) > -1).map((f) => {
-      const yr = (f.properties.STATUS_YR !== 0) ? " (" + f.properties.STATUS_YR + ")" : "";
-      return (
-        <div key={f.properties.WDPAID} className="popupItem" onClick={this.itemClick.bind(this,f.geometry.coordinates)}>{f.properties.NAME + yr}</div>
-      );
-    });
-    return txt;
-  }
   getBoundingBox(coordinates) {
     var bounds = new mapboxgl.LngLatBounds();
     coordinates[0].map((coord) => {
@@ -52,7 +43,7 @@ class MapPopup extends React.Component {
     // });
   }
   render() {
-    const text = this.state.mouseFeatures && this.getText();
+    const text = this.state.mouseFeatures && this.props.getContent(this.state.mouseFeatures, this);
     return (
       this.state.mouseCentre && this.state.mouseCentre.length && text.length &&
       <Popup coordinates={this.state.mouseCentre} offset={12}>

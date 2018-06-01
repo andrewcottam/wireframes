@@ -2,7 +2,7 @@ import * as React from 'react';
 import { Tabs, Tab } from 'material-ui/Tabs';
 import TimeSeriesChart from './TimeSeriesChart.js';
 import { CardText } from 'material-ui/Card';
-import * as jsonp from 'jsonp';
+import * as jsonp from 'jsonp'; 
 
 class CoverageIndicator extends React.Component {
   constructor(props) {
@@ -28,7 +28,7 @@ class CoverageIndicator extends React.Component {
       return { x: item.yr, cum_area: item.cum_area, percent: (item.cum_area / (countryArea / 100000000)), threshold: 17 };
     });
     let xstart = (allyears[0].x === 0) ? allyears[1].x : allyears[0].x;
-    let xend = 2018;
+    let xend = allyears[allyears.length - 1].x;
     allyears = (allyears[0].x === 0) ? allyears.slice(1) : allyears;
     this.setState({ data: allyears, xdomain: [xstart, xend] });
   }
@@ -120,7 +120,7 @@ class CoverageIndicator extends React.Component {
   }
 
   render() {
-    return (
+    return ( 
       <Tabs        
         value="Country"
         onChange={this.handleChange}

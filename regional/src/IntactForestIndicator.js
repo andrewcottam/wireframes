@@ -6,20 +6,63 @@ import { List, ListItem } from 'material-ui/List';
 import { Tabs, Tab } from 'material-ui/Tabs';
 import logo_slb from './logo-slb.png';
 import logo_png from './logo-png.png';
-import logo_tls from './logo-tls.png';
+import logo_tls from './logo-tls.png'; 
 import logo_vut from './logo-vut.png';
 import { CardText } from 'material-ui/Card';
-import TimeSeriesChart2 from './TimeSeriesChart2.js';
+import TimeSeriesChart from './TimeSeriesChart.js';
 import CountryListItem from './CountryListItem.js';
 import ProvinceListItem from './ProvinceListItem.js';
-import mapboxgl from 'mapbox-gl';
+import mapboxgl from 'mapbox-gl'; 
+import * as jsonp from 'jsonp';
 
 let countryPopups = [];
 
 class IntactForestIndicator extends React.Component {
   constructor(props) {
     super(props);
-    this.state = { value: "Indicator" };
+    this.state = { value: "Indicator", region: '', data: [], xdomain: [],allData: [{ iso3: 'PNG', yr: 2016 }]  };
+    let ENDPOINT = "https://db-server-blishten.c9users.io/cgi-bin/services.py/biopama/services/get_countries_logging_intact_forest?region=" + this.props.region;
+    jsonp(ENDPOINT, this.parseData.bind(this)); //get the data from the server and parse it
+    ENDPOINT = "https://db-server-blishten.c9users.io/cgi-bin/services.py/biopama/services/get_countries_logging_intact_forest_by_year?format=json";
+    jsonp(ENDPOINT, this.parseAllData.bind(this)); //get the data from the server and parse it
+  }
+  componentWillMount() {
+    if (this.props.map) {
+      this.props.map.on("click", this.mapClick.bind(this));
+    }
+  }
+  componentWillUnmount() {
+    this.props.map.off("click", this.mapClick.bind(this));
+  }
+  mapClick(e){
+    var features = e.target.queryRenderedFeatures(e.point);
+    let countryFeature = features.filter((f) => ['gaul', 'gaul-2015-simplified'].indexOf(f.layer.id) > -1);
+    if (countryFeature.length > 0 ){
+        let iso3 = countryFeature[0].properties.iso3;
+        this.props.history.push({
+            pathname: window.basepath + "indicator/13/" + iso3
+        });
+    }
+  }
+  componentDidUpdate(prevProps, prevState, snapshot) {
+    if (prevProps.region !== this.props.region) {
+      let ENDPOINT = "https://db-server-blishten.c9users.io/cgi-bin/services.py/biopama/services/get_countries_logging_intact_forest?region=" + this.props.region;
+      jsonp(ENDPOINT, this.parseData.bind(this)); //get the data from the server and parse it
+    }
+  }
+  parseData(err, response) {
+    if (err) throw err;
+    let transposed = [];
+    let obj = response.records[0];
+    for (var p in obj) {
+      if (p !== 'region')
+        transposed.push({ yr: p, num: obj[p] });
+    }
+    this.setState({ data: transposed });
+  }
+  parseAllData(err, response) {
+    if (err) throw err;
+    this.setState({ alldata: response.records });
   }
   drillCountries() {
     this.setState({ value: 'Region' });
@@ -96,10 +139,29 @@ class IntactForestIndicator extends React.Component {
     }
     return num;
   }
+  getFilterExpressions(yr) {
+    if (this.state.alldata) {
+      //filter the data for only those countries with the passed year
+      let countriesFilter = this.state.alldata.filter(function(item) {
+        return (item.yr === Number(yr));
+      });
+      //convert the countries to an array of iso3 codes to be able to filter the map
+      let countriesFilterArray = countriesFilter.map((item) => { return item.country });
+      //get the filter expressions to pass to the time series chart
+      let filterExpressions = [
+        { layer: "gaul", expression: ["in", "iso3"].concat(countriesFilterArray) },
+        { layer: "gaul-2015-simplified", expression: ["in", "iso3"].concat(countriesFilterArray) }
+      ];
+      return filterExpressions;
+    }
+    else {
+      return null;
+    }
+  }
   onChange(value) {
     this.setState({ value: value });
     if (value === "Region") {
-      this.props.map.setCenter([162,-13]);
+      this.props.map.setCenter([162, -13]);
       this.props.map.zoomTo(4);
     }
   }
@@ -123,15 +185,19 @@ class IntactForestIndicator extends React.Component {
                   </div> : null }
                   <React.Fragment>
                   <div style={{textAlign:'center'}}>    
-                    <Badge
-                      badgeContent={4}
-                      primary={true}
-                      title="Click to show the countries in the region"
-                      badgeStyle={{top: 25, right: 25, cursor :'pointer'}}
-                      onClick={this.drillCountries.bind(this)}
-                      >
-                      <TimeSeriesChart2 width={400} height={200} data={[{x:1995,y:25},{x:1996,y:24},{x:1997,y:24},{x:1998,y:23},{x:1999,y:23},{x:2000,y:21},{x:2001,y:22},{x:2002,y:21},{x:2003,y:21},{x:2004,y:18},{x:2005,y:18},{x:2006,y:16},{x:2007,y:15},{x:2008,y:11},{x:2009,y:10},{x:2010,y:11},{x:2011,y:9},{x:2012,y:7},{x:2013,y:6},{x:2014,y:4},{x:2015,y:4}]} margin={{ top: 25, right: 15, bottom: 25, left: 15 }} map={this.props.map}/>
-                    </Badge>
+
+                      <TimeSeriesChart 
+                        width={400} 
+                        height={200} 
+                        data={this.state.data} 
+                        margin={{ top: 25, right: 15, bottom: 25, left: 15 }} {...this.props} 
+                        xDataKey={'yr'} 
+                        xdomain={[2001,2016]}
+                        yDataKey={'num'} 
+                        yAxisLabel={'Number of countries'}
+                        scale={'linear'}
+                        getFilterExpressions={this.getFilterExpressions.bind(this)}
+                      />
                   </div>
                   <CardText 
                     style={{padding:'12px',fontSize:'13px'}}>{this.props.desc ? this.props.desc : "No description."}
@@ -226,7 +292,7 @@ class IntactForestIndicator extends React.Component {
                       : null}
                 </Tab>
                 <Tab 
-                  label="Province"
+                  label="IFL"
                   value="province"
                   buttonStyle={{height:'25px',padding:'3px 0px 3px 0px'}}
                   style={{fontSize:'12px'}}

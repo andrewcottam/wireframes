@@ -14,6 +14,24 @@ class TerrestrialCoverageIndicatorGlobal extends React.Component {
     ENDPOINT = "https://db-server-blishten.c9users.io/cgi-bin/services.py/biopama/services/get_" + domain + "_coverage_analysis2?format=json";
     jsonp(ENDPOINT, this.parseAllData.bind(this)); //get the data including the country iso3 code and the year
   }
+  componentWillMount() {
+    if (this.props.map) {
+      this.props.map.on("click", this.mapClick.bind(this));
+    }
+  }
+  componentWillUnmount() {
+    this.props.map.off("click", this.mapClick.bind(this));
+  }
+  mapClick(e) {
+    var features = e.target.queryRenderedFeatures(e.point);
+    let countryFeatures = features.filter((f) => ['gaul-2015-simplified','gaul'].indexOf(f.layer.id) > -1);
+    if (countryFeatures.length > 0) {
+      let iso3 = countryFeatures[0].properties.iso3;
+      this.props.history.push({
+        pathname: window.basepath + "indicator/" + (this.props.match.params.id -11) + "/" + iso3
+      });
+    }
+  }
   parseData(err, response) {
     if (err) throw err;
     let xstart = 1948;
@@ -59,7 +77,7 @@ class TerrestrialCoverageIndicatorGlobal extends React.Component {
                   >
                   <div
                     style={{padding:'12px',fontSize:'19px'}}>
-                    Countries achieving the CBD 11 terrestrial coverage target
+                    Countries achieving the CBD 11 {(this.props.terrestrial) ? "terrestrial" : "marine"} target
                   </div> 
                   <React.Fragment>
                     <TimeSeriesChart 
@@ -71,7 +89,6 @@ class TerrestrialCoverageIndicatorGlobal extends React.Component {
                       xDataKey={'yr'} 
                       yDataKey={'num'} 
                       yAxisLabel={'Number of countries'}
-                      scale={'linear'} 
                       alldata={this.state.alldata}
                       getFilterExpressions={this.getFilterExpressions.bind(this)}
                     />

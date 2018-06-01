@@ -47,16 +47,18 @@ class TimeSeriesChart extends React.Component {
         //get the map filter expressions from the calling component
         let filterExpressions = this.props.getFilterExpressions(yr);
         //iterate through the map filter expressions and apply them
-        filterExpressions.map((expression) => {
-            this.props.map.setFilter(expression.layer, expression.expression);
-        });
+        if (filterExpressions) {
+            filterExpressions.map((expression) => {
+                this.props.map.setFilter(expression.layer, expression.expression);
+            });
+        }
     }
     render() {
         return (
             <React.Fragment>
-                <div style={{paddingLeft:'41px'}}>Up to {this.state.yr}</div>
+                <div style={{paddingLeft:'41px'}}>{this.state.yr}</div>
                 <LineChart {...this.props} onMouseMove={this.mouseMove.bind(this)} width={400} height={300}> 
-                    <XAxis scale={this.props.scale} dataKey={this.props.xDataKey} domain={this.props.xdomain} label={{value:"Year", position:"insideBottom",style:{fontSize:'11px'},offset:-1}} style={{fontSize:'11px',paddingTop:'20px'}} padding={{ left: 10, right: 10 }}/>
+                    <XAxis type={'number'} dataKey={this.props.xDataKey} domain={this.props.xdomain} label={{value:"Year", position:"insideBottom",style:{fontSize:'11px'},offset:-1}} style={{fontSize:'11px',paddingTop:'20px'}} padding={{ left: 10, right: 10 }}/>
                     <YAxis label={{ value: this.props.yAxisLabel, angle: -90, position: 'inside', style:{fontSize:'11px'}}} style={{fontSize:'11px'}}/>
                     <Tooltip isAnimationActive={false} content={<CBD11Tooltip/>} wrapperStyle={{visibility: 'visible'}} style={{visibility: 'visible'}} active={true}/>
                     <Line type="monotone" dataKey={this.props.yDataKey} stroke="#00BCD4" isAnimationActive={false} dot={{ stroke: '#00BCD4', strokeWidth: 1,r:2 }} connectNulls={true}/>

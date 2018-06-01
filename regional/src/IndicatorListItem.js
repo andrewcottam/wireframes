@@ -5,6 +5,8 @@ class IndicatorListItem extends React.Component {
     indicatorSelected(e) {
         this.props.onClick(this);
         let path = this.props.iso3 ? "indicator/" + this.props.id + "/" + this.props.iso3 : "indicator/" + this.props.id;
+        path = this.props.region ? "indicator/" + this.props.id + "/" + this.props.region : path;
+        path = this.props.wdpaid ? "indicator/" + this.props.id + "/" + this.props.wdpaid : path;
         this.props.history.push({
             pathname: window.basepath + path
         });
