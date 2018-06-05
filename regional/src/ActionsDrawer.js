@@ -6,7 +6,7 @@ import ActionsPanel from './ActionsPanel.js';
 class ActionsDrawer extends React.Component {
     constructor(props) {
         super(props);
-        this.state = { open: true };
+        this.state = { open: false };
     }
 
     buttonClick() {
@@ -19,7 +19,7 @@ class ActionsDrawer extends React.Component {
                 <Drawer open={this.state.open} containerStyle={{'position': 'absolute', 'top': '64px'}} width={300} openSecondary={true}>
                     <ActionsPanel {...this.props}/>
                 </Drawer>
-                <RaisedButton label="Actions" secondary={true} style={{"transform":"rotate(270deg)",'right': (this.state.open) ? '274px' : '-27px','top': '415px','position': 'absolute'}} onClick={this.buttonClick.bind(this)}/>
+                <RaisedButton label="Actions" secondary={true} style={{"transform":"rotate(270deg)",'right': (this.state.open) ? '274px' : '-27px','top': '431px','position': 'absolute'}} onClick={this.buttonClick.bind(this)}/>
             </React.Fragment>
         );
     }
