@@ -6,7 +6,7 @@ import * as jsonp from 'jsonp';
 
 class CoverageIndicator extends React.Component {
   constructor(props) {
-    super(props);
+    super(props); 
     this.state = { data: [], xdomain: [] };
   }
   componentDidMount() {
@@ -165,7 +165,7 @@ class CoverageIndicator extends React.Component {
               getFilterExpressions={this.getFilterExpressions.bind(this)}
             />
             <CardText 
-              style={{padding:'12px',fontSize:'13px'}}>{this.props.desc ? this.props.desc : "Move the mouse over the chart to filter by year."}
+              style={{padding:'12px',fontSize:'13px'}}>{this.props.desc ? this.props.desc : "IUCN and UNEP-WCMC (2018), The World Database on Protected Areas (WDPA), April 2014, Cambridge, UK: UNEP-WCMC. Available at: www.protectedplanet.net."}
             </CardText>
           </React.Fragment>
         </Tab>                  
