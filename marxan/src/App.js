@@ -96,6 +96,7 @@ class App extends React.Component {
   responseIsTimeoutOrEmpty(err, response) {
     if (err || !response) {
       let msg = err ? err.message : "No response received from server";
+      msg = (msg ==="Timeout") ? "Timeout contacting server" : msg;
       this.setState({ snackbarOpen: true, snackbarMessage: msg, loggingIn: false });
       return true;
     }
@@ -126,7 +127,7 @@ class App extends React.Component {
   validateUser() {
     this.setState({ loggingIn: true });
     //get a list of existing users 
-    jsonp(MARXAN_ENDPOINT + "validateUser?user=" + this.state.user + "&password=" + this.state.password, { timeout: TIMEOUT }, this.parseValidateUserResponse.bind(this));
+    jsonp(MARXAN_ENDPOINT + "validateUser?user=" + this.state.user + "&password=" + this.state.password, { timeout: 10000 }, this.parseValidateUserResponse.bind(this));
   }
 
   parseValidateUserResponse(err, response) {
