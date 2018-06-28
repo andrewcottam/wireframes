@@ -634,10 +634,10 @@ class App extends React.Component {
     let solutions = response.sum;
     //the array data are in the format "Run_Number","Score","Cost","Planning_Units" - so create an array of objects to pass to the outputs table
     solutions = solutions.map(function(item) {
-      return { "Run_Number": item[0], "Score": item[1], "Cost": item[2], "Planning_Units": item[3] };
+      return { "Run_Number": item[0], "Score": Math.floor(item[1]), "Cost": Math.floor(item[2]), "Planning_Units": item[3],"Missing_Values": item[12] };
     });
     //add in the row for the summed solutions
-    solutions.splice(0, 0, { 'Run_Number': 'Sum', 'Score': '', 'Cost': '', 'Planning_Units': '' });
+    solutions.splice(0, 0, { 'Run_Number': 'Sum', 'Score': '', 'Cost': '', 'Planning_Units': '','Missing_Values':'' });
     //ui feedback
     this.setState({ running: false, runsCompleted: 0, log: response.log.replace(/(\r\n|\n|\r)/g, "<br />"), outputsTabString: '', solutions: solutions, snackbarOpen: true, snackbarMessage: response.info });
   }

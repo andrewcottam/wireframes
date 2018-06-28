@@ -190,22 +190,27 @@ class InfoPanel extends React.Component {
                     columns={[{
                        Header: 'Run', 
                        accessor: 'Run_Number',
-                       width:44,
+                       width:40,
                        headerStyle:{'textAlign':'left'}                             
                     },{
                        Header: 'Score',
                        accessor: 'Score',
-                       width:90,
+                       width:80,
                       headerStyle:{'textAlign':'left'}
                     },{
                        Header: 'Cost',
                        accessor: 'Cost' ,
-                       width:47,
+                       width:80,
                        headerStyle:{'textAlign':'left'}
                     },{
                        Header: 'Planning Units',
                        accessor: 'Planning_Units' ,
-                       width:130,
+                       width:50,
+                       headerStyle:{'textAlign':'left'}
+                    },{
+                       Header: 'Missing Values',
+                       accessor: 'Missing_Values' ,
+                       width:105,
                        headerStyle:{'textAlign':'left'}
                     }]}
                   />
@@ -256,7 +261,7 @@ class InfoPanel extends React.Component {
             dataBreaks={this.props.dataBreaks}
           />
           <div className='footer'>
-            <div>v0.9 Feedback: <a href='mailto:andrew.cottam@ec.europa.eu' className='email'>Andrew Cottam</a></div>
+            <div>v1.0 Feedback: <a href='mailto:andrew.cottam@ec.europa.eu' className='email'>Andrew Cottam</a></div>
             <div>Marxan 2.4.3 - Ian Ball, Matthew Watts &amp; Hugh Possingham</div>
           </div>
         </Paper>
