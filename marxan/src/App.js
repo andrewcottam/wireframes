@@ -19,7 +19,7 @@ import * as utilities from './utilities.js';
 
 //CONSTANTS
 //THE MARXAN_ENDPOINT MUST ALSO BE CHANGED IN THE FILEUPLOAD.JS FILE 
-let MARXAN_ENDPOINT = "https://db-server-blishten.c9users.io/marxan/webAPI2.py/";
+let MARXAN_ENDPOINT = "https://db-server-blishten.c9users.io/marxan/webAPI.py/";
 let TIMEOUT = 0; //disable timeout setting
 mapboxgl.accessToken = 'pk.eyJ1IjoiYmxpc2h0ZW4iLCJhIjoiMEZrNzFqRSJ9.0QBRA2HxTb8YHErUFRMPZg'; //this is my public access token for using in the Mapbox GL client - TODO change this to the logged in users public access token
 
