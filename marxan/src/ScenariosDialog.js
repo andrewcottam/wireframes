@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import Dialog from 'material-ui/Dialog';
 import RaisedButton from 'material-ui/RaisedButton';
 import { List, ListItem, makeSelectable } from 'material-ui/List';
-import NewScenarioDialog from './NewScenarioDialog.js';
+import NewCaseStudyDialog from './NewCaseStudyDialog.js';
 import FontAwesome from 'react-fontawesome'; 
 
 let SelectableList = makeSelectable(List);
@@ -47,7 +47,7 @@ SelectableList = wrapState(SelectableList);
 class ScenariosDialog extends React.Component {
     constructor(props) {
         super(props);
-        this.state = { newScenarioDialogOpen: false, selectedScenario: undefined };
+        this.state = { selectedScenario: undefined };
     }
     _delete() {
         this.props.deleteScenario(this.state.selectedScenario);
@@ -57,10 +57,7 @@ class ScenariosDialog extends React.Component {
         this.props.loadScenario(this.state.selectedScenario);
     }
     _new() {
-        this.setState({ newScenarioDialogOpen: true });
-    }
-    closeNewScenarioDialog() {
-        this.setState({ newScenarioDialogOpen: false });
+        this.props.openNewCaseStudyDialog();
     }
     changeScenario(event, scenario) {
         this.setState({ selectedScenario: scenario });
@@ -86,12 +83,7 @@ class ScenariosDialog extends React.Component {
 
         return (
             <React.Fragment>
-                <Dialog overlayStyle={{display:'none'}} className={'dialog'} children={c} title="Scenarios" actions={actions} open={this.props.open} onRequestClose={this.props.closeScenariosDialog} contentStyle={{width:'566px'}}/>
-                <NewScenarioDialog 
-                newScenarioDialogOpen={this.state.newScenarioDialogOpen} 
-                closeNewScenarioDialog={this.closeNewScenarioDialog.bind(this)}
-                createNewScenario={this.props.createNewScenario}
-                />
+                <Dialog overlayStyle={{display:'none'}} className={'dialog'} children={c} title="Case studies" actions={actions} open={this.props.open} onRequestClose={this.props.closeScenariosDialog} contentStyle={{width:'566px'}}/>
             </React.Fragment>
         );
     }

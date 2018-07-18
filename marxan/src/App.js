@@ -16,11 +16,15 @@ import classyBrew from 'classybrew';
 import axios, { post } from 'axios';
 /*eslint-enable no-unused-vars*/
 import * as utilities from './utilities.js';
+import NewCaseStudyDialog from './NewCaseStudyDialog.js';
+import NewPlanningUnitDialog from './newCaseStudySteps/NewPlanningUnitDialog';
 
 //CONSTANTS
 //THE MARXAN_ENDPOINT MUST ALSO BE CHANGED IN THE FILEUPLOAD.JS FILE 
 let MARXAN_ENDPOINT = "https://db-server-blishten.c9users.io/marxan/webAPI.py/";
+let REST_ENDPOINT = "https://db-server-blishten.c9users.io/cgi-bin/services.py/biopama/marxan/";
 let TIMEOUT = 0; //disable timeout setting
+let DISABLE_LOGIN = false; //to not show the login form, set loggedIn to true
 mapboxgl.accessToken = 'pk.eyJ1IjoiYmxpc2h0ZW4iLCJhIjoiMEZrNzFqRSJ9.0QBRA2HxTb8YHErUFRMPZg'; //this is my public access token for using in the Mapbox GL client - TODO change this to the logged in users public access token
 
 class App extends React.Component {
@@ -28,8 +32,8 @@ class App extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      user: '',
-      password: '',
+      user: DISABLE_LOGIN ? 'asd' : '',
+      password: DISABLE_LOGIN ? 'asd' : '',
       userData: {},
       loggingIn: false,
       loggedIn: false,
@@ -55,8 +59,16 @@ class App extends React.Component {
       parametersDialogOpen: false,
       updatingRunParameters: false,
       optionsDialogOpen: false,
+      newCaseStudyDialogOpen: false, //set to true to debug immediately
+      NewPlanningUnitDialogOpen: false, //set to true to debug immediately
+      creatingNewPlanningUnit: false,
       savingOptions: false,
-      dataBreaks: []
+      dataBreaks: [],
+      planningUnits: [],
+      iso3: '',
+      domain: '',
+      areakm2: undefined,
+      countries: []
     };
   }
 
@@ -72,6 +84,8 @@ class App extends React.Component {
     this.map.on("load", this.mapLoaded.bind(this));
     //instantiate the classybrew to get the color ramps for the renderers
     this.setState({ brew: new classyBrew() });
+    //if disabling the login, then programatically log in
+    if (DISABLE_LOGIN) this.validateUser();
   }
 
   componentDidUpdate(prevProps, prevState) {
@@ -96,7 +110,7 @@ class App extends React.Component {
   responseIsTimeoutOrEmpty(err, response) {
     if (err || !response) {
       let msg = err ? err.message : "No response received from server";
-      msg = (msg ==="Timeout") ? "Timeout contacting server" : msg;
+      msg = (msg === "Timeout") ? "Timeout contacting server" : msg;
       this.setState({ snackbarOpen: true, snackbarMessage: msg, loggingIn: false });
       return true;
     }
@@ -107,8 +121,10 @@ class App extends React.Component {
 
   //checks to see if the rest server raised an error and if it did then show in the snackbar
   isServerError(response) {
-    if (response.error) {
-      this.setState({ snackbarOpen: true, snackbarMessage: response.error });
+    //errors may come from the marxan server or from the rest server which have slightly different json responses
+    if ((response.error) || (response.hasOwnProperty('metadata') && response.metadata.hasOwnProperty('error') && response.metadata.error != null)) {
+      var err = (response.error) ? (response.error) : response.metadata.error;
+      this.setState({ snackbarOpen: true, snackbarMessage: err });
       return true;
     }
     else {
@@ -432,7 +448,7 @@ class App extends React.Component {
     formData.append('name', name);
     formData.append('email', email);
     formData.append('mapboxaccesstoken', mapboxaccesstoken);
-    formData.append('scenario', 'Sample scenario');
+    formData.append('scenario', 'Sample case study');
     const config = {
       headers: {
         'content-type': 'multipart/form-data'
@@ -634,10 +650,10 @@ class App extends React.Component {
     let solutions = response.sum;
     //the array data are in the format "Run_Number","Score","Cost","Planning_Units" - so create an array of objects to pass to the outputs table
     solutions = solutions.map(function(item) {
-      return { "Run_Number": item[0], "Score": Math.floor(item[1]), "Cost": Math.floor(item[2]), "Planning_Units": item[3],"Missing_Values": item[12] };
+      return { "Run_Number": item[0], "Score": Math.floor(item[1]), "Cost": Math.floor(item[2]), "Planning_Units": item[3], "Missing_Values": item[12] };
     });
     //add in the row for the summed solutions
-    solutions.splice(0, 0, { 'Run_Number': 'Sum', 'Score': '', 'Cost': '', 'Planning_Units': '','Missing_Values':'' });
+    solutions.splice(0, 0, { 'Run_Number': 'Sum', 'Score': '', 'Cost': '', 'Planning_Units': '', 'Missing_Values': '' });
     //ui feedback
     this.setState({ running: false, runsCompleted: 0, log: response.log.replace(/(\r\n|\n|\r)/g, "<br />"), outputsTabString: '', solutions: solutions, snackbarOpen: true, snackbarMessage: response.info });
   }
@@ -887,6 +903,107 @@ class App extends React.Component {
     this.map.fitBounds([minLng, minLat, maxLng, maxLat], { padding: { top: 10, bottom: 10, left: 10, right: 10 }, easing: function(num) { return 1; } });
   }
 
+  //ROUTINES FOR CREATING A NEW CASE STUDY
+
+  openNewCaseStudyDialog() {
+    this.setState({ newCaseStudyDialogOpen: true });
+  }
+  closeNewCaseStudyDialog() {
+    this.setState({ newCaseStudyDialogOpen: false });
+  }
+
+  //gets the planning units from the marxan server
+  getPlanningUnits() {
+    //get a list of existing planning units 
+    jsonp(REST_ENDPOINT + "getplanningunits?", { timeout: 10000 }, this.parsegetplanningunitsResponse.bind(this));
+  }
+
+  //asynchronous response for getting the planning units
+  parsegetplanningunitsResponse(err, response) {
+    //check if there are no timeout errors or empty responses
+    if (!this.responseIsTimeoutOrEmpty(err, response)) {
+      //check there are no errors from the server
+      if (!this.isServerError(response)) {
+        //valid response
+        this.setState({ planningUnits: response.records });
+      }
+      else {
+        this.setState({ loggingIn: false });
+      }
+    }
+  }
+  openNewPlanningUnitDialog() {
+    this.setState({ NewPlanningUnitDialogOpen: true });
+  }
+  closeNewPlanningUnitDialog() {
+    this.setState({ NewPlanningUnitDialogOpen: false });
+  }
+  createNewPlanningUnitGrid() {
+    this.setState({ creatingNewPlanningUnit: true });
+    jsonp(REST_ENDPOINT + "get_hexagons?iso3=" + this.state.iso3 + "&domain=" + this.state.domain + "&areakm2=" + this.state.areakm2, { timeout: 0 }, this.parsecreateNewPlanningUnitGridResponse.bind(this));
+  }
+  parsecreateNewPlanningUnitGridResponse(err, response) {
+    //check if there are no timeout errors or empty responses
+    if (!this.responseIsTimeoutOrEmpty(err, response)) {
+      //check there are no errors from the server
+      if (!this.isServerError(response)) {
+        //feedback
+        this.setState({ snackbarOpen: true, snackbarMessage: "Planning grid: '" + response.records[0].get_hexagons.split(",")[1].replace(/"/gm, '').replace(")", "") + "' created" }); //response is (pu_cok_terrestrial_hexagons_10,"Cook Islands Terrestrial 10Km2 hexagon grid")
+        //valid response
+        this.uploadToMapBox(response.records[0].get_hexagons.split(",")[0].replace(/"/gm, '').replace("(", ""));
+      }
+      else {
+        //do something
+      }
+    }
+    //reset the state
+    this.setState({ creatingNewPlanningUnit: false });
+  }
+
+  changeIso3(value) {
+    this.setState({ iso3: value });
+  }
+  changeDomain(value) {
+    this.setState({ domain: value });
+  }
+  changeAreaKm2(value) {
+    this.setState({ areakm2: value });
+  }
+  getCountries() {
+    jsonp(REST_ENDPOINT + "getcountries2", { timeout: 10000 }, this.parsegetCountriesResponse.bind(this));
+  }
+  parsegetCountriesResponse(err, response) {
+    //check if there are no timeout errors or empty responses
+    if (!this.responseIsTimeoutOrEmpty(err, response)) {
+      //check there are no errors from the server
+      if (!this.isServerError(response)) {
+        //valid response
+        this.setState({ countries: response.records });
+      }
+      else {
+        this.setState({ loggingIn: false });
+      }
+    }
+  }
+
+  uploadToMapBox(feature_class_name) {
+    jsonp(MARXAN_ENDPOINT + "uploadTilesetToMapBox?feature_class_name=" + feature_class_name, { timeout: 300000 }, this.parseuploadToMapBoxResponse.bind(this)); //5 minute timeout
+  }
+  parseuploadToMapBoxResponse(err, response) {
+    //check if there are no timeout errors or empty responses
+    if (!this.responseIsTimeoutOrEmpty(err, response)) {
+      //check there are no errors from the server
+      if (!this.isServerError(response)) {
+        //valid response - get the MapBox uploadID
+        let uploadid = response.uploadid;
+        this.setState({ snackbarOpen: true, snackbarMessage: "Uploading to MapBox with the id: " + uploadid });
+      }
+      else {
+        //server error
+      }
+    }
+  }
+
   render() {
     return (
       <MuiThemeProvider>
@@ -939,6 +1056,7 @@ class App extends React.Component {
             openParametersDialog={this.openParametersDialog.bind(this)}
             closeParametersDialog={this.closeParametersDialog.bind(this)}
             parametersDialogOpen={this.state.parametersDialogOpen}
+            openNewCaseStudyDialog={this.openNewCaseStudyDialog.bind(this)}
             updatingRunParameters={this.state.updatingRunParameters}
             changeRenderer={this.changeRenderer.bind(this)}
             changeNumClasses={this.changeNumClasses.bind(this)}
@@ -974,6 +1092,27 @@ class App extends React.Component {
             open={this.state.running}
             numReps={this.state.numReps}
             runsCompleted={this.state.runsCompleted}
+          />
+          <NewCaseStudyDialog
+            open={this.state.newCaseStudyDialogOpen}
+            closeNewCaseStudyDialog={this.closeNewCaseStudyDialog.bind(this)}
+            getPlanningUnits={this.getPlanningUnits.bind(this)}
+            planningUnits={this.state.planningUnits}
+            openNewPlanningUnitDialog={this.openNewPlanningUnitDialog.bind(this)}
+          />
+          <NewPlanningUnitDialog 
+            open={this.state.NewPlanningUnitDialogOpen} 
+            closeNewPlanningUnitDialog={this.closeNewPlanningUnitDialog.bind(this)} 
+            createNewPlanningUnitGrid={this.createNewPlanningUnitGrid.bind(this)}
+            creatingNewPlanningUnit={this.state.creatingNewPlanningUnit}
+            getCountries={this.getCountries.bind(this)}
+            countries={this.state.countries}
+            changeIso3={this.changeIso3.bind(this)}
+            changeDomain={this.changeDomain.bind(this)}
+            changeAreaKm2={this.changeAreaKm2.bind(this)}
+            iso3={this.state.iso3}
+            domain={this.state.domain}
+            areakm2={this.state.areakm2}
           />
         </React.Fragment>
       </MuiThemeProvider>

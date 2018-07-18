@@ -129,11 +129,12 @@ class InfoPanel extends React.Component {
                     openOptionsDialog={this.props.openOptionsDialog}
                     closeOptionsDialog={this.props.closeOptionsDialog}
                     optionsDialogOpen={this.props.optionsDialogOpen}
+                    openNewCaseStudyDialog={this.props.openNewCaseStudyDialog}
                     hidePopup={this.props.hidePopup}
                     updateUser={this.props.updateUser}
                     />}/>
           <Tabs contentContainerStyle={{'margin':'20px'}}>
-            <Tab label="Scenario">
+            <Tab label="Case study">
               <div>
                 <div className={'tabTitle'}>Description</div>
                 <input id="descriptionEdit" style={{'display': (this.props.editingDescription) ? 'block' : 'none'}} className={'descriptionEditBox'} onKeyPress={this.onKeyPress.bind(this)} onBlur={this.onBlur.bind(this)}/>

@@ -82,6 +82,6 @@ class ActionsPanel extends React.Component {
                 <Dialog title="Land Cover Change analysis" open={this.state.action==='lcc'} actions={<ActionLCC closeDialog={this.handleClose.bind(this)}/>} overlayStyle={{backgroundColor: 'transparent'}} onRequestClose={this.handleClose.bind(this)} modal={false} />
             </List>
         );
-    }
+    } 
 }
 export default ActionsPanel;
