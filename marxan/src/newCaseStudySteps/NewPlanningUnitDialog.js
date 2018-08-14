@@ -43,7 +43,7 @@ class NewPlanningUnitDialog extends React.Component {
             <React.Fragment>
                 <div>
                     <SelectField onChange={this.changeIso3.bind(this)} value={this.props.iso3} style={{width: '420px'}} floatingLabelText="Area of interest" floatingLabelFixed={true} >
-                        {this.props.countries.map((item)=>{return <MenuItem value={item.iso3} primaryText={item.original_n} />})}
+                        {this.props.countries.map((item)=>{return <MenuItem value={item.iso3} primaryText={item.original_n} key={item.iso3}/>})}
                     </SelectField>
                     <RaisedButton 
                         label="Upload" 
@@ -54,12 +54,12 @@ class NewPlanningUnitDialog extends React.Component {
                 </div>
                 <div>
                     <SelectField onChange={this.changeDomain.bind(this)} value={this.props.domain}  style={dropDownStyle} floatingLabelText="Domain" floatingLabelFixed={true} >
-                        {domains.map((item)=>{return <MenuItem value={item} primaryText={item} />})}
+                        {domains.map((item)=>{return <MenuItem value={item} primaryText={item} key={item}/>})}
                     </SelectField>
                 </div>
                 <div>
                     <SelectField onChange={this.changeAreaKm2.bind(this)} value={this.props.areakm2}  style={dropDownStyle} floatingLabelText="Area of each planning unit" floatingLabelFixed={true} >
-                        {areakm2s.map((item)=>{return <MenuItem value={item} primaryText={item + " Km2"} />})}
+                        {areakm2s.map((item)=>{return <MenuItem value={item} primaryText={item + " Km2"} key={item}/>})}
                     </SelectField>
                 </div>
                 

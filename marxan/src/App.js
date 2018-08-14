@@ -36,7 +36,7 @@ class App extends React.Component {
       password: DISABLE_LOGIN ? 'asd' : '',
       userData: {},
       loggingIn: false,
-      loggedIn: false,
+      loggedIn: true,
       scenario: '',
       metadata: {},
       renderer: {},
@@ -59,7 +59,7 @@ class App extends React.Component {
       parametersDialogOpen: false,
       updatingRunParameters: false,
       optionsDialogOpen: false,
-      newCaseStudyDialogOpen: false, //set to true to debug immediately
+      newCaseStudyDialogOpen: true, //set to true to debug immediately
       NewPlanningUnitDialogOpen: false, //set to true to debug immediately
       creatingNewPlanningUnit: false,
       savingOptions: false,
@@ -949,8 +949,10 @@ class App extends React.Component {
       if (!this.isServerError(response)) {
         //feedback
         this.setState({ snackbarOpen: true, snackbarMessage: "Planning grid: '" + response.records[0].get_hexagons.split(",")[1].replace(/"/gm, '').replace(")", "") + "' created" }); //response is (pu_cok_terrestrial_hexagons_10,"Cook Islands Terrestrial 10Km2 hexagon grid")
-        //valid response
+        //upload this data to mapbox for visualisation
         this.uploadToMapBox(response.records[0].get_hexagons.split(",")[0].replace(/"/gm, '').replace("(", ""));
+        //update the planning unit items
+        this.getPlanningUnits();
       }
       else {
         //do something
@@ -958,6 +960,8 @@ class App extends React.Component {
     }
     //reset the state
     this.setState({ creatingNewPlanningUnit: false });
+    //close the NewPlanningUnitDialog
+    this.closeNewPlanningUnitDialog();
   }
 
   changeIso3(value) {
@@ -986,6 +990,7 @@ class App extends React.Component {
     }
   }
 
+  //uploads the names feature class to mapbox on the server
   uploadToMapBox(feature_class_name) {
     jsonp(MARXAN_ENDPOINT + "uploadTilesetToMapBox?feature_class_name=" + feature_class_name, { timeout: 300000 }, this.parseuploadToMapBoxResponse.bind(this)); //5 minute timeout
   }
@@ -994,13 +999,25 @@ class App extends React.Component {
     if (!this.responseIsTimeoutOrEmpty(err, response)) {
       //check there are no errors from the server
       if (!this.isServerError(response)) {
-        //valid response - get the MapBox uploadID
-        let uploadid = response.uploadid;
-        this.setState({ snackbarOpen: true, snackbarMessage: "Uploading to MapBox with the id: " + uploadid });
+        this.setState({ snackbarOpen: true, snackbarMessage: "Uploading to MapBox with the id: " + response.uploadid });
+        this.timer = setInterval(() => this.pollMapboxForUploadComplete(response.uploadid), 5000);
       }
       else {
         //server error
       }
+    }
+  }
+
+  pollMapboxForUploadComplete(uploadid) {
+    var request = require('request');
+    request("https://api.mapbox.com/uploads/v1/blishten/" + uploadid + "?access_token=sk.eyJ1IjoiYmxpc2h0ZW4iLCJhIjoiY2piNm1tOGwxMG9lajMzcXBlZDR4aWVjdiJ9.Z1Jq4UAgGpXukvnUReLO1g", this.pollMapboxForUploadCompleteResponse.bind(this));
+  }
+
+  pollMapboxForUploadCompleteResponse(error, response, body) {
+    if (JSON.parse(body).complete) {
+      clearInterval(this.timer);
+      this.timer = null;
+      this.setState({ snackbarOpen: true, snackbarMessage: "Uploaded to MapBox" });
     }
   }
 

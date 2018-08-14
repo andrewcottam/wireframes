@@ -64,7 +64,7 @@ class NewCaseStudyDialog extends React.Component {
             <div style={{width: '100%', maxWidth: 700, margin: 'auto',textAlign:'center'}}>
                 {/*dynamically create the stepper */}
                 <Stepper activeStep={stepIndex}>
-                    {this.state.steps.map((item) => {return <Step><StepLabel>{item}</StepLabel></Step>})}
+                    {this.state.steps.map((item) => {return <Step key={item}><StepLabel>{item}</StepLabel></Step>})}
                 </Stepper>
                 <div style={contentStyle}>
                     <div style={{marginTop: 12}}>
