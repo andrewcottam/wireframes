@@ -1,56 +1,90 @@
-import * as React from 'react';
-import mapboxgl from 'mapbox-gl';
+import React, { Component } from 'react';
+import { List, ListItem, makeSelectable } from 'material-ui/List';
+import IconMenu from 'material-ui/IconMenu';
+import MenuItem from 'material-ui/MenuItem';
+import { grey400 } from 'material-ui/styles/colors';
+import IconButton from 'material-ui/IconButton';
+import MoreVertIcon from 'material-ui/svg-icons/navigation/more-vert';
+import PropTypes from 'prop-types';
+import RaisedButton from 'material-ui/RaisedButton';
+
+let SelectableList = makeSelectable(List);
+
+function wrapState(ComposedComponent) {
+    return class SelectableList extends Component {
+        static propTypes = {
+            children: PropTypes.node.isRequired,
+            defaultValue: PropTypes.number.isRequired,
+        };
+
+        componentWillMount() {
+            this.setState({
+                selectedIndex: this.props.defaultValue,
+            });
+        }
+
+        handleRequestChange = (event, index) => {
+            this.setState({
+                selectedIndex: index,
+            });
+            this.props.changeFeature(event, index);
+        };
+
+        render() {
+            return (
+                <ComposedComponent
+                  value={this.state.selectedIndex}
+                  onChange={this.handleRequestChange}
+                  style={{'height':'235px','overflow':'auto'}}
+                >
+          {this.props.children}
+        </ComposedComponent>
+            );
+        }
+    };
+}
+
+SelectableList = wrapState(SelectableList);
 
 class InterestFeatures extends React.Component {
+    constructor(props) {
+        super(props);
+        this.state = { selectedFeature: undefined };
+    }
     componentDidMount() {
-        this.map = new mapboxgl.Map({
-            container: this.mapContainer,
-            style: 'mapbox://styles/blishten/cjg6jk8vg3tir2spd2eatu5fd', //north star + marine PAs in pacific
-            center: [-174, -13],
-            zoom: 2,
+        this.props.getInterestFeatures();
+    }
+    changeFeature(event, feature) {
+        this.setState({ selectedFeature: feature });
+    }
 
-        });
-        this.map.on("load", this.mapLoaded.bind(this));
-    }
-    mapLoaded(e) {
-        this.addLayerToMap("macbio_deep_water_bioregions");
-    }
-    addLayerToMap(mapboxlayername) {
-        //add the source for this layer
-        this.map.addSource('blishten', {
-            type: 'vector',
-            url: "mapbox://blishten." + mapboxlayername
-        });
-        var r = Math.random() * 256,
-            g = Math.random() * 256,
-            b = Math.random() * 256,
-            hsl = "rgba(" + r + "," + g + "," + b + ",0.4)";
-        this.map.addLayer({
-            'id': mapboxlayername,
-            'type': "fill",
-            'source': 'blishten',
-            'source-layer': "macbio_deep_water_bioregions",
-            'paint': {
-                "fill-color": [
-                    "match", [
-                        "get",
-                        "Draft_name"
-                    ],
-                    "Torres Rise",
-                    hsl,
-                    "East Reao Atoll",
-                    "hsl(120, 82%, 52%)",
-                    "#000000"
-                ],
-                'fill-opacity': 0.4
-            }
-        });
-    }
     render() {
+        const iconButtonElement = (
+            <IconButton
+                touch={true}
+                tooltip="more"
+                tooltipPosition="bottom-left"
+            >
+            <MoreVertIcon color={grey400} />
+            </IconButton>
+        );
+        
+        const rightIconMenu = (
+            <IconMenu iconButtonElement={iconButtonElement}>
+            <MenuItem>Info</MenuItem>
+            <MenuItem>View</MenuItem>
+            <MenuItem>Prioritise</MenuItem>
+        </IconMenu>
+        );
+        
         return (
             <React.Fragment>
                 <div className={'newPUDialogPane'}>
-                    <div ref={el => this.mapContainer = el} className="absolute top right left bottom" style={{width:'500px',height:'300px', marginTop: '71px',marginLeft: '104px'}}/>
+                    <SelectableList defaultValue ={0} changeFeature={this.changeFeature.bind(this)}>
+                        {this.props.interestFeatures.map((item)=>{return <ListItem rightIconButton={rightIconMenu} primaryText={item} secondaryText="Something groovy" key={item} value={item}/>})}
+                    </SelectableList>
+                    <RaisedButton label="Delete" primary={true} className="scenariosBtn" disabled={!this.state.selectedFeature}/>
+                    <RaisedButton label="New" primary={true} className="scenariosBtn" onClick={this.props.openNewInterestFeatureDialog}/>
                 </div>
             </React.Fragment>
         );

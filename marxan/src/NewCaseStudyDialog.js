@@ -7,12 +7,13 @@ import Metadata from './newCaseStudySteps/Metadata';
 import PlanningUnits from './newCaseStudySteps/PlanningUnits';
 import InterestFeatures from './newCaseStudySteps/InterestFeatures';
 import Costs from './newCaseStudySteps/Costs';
+import Options from './newCaseStudySteps/Options';
 
 class NewCaseStudyDialog extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
-            steps: ['Metadata', 'Planning Units', 'Interest features', 'Costs'],
+            steps: ['Info', 'Planning Units', 'Features', 'Costs','Options'],
             finished: false,
             stepIndex: 0,
             name: '',
@@ -51,9 +52,6 @@ class NewCaseStudyDialog extends React.Component {
     setDescription(value) {
         this.setState({ description: value });
     }
-    getPlanningUnits(){
-        this.props.getPlanningUnits();
-    }
     changePU(value){
         this.setState({pu:value});
     }
@@ -76,9 +74,10 @@ class NewCaseStudyDialog extends React.Component {
         ];
         let c = <div>
                     {stepIndex === 0 ? <Metadata name={this.state.name} description={this.state.description} setName={this.setName.bind(this)} setDescription={this.setDescription.bind(this)}/> : null}
-                    {stepIndex === 1 ? <PlanningUnits getPlanningUnits={this.getPlanningUnits.bind(this)} planningUnits={this.props.planningUnits} changeItem={this.changePU.bind(this)} pu={this.state.pu} openNewPlanningUnitDialog={this.props.openNewPlanningUnitDialog} /> : null}
-                    {stepIndex === 2 ? <InterestFeatures/> : null}
+                    {stepIndex === 1 ? <PlanningUnits getPlanningUnits={this.props.getPlanningUnits} planningUnits={this.props.planningUnits} changeItem={this.changePU.bind(this)} pu={this.state.pu} openNewPlanningUnitDialog={this.props.openNewPlanningUnitDialog} /> : null}
+                    {stepIndex === 2 ? <InterestFeatures getInterestFeatures={this.props.getInterestFeatures} interestFeatures={this.props.interestFeatures} openNewInterestFeatureDialog={this.props.openNewInterestFeatureDialog}/> : null}
                     {stepIndex === 3 ? <Costs/> : null}
+                    {stepIndex === 4 ? <Options/> : null}
                 </div>;
         return (
             <Dialog title="New Case Study" 

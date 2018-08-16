@@ -9,7 +9,7 @@ import FontAwesome from 'react-fontawesome';
 let SelectableList = makeSelectable(List);
 
 function wrapState(ComposedComponent) {
-    return class SelectableList extends Component {
+    return class SelectableList extends Component { 
         static propTypes = {
             children: PropTypes.node.isRequired,
             defaultValue: PropTypes.number.isRequired,

@@ -18,6 +18,7 @@ import axios, { post } from 'axios';
 import * as utilities from './utilities.js';
 import NewCaseStudyDialog from './NewCaseStudyDialog.js';
 import NewPlanningUnitDialog from './newCaseStudySteps/NewPlanningUnitDialog';
+import NewInterestFeatureDialog from './newCaseStudySteps/NewInterestFeatureDialog';
 
 //CONSTANTS
 //THE MARXAN_ENDPOINT MUST ALSO BE CHANGED IN THE FILEUPLOAD.JS FILE 
@@ -61,10 +62,15 @@ class App extends React.Component {
       optionsDialogOpen: false,
       newCaseStudyDialogOpen: true, //set to true to debug immediately
       NewPlanningUnitDialogOpen: false, //set to true to debug immediately
+      NewInterestFeatureDialogOpen: false,
+      featureDatasetName:'',
+      featureDatasetDescription:'',
+      featureDatasetFilename:'',
       creatingNewPlanningUnit: false,
       savingOptions: false,
       dataBreaks: [],
       planningUnits: [],
+      interestFeatures: [],
       iso3: '',
       domain: '',
       areakm2: undefined,
@@ -1021,6 +1027,42 @@ class App extends React.Component {
     }
   }
 
+  getInterestFeatures() {
+    console.log("ok");
+    this.setState({ interestFeatures: ['wibble', 'wibble2', 'wibble3', 'wibble4', 'wibble5', 'wibble6', 'wibble7', 'wibble8'] });
+  }
+  openNewInterestFeatureDialog() {
+    this.setState({ NewInterestFeatureDialogOpen: true });
+  }
+  closeNewInterestFeatureDialog() {
+    console.log("ok");
+    this.setState({ NewInterestFeatureDialogOpen: false });
+  }
+  setNewFeatureDatasetName(name) {
+    this.setState({ featureDatasetName: name });
+  }
+  setNewFeatureDatasetDescription(description) {
+    this.setState({ featureDatasetDescription: description });
+  }
+  setNewFeatureDatasetFilename(filename) {
+    this.setState({ featureDatasetFilename: filename });
+  }
+  createNewInterestFeature(){
+    //the zipped shapefile has been uploaded to the MARXAN folder and the metadata are in the featureDatasetName, featureDatasetDescription and featureDatasetFilename state variables - 
+    jsonp(MARXAN_ENDPOINT + "importShapefile?filename=" + this.state.featureDatasetFilename + "&name=" + this.state.featureDatasetName + "&description="+ this.state.featureDatasetDescription, { timeout: TIMEOUT }, this.parsecreateNewInterestFeature.bind(this)); //5 minute timeout
+  }
+  parsecreateNewInterestFeature(err, response){
+    //check if there are no timeout errors or empty responses
+    if (!this.responseIsTimeoutOrEmpty(err, response)) {
+      //check there are no errors from the server
+      if (!this.isServerError(response)) {
+        this.setState({ snackbarOpen: true, snackbarMessage: response.info});
+      }
+      else {
+        //server error
+      }
+    }
+  }
   render() {
     return (
       <MuiThemeProvider>
@@ -1116,6 +1158,9 @@ class App extends React.Component {
             getPlanningUnits={this.getPlanningUnits.bind(this)}
             planningUnits={this.state.planningUnits}
             openNewPlanningUnitDialog={this.openNewPlanningUnitDialog.bind(this)}
+            getInterestFeatures={this.getInterestFeatures.bind(this)}
+            interestFeatures={this.state.interestFeatures}
+            openNewInterestFeatureDialog={this.openNewInterestFeatureDialog.bind(this)}
           />
           <NewPlanningUnitDialog 
             open={this.state.NewPlanningUnitDialogOpen} 
@@ -1130,6 +1175,17 @@ class App extends React.Component {
             iso3={this.state.iso3}
             domain={this.state.domain}
             areakm2={this.state.areakm2}
+          />
+          <NewInterestFeatureDialog
+            open={this.state.NewInterestFeatureDialogOpen} 
+            closeNewInterestFeatureDialog={this.closeNewInterestFeatureDialog.bind(this)}
+            setName={this.setNewFeatureDatasetName.bind(this)}
+            setDescription={this.setNewFeatureDatasetDescription.bind(this)}
+            setFilename={this.setNewFeatureDatasetFilename.bind(this)}
+            name={this.state.featureDatasetName}
+            description={this.state.featureDatasetDescription}
+            filename={this.state.featureDatasetFilename}
+            createNewInterestFeature={this.createNewInterestFeature.bind(this)}
           />
         </React.Fragment>
       </MuiThemeProvider>
