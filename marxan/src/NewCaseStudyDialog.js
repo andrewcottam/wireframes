@@ -5,7 +5,7 @@ import RaisedButton from 'material-ui/RaisedButton';
 import FlatButton from 'material-ui/FlatButton';
 import Metadata from './newCaseStudySteps/Metadata';
 import PlanningUnits from './newCaseStudySteps/PlanningUnits';
-import InterestFeatures from './newCaseStudySteps/InterestFeatures';
+import SelectInterestFeatures from './newCaseStudySteps/SelectInterestFeatures';
 import Costs from './newCaseStudySteps/Costs';
 import Options from './newCaseStudySteps/Options';
 
@@ -13,13 +13,14 @@ class NewCaseStudyDialog extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
-            steps: ['Info', 'Planning Units', 'Features', 'Costs','Options'],
+            steps: ['Info', 'Planning Units', 'Features', 'Costs', 'Options'],
             finished: false,
             stepIndex: 0,
             name: '',
             description: '',
-            pu:''
-        }; 
+            pu: '',
+            selectedInterestFeatures: [] //an array of ids
+        };
     }
     handleNext = () => {
         const { stepIndex } = this.state;
@@ -34,16 +35,10 @@ class NewCaseStudyDialog extends React.Component {
         }
     };
     createNewScenario() {
-        if (this.state.name === '') {
-            this.setState({ validName: false });
-        }
-        else {
-            this.props.createNewScenario({ name: this.state.name, description: this.state.description });
-            this.closeNewCaseStudyDialog();
-        }
+        this.props.createNewScenario({ name: this.state.name, description: this.state.description, planning_grid_name: this.state.pu });
+        this.closeNewCaseStudyDialog();
     }
     closeNewCaseStudyDialog() {
-        this.setState({ validName: undefined });
         this.props.closeNewCaseStudyDialog();
     }
     setName(value) {
@@ -52,8 +47,11 @@ class NewCaseStudyDialog extends React.Component {
     setDescription(value) {
         this.setState({ description: value });
     }
-    changePU(value){
-        this.setState({pu:value});
+    changePU(value) {
+        this.setState({ pu: value });
+    }
+    getSelectedInterestFeatures() {
+        var allInterestFeatures = this.props.interestFeatures;
     }
     render() {
         const { stepIndex } = this.state;
@@ -67,7 +65,7 @@ class NewCaseStudyDialog extends React.Component {
                 <div style={contentStyle}>
                     <div style={{marginTop: 12}}>
                         <FlatButton label="Back" disabled={stepIndex === 0} onClick={this.handlePrev} />
-                        <RaisedButton label={stepIndex === (this.state.steps.length-1) ? 'Finish' : 'Next'} onClick={stepIndex === (this.state.steps.length-1) ? this.closeNewCaseStudyDialog.bind(this) : this.handleNext} primary={true} />
+                        <RaisedButton label={stepIndex === (this.state.steps.length-1) ? 'Finish' : 'Next'} onClick={stepIndex === (this.state.steps.length-1) ? this.createNewScenario.bind(this) : this.handleNext} primary={true} />
                     </div>
                 </div>
             </div>
@@ -75,7 +73,10 @@ class NewCaseStudyDialog extends React.Component {
         let c = <div>
                     {stepIndex === 0 ? <Metadata name={this.state.name} description={this.state.description} setName={this.setName.bind(this)} setDescription={this.setDescription.bind(this)}/> : null}
                     {stepIndex === 1 ? <PlanningUnits getPlanningUnits={this.props.getPlanningUnits} planningUnits={this.props.planningUnits} changeItem={this.changePU.bind(this)} pu={this.state.pu} openNewPlanningUnitDialog={this.props.openNewPlanningUnitDialog} /> : null}
-                    {stepIndex === 2 ? <InterestFeatures getInterestFeatures={this.props.getInterestFeatures} interestFeatures={this.props.interestFeatures} openNewInterestFeatureDialog={this.props.openNewInterestFeatureDialog}/> : null}
+                    {stepIndex === 2 ? <SelectInterestFeatures 
+                        openAllInterestFeaturesDialog={this.props.openAllInterestFeaturesDialog} 
+                        removeInterestFeature={this.props.removeInterestFeature}
+                    /> : null}
                     {stepIndex === 3 ? <Costs/> : null}
                     {stepIndex === 4 ? <Options/> : null}
                 </div>;

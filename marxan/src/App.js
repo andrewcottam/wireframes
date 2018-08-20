@@ -19,13 +19,14 @@ import * as utilities from './utilities.js';
 import NewCaseStudyDialog from './NewCaseStudyDialog.js';
 import NewPlanningUnitDialog from './newCaseStudySteps/NewPlanningUnitDialog';
 import NewInterestFeatureDialog from './newCaseStudySteps/NewInterestFeatureDialog';
+import AllInterestFeaturesDialog from './AllInterestFeaturesDialog';
 
 //CONSTANTS
 //THE MARXAN_ENDPOINT MUST ALSO BE CHANGED IN THE FILEUPLOAD.JS FILE 
 let MARXAN_ENDPOINT = "https://db-server-blishten.c9users.io/marxan/webAPI.py/";
 let REST_ENDPOINT = "https://db-server-blishten.c9users.io/cgi-bin/services.py/biopama/marxan/";
 let TIMEOUT = 0; //disable timeout setting
-let DISABLE_LOGIN = false; //to not show the login form, set loggedIn to true
+let DISABLE_LOGIN = true; //to not show the login form, set loggedIn to true
 mapboxgl.accessToken = 'pk.eyJ1IjoiYmxpc2h0ZW4iLCJhIjoiMEZrNzFqRSJ9.0QBRA2HxTb8YHErUFRMPZg'; //this is my public access token for using in the Mapbox GL client - TODO change this to the logged in users public access token
 
 class App extends React.Component {
@@ -63,14 +64,16 @@ class App extends React.Component {
       newCaseStudyDialogOpen: true, //set to true to debug immediately
       NewPlanningUnitDialogOpen: false, //set to true to debug immediately
       NewInterestFeatureDialogOpen: false,
-      featureDatasetName:'',
-      featureDatasetDescription:'',
-      featureDatasetFilename:'',
+      AllInterestFeaturesDialogOpen: false,
+      featureDatasetName: '',
+      featureDatasetDescription: '',
+      featureDatasetFilename: '',
       creatingNewPlanningUnit: false,
       savingOptions: false,
       dataBreaks: [],
       planningUnits: [],
       interestFeatures: [],
+      selectedInterestFeatures: [],
       iso3: '',
       domain: '',
       areakm2: undefined,
@@ -484,6 +487,12 @@ class App extends React.Component {
     else {
       jsonp(MARXAN_ENDPOINT + "createScenario?user=" + this.state.user + "&scenario=" + scenario.name, { timeout: TIMEOUT }, this.parseCreateNewScenarioResponse.bind(this));
     }
+  }
+
+  //REST call to create a new scenario from the wizard
+  createNewScenarioFromWizard(scenario) {
+    this.setState({ loadingScenarios: true });
+    jsonp(MARXAN_ENDPOINT + "createScenarioFromWizard?user=" + this.state.user + "&scenario=" + scenario.name + "&description=" + scenario.description + "&planning_grid_name=" + scenario.planning_grid_name, { timeout: TIMEOUT }, this.parseCreateNewScenarioResponse.bind(this));
   }
 
   //callback function after creating a new scenario
@@ -1028,15 +1037,30 @@ class App extends React.Component {
   }
 
   getInterestFeatures() {
-    console.log("ok");
-    this.setState({ interestFeatures: ['wibble', 'wibble2', 'wibble3', 'wibble4', 'wibble5', 'wibble6', 'wibble7', 'wibble8'] });
+    jsonp(REST_ENDPOINT + "get_interest_features?format=json", { timeout: 10000 }, this.parsegetInterestFeatures.bind(this));
+  }
+  parsegetInterestFeatures(err, response) {
+    //check if there are no timeout errors or empty responses
+    if (!this.responseIsTimeoutOrEmpty(err, response)) {
+      //check there are no errors from the server
+      if (!this.isServerError(response)) {
+        //valid response
+        this.setState({ interestFeatures: response.records });
+      }
+      else {}
+    }
   }
   openNewInterestFeatureDialog() {
     this.setState({ NewInterestFeatureDialogOpen: true });
   }
   closeNewInterestFeatureDialog() {
-    console.log("ok");
     this.setState({ NewInterestFeatureDialogOpen: false });
+  }
+  openAllInterestFeaturesDialog() {
+    this.setState({ AllInterestFeaturesDialogOpen: true });
+  }
+  closeAllInterestFeaturesDialog() {
+    this.setState({ AllInterestFeaturesDialogOpen: false });
   }
   setNewFeatureDatasetName(name) {
     this.setState({ featureDatasetName: name });
@@ -1047,21 +1071,59 @@ class App extends React.Component {
   setNewFeatureDatasetFilename(filename) {
     this.setState({ featureDatasetFilename: filename });
   }
-  createNewInterestFeature(){
+  createNewInterestFeature() {
     //the zipped shapefile has been uploaded to the MARXAN folder and the metadata are in the featureDatasetName, featureDatasetDescription and featureDatasetFilename state variables - 
-    jsonp(MARXAN_ENDPOINT + "importShapefile?filename=" + this.state.featureDatasetFilename + "&name=" + this.state.featureDatasetName + "&description="+ this.state.featureDatasetDescription, { timeout: TIMEOUT }, this.parsecreateNewInterestFeature.bind(this)); //5 minute timeout
+    jsonp(MARXAN_ENDPOINT + "importShapefile?filename=" + this.state.featureDatasetFilename + "&name=" + this.state.featureDatasetName + "&description=" + this.state.featureDatasetDescription + "&dissolve=true", { timeout: TIMEOUT }, this.parsecreateNewInterestFeature.bind(this));
   }
-  parsecreateNewInterestFeature(err, response){
+  parsecreateNewInterestFeature(err, response) {
     //check if there are no timeout errors or empty responses
     if (!this.responseIsTimeoutOrEmpty(err, response)) {
       //check there are no errors from the server
       if (!this.isServerError(response)) {
-        this.setState({ snackbarOpen: true, snackbarMessage: response.info});
+        this.setState({ snackbarOpen: true, snackbarMessage: response.info });
+        this.getInterestFeatures();
       }
       else {
         //server error
       }
     }
+  }
+  deleteInterestFeature(selectedFeature) {
+    jsonp(REST_ENDPOINT + "delete_interest_features?interest_feature_name=" + selectedFeature, { timeout: TIMEOUT }, this.parsedeleteInterestFeature.bind(this));
+  }
+  parsedeleteInterestFeature(err, response) {
+    //check if there are no timeout errors or empty responses
+    if (!this.responseIsTimeoutOrEmpty(err, response)) {
+      //check there are no errors from the server
+      if (!this.isServerError(response)) {
+        if (response.records.length > 0) {
+          if (response.records[0].delete_interest_features === 1) {
+            this.setState({ snackbarOpen: true, snackbarMessage: "Interest feature deleted" });
+            this.getInterestFeatures();
+          }
+          else {
+            this.setState({ snackbarOpen: true, snackbarMessage: "Interest feature not deleted" });
+          }
+        }
+      }
+      else {
+        //server error
+      }
+    }
+  }
+  //removes an interest feature from a scenario
+  removeInterestFeature(selectedFeature) {
+
+  }
+  //gets the interest features for the current scenario
+  getInterestFeaturesForScenario() {
+
+  }
+
+  //sets the items that are selected in the AllInterestFeaturesDialogBox
+  setSelectedInterestFeatures(selectedInterestFeatures) {
+    console.log("wibble");
+    this.setState({ selectedInterestFeatures: selectedInterestFeatures });
   }
   render() {
     return (
@@ -1158,9 +1220,11 @@ class App extends React.Component {
             getPlanningUnits={this.getPlanningUnits.bind(this)}
             planningUnits={this.state.planningUnits}
             openNewPlanningUnitDialog={this.openNewPlanningUnitDialog.bind(this)}
-            getInterestFeatures={this.getInterestFeatures.bind(this)}
+            openAllInterestFeaturesDialog={this.openAllInterestFeaturesDialog.bind(this)}
+            closeAllInterestFeaturesDialog={this.closeAllInterestFeaturesDialog.bind(this)}
+            removeInterestFeature={this.removeInterestFeature.bind(this)}
+            createNewScenario={this.createNewScenarioFromWizard.bind(this)}
             interestFeatures={this.state.interestFeatures}
-            openNewInterestFeatureDialog={this.openNewInterestFeatureDialog.bind(this)}
           />
           <NewPlanningUnitDialog 
             open={this.state.NewPlanningUnitDialogOpen} 
@@ -1175,6 +1239,15 @@ class App extends React.Component {
             iso3={this.state.iso3}
             domain={this.state.domain}
             areakm2={this.state.areakm2}
+          />
+          <AllInterestFeaturesDialog
+            open={this.state.AllInterestFeaturesDialogOpen}
+            getInterestFeatures={this.getInterestFeatures.bind(this)}
+            interestFeatures={this.state.interestFeatures}
+            selectedInterestFeatures={this.state.selectedInterestFeatures}
+            setSelectedInterestFeatures={this.setSelectedInterestFeatures.bind(this)}
+            closeAllInterestFeaturesDialog={this.closeAllInterestFeaturesDialog.bind(this)}
+            openNewInterestFeatureDialog={this.openNewInterestFeatureDialog.bind(this)}
           />
           <NewInterestFeatureDialog
             open={this.state.NewInterestFeatureDialogOpen} 
