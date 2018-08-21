@@ -20,6 +20,7 @@ import NewCaseStudyDialog from './NewCaseStudyDialog.js';
 import NewPlanningUnitDialog from './newCaseStudySteps/NewPlanningUnitDialog';
 import NewInterestFeatureDialog from './newCaseStudySteps/NewInterestFeatureDialog';
 import AllInterestFeaturesDialog from './AllInterestFeaturesDialog';
+import AllCostsDialog from './AllCostsDialog';
 
 //CONSTANTS
 //THE MARXAN_ENDPOINT MUST ALSO BE CHANGED IN THE FILEUPLOAD.JS FILE 
@@ -65,6 +66,7 @@ class App extends React.Component {
       NewPlanningUnitDialogOpen: false, //set to true to debug immediately
       NewInterestFeatureDialogOpen: false,
       AllInterestFeaturesDialogOpen: false,
+      AllCostsDialogOpen: false,
       featureDatasetName: '',
       featureDatasetDescription: '',
       featureDatasetFilename: '',
@@ -74,6 +76,8 @@ class App extends React.Component {
       planningUnits: [],
       interestFeatures: [],
       selectedInterestFeatures: [],
+      costs: [],
+      selectedCosts: [],
       iso3: '',
       domain: '',
       areakm2: undefined,
@@ -250,6 +254,7 @@ class App extends React.Component {
   removeKeys(obj, keys) {
     keys.map(function(key) {
       delete obj[key];
+      return null;
     });
     return obj;
   }
@@ -301,10 +306,6 @@ class App extends React.Component {
   saveOptions(options) {
     this.updateUser(options);
   }
-  //hides the popup
-  hidePopup() {
-    this.setState({ active_pu: undefined });
-  }
   //opens the run parameters dialog whos open state is controlled
   openParametersDialog() {
     this.setState({ parametersDialogOpen: true });
@@ -320,7 +321,7 @@ class App extends React.Component {
     this.setState({ updatingRunParameters: true });
     //convert the parameters array into an object
     let parameters = {};
-    array.map((obj) => { parameters[obj.key] = obj.value });
+    array.map((obj) => { parameters[obj.key] = obj.value; return null; });
     //initialise the form data
     let formData = new FormData();
     //add the current user
@@ -492,7 +493,41 @@ class App extends React.Component {
   //REST call to create a new scenario from the wizard
   createNewScenarioFromWizard(scenario) {
     this.setState({ loadingScenarios: true });
-    jsonp(MARXAN_ENDPOINT + "createScenarioFromWizard?user=" + this.state.user + "&scenario=" + scenario.name + "&description=" + scenario.description + "&planning_grid_name=" + scenario.planning_grid_name, { timeout: TIMEOUT }, this.parseCreateNewScenarioResponse.bind(this));
+    let formData = new FormData();
+    formData.append('user', this.state.user);
+    formData.append('scenario', scenario.name);
+    formData.append('description', scenario.description);
+    formData.append('planning_grid_name', scenario.planning_grid_name);
+    var interest_features = [];
+    var target_values = [];
+    var spf_values = [];
+    this.state.selectedInterestFeatures.map((item) => {
+      interest_features.push(item.id);
+      target_values.push(item.targetValue);
+      spf_values.push(40);
+    })
+    //prepare the data for the spec.dat file
+    formData.append('interest_features', interest_features.join(","));
+    formData.append('target_values', target_values.join(","));
+    formData.append('spf_values', spf_values.join(","));
+    const config = {
+      headers: {
+        'content-type': 'multipart/form-data'
+      }
+    };
+    post(MARXAN_ENDPOINT + "createScenarioFromWizard", formData, config).then((response) => this.parseCreateNewUserFromWizardResponse(response.data));
+  }
+
+  //callback from POST
+  parseCreateNewUserFromWizardResponse(response) {
+    this.setState({ loadingScenarios: false });
+    //check there are no errors from the server
+    if (!this.isServerError(response)) {
+
+    }
+    else {
+      this.setState({ snackbarOpen: true, snackbarMessage: response.error });
+    }
   }
 
   //callback function after creating a new scenario
@@ -718,6 +753,7 @@ class App extends React.Component {
     data.map(function(item) {
       summaryStats.push({ number: item[0], count: item[1].length });
       total += item[1].length;
+      return null;
     });
     this.setState({ summaryStats: summaryStats });
     return total;
@@ -730,6 +766,7 @@ class App extends React.Component {
     data.map(function(item) {
       num = Math.floor((item[1].length / ssolnLength) * sampleSize);
       sample.push(Array(num, ).fill(item[0]));
+      return null;
     });
     return [].concat.apply([], sample);
   }
@@ -1047,6 +1084,7 @@ class App extends React.Component {
         //add the properties for managing the interest features in this app
         response.records.map((item) => {
           item['selected'] = false;
+          return null;
         });
         this.setState({ interestFeatures: response.records });
       }
@@ -1065,6 +1103,12 @@ class App extends React.Component {
   closeAllInterestFeaturesDialog() {
     this.setState({ AllInterestFeaturesDialogOpen: false });
     this.setSelectedFeatures(); //update the selected features to reflect what the user has selected in the AllInterestFeaturesDialog box
+  }
+  openAllCostsDialog() {
+    this.setState({ AllCostsDialogOpen: true });
+  }
+  closeAllCostsDialog() {
+    this.setState({ AllCostsDialogOpen: false });
   }
   setNewFeatureDatasetName(name) {
     this.setState({ featureDatasetName: name });
@@ -1156,7 +1200,7 @@ class App extends React.Component {
       }
       //select the item
       item['selected'] = true;
-      return;
+      return null;
     });
     this.setState({ interestFeatures: features });
   }
@@ -1167,7 +1211,7 @@ class App extends React.Component {
     features.map((item) => {
       //unselect the item
       item['selected'] = false;
-      return;
+      return null;
     });
     this.setState({ interestFeatures: features });
   }
@@ -1272,10 +1316,13 @@ class App extends React.Component {
             getPlanningUnits={this.getPlanningUnits.bind(this)}
             planningUnits={this.state.planningUnits}
             openNewPlanningUnitDialog={this.openNewPlanningUnitDialog.bind(this)}
-            openAllInterestFeaturesDialog={this.openAllInterestFeaturesDialog.bind(this)}
             createNewScenario={this.createNewScenarioFromWizard.bind(this)}
+            openAllInterestFeaturesDialog={this.openAllInterestFeaturesDialog.bind(this)}
             selectedInterestFeatures={this.state.selectedInterestFeatures}
             updateTargetValue={this.updateTargetValue.bind(this)}
+            openAllCostsDialog={this.openAllCostsDialog.bind(this)}
+            selectedCosts={this.state.selectedCosts}
+            createNewScenarioFromWizard={this.createNewScenarioFromWizard.bind(this)}
           />
           <NewPlanningUnitDialog 
             open={this.state.NewPlanningUnitDialogOpen} 
@@ -1302,6 +1349,11 @@ class App extends React.Component {
             unselectItem={this.unselectItem.bind(this)}
             selectAll={this.selectAll.bind(this)}
             clearAll={this.clearAll.bind(this)}
+          />
+          <AllCostsDialog
+            open={this.state.AllCostsDialogOpen}
+            costs={this.state.costs}
+            closeAllCostsDialog={this.closeAllCostsDialog.bind(this)}
           />
           <NewInterestFeatureDialog
             open={this.state.NewInterestFeatureDialogOpen} 

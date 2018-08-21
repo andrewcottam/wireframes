@@ -6,7 +6,7 @@ import FlatButton from 'material-ui/FlatButton';
 import Metadata from './newCaseStudySteps/Metadata';
 import PlanningUnits from './newCaseStudySteps/PlanningUnits';
 import SelectInterestFeatures from './newCaseStudySteps/SelectInterestFeatures';
-import Costs from './newCaseStudySteps/Costs';
+import SelectCostFeatures from './newCaseStudySteps/SelectCostFeatures';
 import Options from './newCaseStudySteps/Options';
 
 class NewCaseStudyDialog extends React.Component {
@@ -34,8 +34,8 @@ class NewCaseStudyDialog extends React.Component {
             this.setState({ stepIndex: stepIndex - 1 });
         }
     };
-    createNewScenario() {
-        this.props.createNewScenario({ name: this.state.name, description: this.state.description, planning_grid_name: this.state.pu });
+    createNewScenarioFromWizard() {
+        this.props.createNewScenarioFromWizard({ name: this.state.name, description: this.state.description, planning_grid_name: this.state.pu });
         this.closeNewCaseStudyDialog();
     }
     closeNewCaseStudyDialog() {
@@ -50,9 +50,6 @@ class NewCaseStudyDialog extends React.Component {
     changePU(value) {
         this.setState({ pu: value });
     }
-    getSelectedInterestFeatures() {
-        var allInterestFeatures = this.props.interestFeatures;
-    }
     render() {
         const { stepIndex } = this.state;
         const contentStyle = { margin: '0 16px' };
@@ -65,7 +62,7 @@ class NewCaseStudyDialog extends React.Component {
                 <div style={contentStyle}>
                     <div style={{marginTop: 12}}>
                         <FlatButton label="Back" disabled={stepIndex === 0} onClick={this.handlePrev} />
-                        <RaisedButton label={stepIndex === (this.state.steps.length-1) ? 'Finish' : 'Next'} onClick={stepIndex === (this.state.steps.length-1) ? this.createNewScenario.bind(this) : this.handleNext} primary={true} />
+                        <RaisedButton label={stepIndex === (this.state.steps.length-1) ? 'Finish' : 'Next'} onClick={stepIndex === (this.state.steps.length-1) ? this.createNewScenarioFromWizard.bind(this) : this.handleNext} primary={true} />
                     </div>
                 </div>
             </div>
@@ -78,7 +75,10 @@ class NewCaseStudyDialog extends React.Component {
                         selectedInterestFeatures={this.props.selectedInterestFeatures}
                         updateTargetValue={this.props.updateTargetValue}
                     /> : null}
-                    {stepIndex === 3 ? <Costs/> : null}
+                    {stepIndex === 3 ? <SelectCostFeatures
+                        openAllCostsDialog={this.props.openAllCostsDialog}
+                        selectedCosts={this.props.selectedCosts}
+                    /> : null}
                     {stepIndex === 4 ? <Options/> : null}
                 </div>;
         return (

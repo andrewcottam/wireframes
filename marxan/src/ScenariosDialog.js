@@ -3,7 +3,6 @@ import PropTypes from 'prop-types';
 import Dialog from 'material-ui/Dialog';
 import RaisedButton from 'material-ui/RaisedButton';
 import { List, ListItem, makeSelectable } from 'material-ui/List';
-import NewCaseStudyDialog from './NewCaseStudyDialog.js';
 import FontAwesome from 'react-fontawesome'; 
 
 let SelectableList = makeSelectable(List);
