@@ -75,9 +75,8 @@ class NewCaseStudyDialog extends React.Component {
                     {stepIndex === 1 ? <PlanningUnits getPlanningUnits={this.props.getPlanningUnits} planningUnits={this.props.planningUnits} changeItem={this.changePU.bind(this)} pu={this.state.pu} openNewPlanningUnitDialog={this.props.openNewPlanningUnitDialog} /> : null}
                     {stepIndex === 2 ? <SelectInterestFeatures 
                         openAllInterestFeaturesDialog={this.props.openAllInterestFeaturesDialog} 
-                        removeInterestFeature={this.props.removeInterestFeature}
                         selectedInterestFeatures={this.props.selectedInterestFeatures}
-                        setTargetValue={this.props.setTargetValue}
+                        updateTargetValue={this.props.updateTargetValue}
                     /> : null}
                     {stepIndex === 3 ? <Costs/> : null}
                     {stepIndex === 4 ? <Options/> : null}

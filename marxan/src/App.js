@@ -1044,7 +1044,10 @@ class App extends React.Component {
     if (!this.responseIsTimeoutOrEmpty(err, response)) {
       //check there are no errors from the server
       if (!this.isServerError(response)) {
-        //valid response
+        //add the properties for managing the interest features in this app
+        response.records.map((item) => {
+          item['selected'] = false;
+        });
         this.setState({ interestFeatures: response.records });
       }
       else {}
@@ -1061,6 +1064,7 @@ class App extends React.Component {
   }
   closeAllInterestFeaturesDialog() {
     this.setState({ AllInterestFeaturesDialogOpen: false });
+    this.setSelectedFeatures(); //update the selected features to reflect what the user has selected in the AllInterestFeaturesDialog box
   }
   setNewFeatureDatasetName(name) {
     this.setState({ featureDatasetName: name });
@@ -1111,32 +1115,68 @@ class App extends React.Component {
       }
     }
   }
-  //removes an interest feature from a scenario
-  removeInterestFeature(selectedFeature) {
-
-  }
   //gets the interest features for the current scenario
   getInterestFeaturesForScenario() {
 
   }
 
-  //sets the items that are selected in the AllInterestFeaturesDialogBox
-  setSelectedInterestFeatures(selectedInterestFeatures) {
-    this.setState({ selectedInterestFeatures: selectedInterestFeatures });
+  //sets the selected interest features by filtering the interestFeatures for all those objects that have the selected value of true
+  setSelectedFeatures() {
+    this.setState({ selectedInterestFeatures: this.state.interestFeatures.filter(function(item) { return item.selected }) });
+  }
+
+  //update interest feature value by finding the object and setting the value for the key - set override to true to overwrite an existing key value
+  updateInterestFeature(features, id, key, value, override) {
+    //get the position of the feature 
+    var index = features.findIndex(function(element) { return element.id === id; });
+    var updatedFeature = features[index];
+    //update the target value if either the property doesn't exist (i.e. new value) or it does and override is set to true
+    if (!(updatedFeature.hasOwnProperty(key) && !override)) updatedFeature[key] = value;
+    this.setState({ interestFeatures: features });
+  }
+
+  //selects a single interest feature
+  selectItem(interestFeature) {
+    this.updateInterestFeature(this.state.interestFeatures, interestFeature.id, "selected", true, true); //select the interest feature
+    this.updateInterestFeature(this.state.interestFeatures, interestFeature.id, "targetValue", 17, false); //set a default target value if one is not already set
+  }
+
+  //unselects a single interest feature
+  unselectItem(interestFeature) {
+    this.updateInterestFeature(this.state.interestFeatures, interestFeature.id, "selected", false, true); //select the interest feature
+  }
+
+  //selects all the interest features
+  selectAll() {
+    var features = this.state.interestFeatures;
+    features.map((item) => {
+      if (!item.hasOwnProperty("targetValue")) {
+        //set the target value if it is not already set
+        item['targetValue'] = 17;
+      }
+      //select the item
+      item['selected'] = true;
+      return;
+    });
+    this.setState({ interestFeatures: features });
+  }
+
+  //clears all the interest features
+  clearAll() {
+    var features = this.state.interestFeatures;
+    features.map((item) => {
+      //unselect the item
+      item['selected'] = false;
+      return;
+    });
+    this.setState({ interestFeatures: features });
   }
 
   //sets the target value of an interest feature
-  setTargetValue(interestFeatureId, newTargetValue) {
-    //get the current selected features
-    var features = this.state.selectedInterestFeatures;
-    //get the position of the feature that has an updated target
-    var index = features.findIndex(function(element) { return element.id === interestFeatureId; });
-    var updatedFeature = features[index];
-    //update the target value
-    updatedFeature['targetValue'] = newTargetValue;
-    //update the state
-    this.setState({ selectedInterestFeatures: features });
+  updateTargetValue(interestFeature, newTargetValue) {
+    this.updateInterestFeature(this.state.interestFeatures, interestFeature.id, "targetValue", newTargetValue, true);
   }
+
   render() {
     return (
       <MuiThemeProvider>
@@ -1233,10 +1273,9 @@ class App extends React.Component {
             planningUnits={this.state.planningUnits}
             openNewPlanningUnitDialog={this.openNewPlanningUnitDialog.bind(this)}
             openAllInterestFeaturesDialog={this.openAllInterestFeaturesDialog.bind(this)}
-            removeInterestFeature={this.removeInterestFeature.bind(this)}
             createNewScenario={this.createNewScenarioFromWizard.bind(this)}
             selectedInterestFeatures={this.state.selectedInterestFeatures}
-            setTargetValue={this.setTargetValue.bind(this)}
+            updateTargetValue={this.updateTargetValue.bind(this)}
           />
           <NewPlanningUnitDialog 
             open={this.state.NewPlanningUnitDialogOpen} 
@@ -1257,9 +1296,12 @@ class App extends React.Component {
             getInterestFeatures={this.getInterestFeatures.bind(this)}
             interestFeatures={this.state.interestFeatures}
             selectedInterestFeatures={this.state.selectedInterestFeatures}
-            setSelectedInterestFeatures={this.setSelectedInterestFeatures.bind(this)}
             closeAllInterestFeaturesDialog={this.closeAllInterestFeaturesDialog.bind(this)}
             openNewInterestFeatureDialog={this.openNewInterestFeatureDialog.bind(this)}
+            selectItem={this.selectItem.bind(this)}
+            unselectItem={this.unselectItem.bind(this)}
+            selectAll={this.selectAll.bind(this)}
+            clearAll={this.clearAll.bind(this)}
           />
           <NewInterestFeatureDialog
             open={this.state.NewInterestFeatureDialogOpen} 

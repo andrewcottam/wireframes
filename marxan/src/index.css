@@ -311,5 +311,6 @@ input:-webkit-autofill {
 .newPUDialogPane {
   width: 500px;
   height: 340px;
-  margin-left: 80px;
+  /*margin-left: 80px;*/
 }
+
