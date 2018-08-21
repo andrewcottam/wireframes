@@ -76,6 +76,8 @@ class NewCaseStudyDialog extends React.Component {
                     {stepIndex === 2 ? <SelectInterestFeatures 
                         openAllInterestFeaturesDialog={this.props.openAllInterestFeaturesDialog} 
                         removeInterestFeature={this.props.removeInterestFeature}
+                        selectedInterestFeatures={this.props.selectedInterestFeatures}
+                        setTargetValue={this.props.setTargetValue}
                     /> : null}
                     {stepIndex === 3 ? <Costs/> : null}
                     {stepIndex === 4 ? <Options/> : null}

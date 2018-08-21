@@ -1122,8 +1122,20 @@ class App extends React.Component {
 
   //sets the items that are selected in the AllInterestFeaturesDialogBox
   setSelectedInterestFeatures(selectedInterestFeatures) {
-    console.log("wibble");
     this.setState({ selectedInterestFeatures: selectedInterestFeatures });
+  }
+
+  //sets the target value of an interest feature
+  setTargetValue(interestFeatureId, newTargetValue) {
+    //get the current selected features
+    var features = this.state.selectedInterestFeatures;
+    //get the position of the feature that has an updated target
+    var index = features.findIndex(function(element) { return element.id === interestFeatureId; });
+    var updatedFeature = features[index];
+    //update the target value
+    updatedFeature['targetValue'] = newTargetValue;
+    //update the state
+    this.setState({ selectedInterestFeatures: features });
   }
   render() {
     return (
@@ -1221,10 +1233,10 @@ class App extends React.Component {
             planningUnits={this.state.planningUnits}
             openNewPlanningUnitDialog={this.openNewPlanningUnitDialog.bind(this)}
             openAllInterestFeaturesDialog={this.openAllInterestFeaturesDialog.bind(this)}
-            closeAllInterestFeaturesDialog={this.closeAllInterestFeaturesDialog.bind(this)}
             removeInterestFeature={this.removeInterestFeature.bind(this)}
             createNewScenario={this.createNewScenarioFromWizard.bind(this)}
-            interestFeatures={this.state.interestFeatures}
+            selectedInterestFeatures={this.state.selectedInterestFeatures}
+            setTargetValue={this.setTargetValue.bind(this)}
           />
           <NewPlanningUnitDialog 
             open={this.state.NewPlanningUnitDialogOpen} 
