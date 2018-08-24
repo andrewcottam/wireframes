@@ -28,6 +28,7 @@ let MARXAN_ENDPOINT = "https://db-server-blishten.c9users.io/marxan/webAPI.py/";
 let REST_ENDPOINT = "https://db-server-blishten.c9users.io/cgi-bin/services.py/biopama/marxan/";
 let TIMEOUT = 0; //disable timeout setting
 let DISABLE_LOGIN = true; //to not show the login form, set loggedIn to true
+let MAPBOX_USER = "blishten"
 mapboxgl.accessToken = 'pk.eyJ1IjoiYmxpc2h0ZW4iLCJhIjoiMEZrNzFqRSJ9.0QBRA2HxTb8YHErUFRMPZg'; //this is my public access token for using in the Mapbox GL client - TODO change this to the logged in users public access token
 
 class App extends React.Component {
@@ -71,6 +72,7 @@ class App extends React.Component {
       featureDatasetDescription: '',
       featureDatasetFilename: '',
       creatingNewPlanningUnit: false,
+      creatingPuvsprFile: false, //true when the puvspr.dat file is being created on the server
       savingOptions: false,
       dataBreaks: [],
       planningUnits: [],
@@ -88,8 +90,8 @@ class App extends React.Component {
   componentDidMount() {
     this.map = new mapboxgl.Map({
       container: this.mapContainer,
-      // style: 'mapbox://styles/blishten/cj6q75jcd39gq2rqm1d7yv5rc', //north star
-      style: 'mapbox://styles/blishten/cjg6jk8vg3tir2spd2eatu5fd', //north star + marine PAs in pacific
+      // style: 'mapbox://styles/' + MAPBOX_USER + '/cj6q75jcd39gq2rqm1d7yv5rc', //north star
+      style: 'mapbox://styles/' + MAPBOX_USER + '/cjg6jk8vg3tir2spd2eatu5fd', //north star + marine PAs in pacific
       // center: [0.043476868184143314, 0.0460817578557311],
       center: [0, 0],
       zoom: 2
@@ -104,7 +106,7 @@ class App extends React.Component {
   componentDidUpdate(prevProps, prevState) {
     //if any files have been uploaded then check to see if we have all of the mandatory file inputs - if so, set the state to being runnable
     if (this.state.files !== prevState.files) {
-      (this.state.files.SPECNAME !== '' && this.state.files.PUNAME !== '' && this.state.files.PUVSPRNAME !== '') ? this.setState({ runnable: true }): this.setState({ runnable: false });
+      (this.state.files.SPECNAME !== '' && this.state.files.PUNAME !== '' ) ? this.setState({ runnable: true }): this.setState({ runnable: false });
     }
   }
 
@@ -426,9 +428,9 @@ class App extends React.Component {
         //get the number of runs from the run parameters array
         let numReps = response.runParameters.filter(function(item) { return item.key === "NUMREPS" })[0].value;
         this.setState({ loggedIn: true, scenario: response.scenario, runParams: response.runParameters, numReps: numReps, files: Object.assign(response.files), metadata: response.metadata, renderer: response.renderer });
-        //if there is a mapid passed then programmatically change the select box to this map 
-        if (response.metadata.MAPID) {
-          this.changeTileset(response.metadata.MAPID);
+        //if there is a PLANNING_UNIT_NAME passed then programmatically change the select box to this map 
+        if (response.metadata.PLANNING_UNIT_NAME) {
+          this.changeTileset(MAPBOX_USER + "." + response.metadata.PLANNING_UNIT_NAME);
         }
         //poll the server to see if results are available for this scenario - if there are these will be loaded
         this.pollResults(true);
@@ -505,8 +507,8 @@ class App extends React.Component {
       interest_features.push(item.id);
       target_values.push(item.targetValue);
       spf_values.push(40);
-    })
-    //prepare the data for the spec.dat file
+    });
+    //prepare the data that will populate the spec.dat file
     formData.append('interest_features', interest_features.join(","));
     formData.append('target_values', target_values.join(","));
     formData.append('spf_values', spf_values.join(","));
@@ -515,15 +517,15 @@ class App extends React.Component {
         'content-type': 'multipart/form-data'
       }
     };
-    post(MARXAN_ENDPOINT + "createScenarioFromWizard", formData, config).then((response) => this.parseCreateNewUserFromWizardResponse(response.data));
+    post(MARXAN_ENDPOINT + "createScenarioFromWizard", formData, config).then((response) => this.parsecreateNewScenarioFromWizardResponse(response.data));
   }
 
   //callback from POST
-  parseCreateNewUserFromWizardResponse(response) {
+  parsecreateNewScenarioFromWizardResponse(response) {
     this.setState({ loadingScenarios: false });
     //check there are no errors from the server
     if (!this.isServerError(response)) {
-
+      this.setState({ snackbarOpen: true, snackbarMessage: response.info });
     }
     else {
       this.setState({ snackbarOpen: true, snackbarMessage: response.error });
@@ -638,7 +640,7 @@ class App extends React.Component {
     }
   }
 
-  //updates a parameter in the input.dat file directly, e.g. for updating the MAPID after the user sets their source spatial data
+  //updates a parameter in the input.dat file directly, e.g. for updating the PLANNING_UNIT_NAME after the user sets their source spatial data
   updateParameter(parameter, value) {
     jsonp(MARXAN_ENDPOINT + "updateParameter?user=" + this.state.user + "&scenario=" + this.state.scenario + "&parameter=" + parameter + "&value=" + value, { timeout: TIMEOUT }, this.parseUpdateParameterResponse.bind(this));
   }
@@ -652,13 +654,33 @@ class App extends React.Component {
     }
   }
 
+  //creates the puvspr.dat file on the server for the current scenario
+  createPuvsprFile() {
+    this.setState({ creatingPuvsprFile: true });
+    jsonp(MARXAN_ENDPOINT + "createPUVSPRdatafile?user=" + this.state.user + "&scenario=" + this.state.scenario + "&planning_grid_name=" + this.state.metadata.PLANNING_UNIT_NAME, { timeout: TIMEOUT }, this.parsecreatePuvsprFile.bind(this));
+  }
+
+  //the preprocessing has finished to create the puvspr.dat file
+  parsecreatePuvsprFile(err, response) {
+    //check if there are no timeout errors or empty responses
+    if (!this.responseIsTimeoutOrEmpty(err, response)) {
+      //check there are no errors from the server
+      if (!this.isServerError(response)) {
+        this.setState({ snackbarOpen: true, snackbarMessage: response.info });
+        //RUN MARXAN!!!
+        //update the ui to reflect the fact that a job is running
+        this.setState({ running: true, log: 'Running...', active_pu: undefined, outputsTabString: 'Running...' });
+        //make the request to get the marxan data
+        jsonp(MARXAN_ENDPOINT + "runMarxan?user=" + this.state.user + "&scenario=" + this.state.scenario);
+        this.timer = setInterval(() => this.pollResults(false), 3000);
+      }
+    }
+  }
+
   //run a marxan job on the server
   runMarxan(e) {
-    //update the ui to reflect the fact that a job is running
-    this.setState({ running: true, log: 'Running...', active_pu: undefined, outputsTabString: 'Running...' });
-    //make the request to get the marxan data
-    jsonp(MARXAN_ENDPOINT + "runMarxan?user=" + this.state.user + "&scenario=" + this.state.scenario);
-    this.timer = setInterval(() => this.pollResults(false), 3000);
+    //preprocess the interest features to create the puvspr.dat file on the server - this is done on demand when the scenario is run because the user may add/remove interest features willy nilly
+    this.createPuvsprFile();
   }
 
   //poll the server to see if the run has completed
@@ -843,7 +865,7 @@ class App extends React.Component {
     //create the renderer using Joshua Tanners excellent library classybrew - available here https://github.com/tannerjt/classybrew
     this.classifyData(data, Number(this.state.renderer.NUMCLASSES), this.state.renderer.COLORCODE, this.state.renderer.CLASSIFICATION);
     //build an expression to get the matching puids with different numbers of 'numbers' in the marxan results
-    var expression = ["match", ["get", "PUID"]];
+    var expression = ["match", ["get", "puid"]];
     //if only the top n classes will be rendered then get the visible value at the boundary
     if (this.state.renderer.TOPCLASSES < this.state.renderer.NUMCLASSES) {
       let breaks = this.state.brew.getBreaks();
@@ -879,14 +901,14 @@ class App extends React.Component {
     //see if there are any planning unit features under the mouse
     if ((features.length) && (features[0].layer.id === this.state.marxanLayer.id)) {
       //set the location for the popup
-      if (!this.state.active_pu || (this.state.active_pu && this.state.active_pu.PUID !== features[0].properties.PUID)) this.setState({ popup_point: e.point });
+      if (!this.state.active_pu || (this.state.active_pu && this.state.active_pu.puid !== features[0].properties.puid)) this.setState({ popup_point: e.point });
       //get the properties from the vector tile
       let vector_tile_properties = features[0].properties;
       //get the properties from the marxan results - these will include the number of solutions that that planning unit is found in
-      let marxan_results = this.runMarxanResponse && this.runMarxanResponse.ssoln ? this.runMarxanResponse.ssoln.filter(item => item[1].indexOf(vector_tile_properties.PUID) > -1)[0] : {};
+      let marxan_results = this.runMarxanResponse && this.runMarxanResponse.ssoln ? this.runMarxanResponse.ssoln.filter(item => item[1].indexOf(vector_tile_properties.puid) > -1)[0] : {};
       if (marxan_results) {
         //convert the marxan results from an array to an object
-        let marxan_results_dict = { "PUID": vector_tile_properties.PUID, "Number": marxan_results[0] };
+        let marxan_results_dict = { "puid": vector_tile_properties.puid, "Number": marxan_results[0] };
         //combine the 2 sets of properties
         let active_pu = Object.assign(marxan_results_dict, vector_tile_properties);
         //set the state to re-render the popup
@@ -906,8 +928,8 @@ class App extends React.Component {
   }
 
   spatialLayerChanged(tileset, zoomToBounds) {
-    //save the name of the layer in the input.dat file in the MAPID parameter
-    this.updateParameter("MAPID", tileset.id);
+    //save the name of the layer in the input.dat file in the PLANNING_UNIT_NAME parameter
+    this.updateParameter("PLANNING_UNIT_NAME", tileset.id);
     //remove the existing spatial layer
     this.removeSpatialLayer();
     //add in the new one
@@ -940,7 +962,7 @@ class App extends React.Component {
         'type': "vector",
         'url': "mapbox://" + tileset.id
       },
-      'source-layer': tileset.vector_layers[0].id,
+      'source-layer': tileset.name,
       'paint': {
         'fill-color': '#f08',
         'fill-opacity': 0.4
@@ -1002,7 +1024,7 @@ class App extends React.Component {
         //feedback
         this.setState({ snackbarOpen: true, snackbarMessage: "Planning grid: '" + response.records[0].get_hexagons.split(",")[1].replace(/"/gm, '').replace(")", "") + "' created" }); //response is (pu_cok_terrestrial_hexagons_10,"Cook Islands Terrestrial 10Km2 hexagon grid")
         //upload this data to mapbox for visualisation
-        this.uploadToMapBox(response.records[0].get_hexagons.split(",")[0].replace(/"/gm, '').replace("(", ""));
+        this.uploadToMapBox(response.records[0].get_hexagons.split(",")[0].replace(/"/gm, '').replace("(", ""), "hexagons");
         //update the planning unit items
         this.getPlanningUnits();
       }
@@ -1043,8 +1065,8 @@ class App extends React.Component {
   }
 
   //uploads the names feature class to mapbox on the server
-  uploadToMapBox(feature_class_name) {
-    jsonp(MARXAN_ENDPOINT + "uploadTilesetToMapBox?feature_class_name=" + feature_class_name, { timeout: 300000 }, this.parseuploadToMapBoxResponse.bind(this)); //5 minute timeout
+  uploadToMapBox(feature_class_name, mapbox_layer_name) {
+    jsonp(MARXAN_ENDPOINT + "uploadTilesetToMapBox?feature_class_name=" + feature_class_name + "&mapbox_layer_name=" + mapbox_layer_name, { timeout: 300000 }, this.parseuploadToMapBoxResponse.bind(this)); //5 minute timeout
   }
   parseuploadToMapBoxResponse(err, response) {
     //check if there are no timeout errors or empty responses
@@ -1062,7 +1084,7 @@ class App extends React.Component {
 
   pollMapboxForUploadComplete(uploadid) {
     var request = require('request');
-    request("https://api.mapbox.com/uploads/v1/blishten/" + uploadid + "?access_token=sk.eyJ1IjoiYmxpc2h0ZW4iLCJhIjoiY2piNm1tOGwxMG9lajMzcXBlZDR4aWVjdiJ9.Z1Jq4UAgGpXukvnUReLO1g", this.pollMapboxForUploadCompleteResponse.bind(this));
+    request("https://api.mapbox.com/uploads/v1/' + MAPBOX_USER + '/" + uploadid + "?access_token=sk.eyJ1IjoiYmxpc2h0ZW4iLCJhIjoiY2piNm1tOGwxMG9lajMzcXBlZDR4aWVjdiJ9.Z1Jq4UAgGpXukvnUReLO1g", this.pollMapboxForUploadCompleteResponse.bind(this));
   }
 
   pollMapboxForUploadCompleteResponse(error, response, body) {

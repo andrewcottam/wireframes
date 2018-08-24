@@ -63,6 +63,7 @@ class ScenariosDialog extends React.Component {
     }
     render() {
         const actions = [
+            <RaisedButton label="Import" primary={true} />,
             <RaisedButton label="Close" primary={true} onClick={this.props.closeScenariosDialog} disabled={this.props.loadingScenarios || this.props.loadingScenario} className="scenariosBtn"/>,
             <RaisedButton label="Delete" primary={true} onClick={this._delete.bind(this)} disabled={!this.state.selectedScenario || this.props.loadingScenarios || this.props.loadingScenario} className="scenariosBtn"/>,
             <RaisedButton label="Load" primary={true} onClick={this.load.bind(this)} disabled={!this.state.selectedScenario || this.props.loadingScenarios || this.props.loadingScenario} className="scenariosBtn"/>,

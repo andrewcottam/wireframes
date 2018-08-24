@@ -55,10 +55,10 @@ class NewCaseStudyDialog extends React.Component {
         const contentStyle = { margin: '0 16px' };
         const actions = [
             <div style={{width: '100%', maxWidth: 700, margin: 'auto',textAlign:'center'}}>
-                {/*dynamically create the stepper */}
+                {/*dynamically create the stepper
                 <Stepper activeStep={stepIndex}>
                     {this.state.steps.map((item) => {return <Step key={item}><StepLabel>{item}</StepLabel></Step>})}
-                </Stepper>
+                </Stepper> */}
                 <div style={contentStyle}>
                     <div style={{marginTop: 12}}>
                         <FlatButton label="Back" disabled={stepIndex === 0} onClick={this.handlePrev} />
@@ -82,7 +82,7 @@ class NewCaseStudyDialog extends React.Component {
                     {stepIndex === 4 ? <Options/> : null}
                 </div>;
         return (
-            <Dialog title="New Case Study" 
+            <Dialog title={'New scenario - ' + this.state.steps[stepIndex]}
                 children={c} 
                 actions={actions} 
                 open={this.props.open} 
