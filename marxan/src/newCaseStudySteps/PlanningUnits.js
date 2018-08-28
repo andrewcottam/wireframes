@@ -20,15 +20,17 @@ class PlanningUnits extends React.Component {
         return (
             <React.Fragment>
                 <div className={'newPUDialogPane'}>
-                    <div ref={el => this.mapContainer = el} className="absolute top right left bottom" style={{width:'500px',height:'300px', marginTop: '71px',marginLeft: '104px'}}/>
-                    <SelectFieldMapboxLayer selectedValue={this.props.pu} map={this.map} mapboxUser={'blishten'} items={this.props.planningUnits} changeItem={this.props.changeItem}/>
-                    <RaisedButton 
-                        label="New" 
-                        onClick={this.openNewPlanningUnitDialog.bind(this)}
-                        style={{minWidth: '66px', width: '30px',height: '23px', marginLeft: '20px',top:'408px',position: 'absolute'}}
-                        labelStyle={{'fontSize':'12px','paddingLeft':'11px'}}
-                        title="Create a new Planning Unit Grid"
-                    />
+                    <div ref={el => this.mapContainer = el} className="absolute top right left bottom" style={{width:'500px',height:'300px', marginTop: '71px',marginLeft: '25px'}}/>
+                    <div style={{'paddingTop': '27px'}}>
+                        <SelectFieldMapboxLayer selectedValue={this.props.pu} map={this.map} mapboxUser={'blishten'} items={this.props.planningUnits} changeItem={this.props.changeItem}/>
+                        <RaisedButton 
+                            label="New" 
+                            onClick={this.openNewPlanningUnitDialog.bind(this)}
+                            style={{minWidth: '66px', width: '30px',height: '23px', marginLeft: '20px',top:'434px',position:'absolute'}}
+                            labelStyle={{'fontSize':'12px','paddingLeft':'11px'}}
+                            title="Create a new Planning Unit Grid"
+                        />
+                    </div>
                 </div>
             </React.Fragment>
         );

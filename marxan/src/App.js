@@ -27,8 +27,8 @@ import AllCostsDialog from './AllCostsDialog';
 let MARXAN_ENDPOINT = "https://db-server-blishten.c9users.io/marxan/webAPI.py/";
 let REST_ENDPOINT = "https://db-server-blishten.c9users.io/cgi-bin/services.py/biopama/marxan/";
 let TIMEOUT = 0; //disable timeout setting
-let DISABLE_LOGIN = true; //to not show the login form, set loggedIn to true
-let MAPBOX_USER = "blishten"
+let DISABLE_LOGIN = false; //to not show the login form, set loggedIn to true
+let MAPBOX_USER = "blishten";
 mapboxgl.accessToken = 'pk.eyJ1IjoiYmxpc2h0ZW4iLCJhIjoiMEZrNzFqRSJ9.0QBRA2HxTb8YHErUFRMPZg'; //this is my public access token for using in the Mapbox GL client - TODO change this to the logged in users public access token
 
 class App extends React.Component {
@@ -40,7 +40,7 @@ class App extends React.Component {
       password: DISABLE_LOGIN ? 'asd' : '',
       userData: {},
       loggingIn: false,
-      loggedIn: true,
+      loggedIn: false,
       scenario: '',
       metadata: {},
       renderer: {},
@@ -63,7 +63,7 @@ class App extends React.Component {
       parametersDialogOpen: false,
       updatingRunParameters: false,
       optionsDialogOpen: false,
-      newCaseStudyDialogOpen: true, //set to true to debug immediately
+      newCaseStudyDialogOpen: false, //set to true to debug immediately
       NewPlanningUnitDialogOpen: false, //set to true to debug immediately
       NewInterestFeatureDialogOpen: false,
       AllInterestFeaturesDialogOpen: false,
@@ -77,7 +77,7 @@ class App extends React.Component {
       dataBreaks: [],
       planningUnits: [],
       interestFeatures: [],
-      selectedInterestFeatures: [],
+      scenarioFeatures: [],
       costs: [],
       selectedCosts: [],
       iso3: '',
@@ -106,7 +106,7 @@ class App extends React.Component {
   componentDidUpdate(prevProps, prevState) {
     //if any files have been uploaded then check to see if we have all of the mandatory file inputs - if so, set the state to being runnable
     if (this.state.files !== prevState.files) {
-      (this.state.files.SPECNAME !== '' && this.state.files.PUNAME !== '' ) ? this.setState({ runnable: true }): this.setState({ runnable: false });
+      (this.state.files.SPECNAME !== '' && this.state.files.PUNAME !== '') ? this.setState({ runnable: true }): this.setState({ runnable: false });
     }
   }
 
@@ -427,7 +427,10 @@ class App extends React.Component {
       if (!this.isServerError(response)) {
         //get the number of runs from the run parameters array
         let numReps = response.runParameters.filter(function(item) { return item.key === "NUMREPS" })[0].value;
-        this.setState({ loggedIn: true, scenario: response.scenario, runParams: response.runParameters, numReps: numReps, files: Object.assign(response.files), metadata: response.metadata, renderer: response.renderer });
+        //set the state for the app based on the data that is returned from the server
+        this.setState({ loggedIn: true, scenario: response.scenario, runParams: response.runParameters, numReps: numReps, files: Object.assign(response.files), metadata: response.metadata, renderer: response.renderer, scenarioFeatures: response.features });
+        //initialise all the interest features with the interest features for this scenario
+        this.initialiseInterestFeatures(response.metadata.OLDVERSION, response.features, response.allFeatures);
         //if there is a PLANNING_UNIT_NAME passed then programmatically change the select box to this map 
         if (response.metadata.PLANNING_UNIT_NAME) {
           this.changeTileset(MAPBOX_USER + "." + response.metadata.PLANNING_UNIT_NAME);
@@ -436,6 +439,38 @@ class App extends React.Component {
         this.pollResults(true);
       }
     }
+  }
+
+  //initialises the interest features based on the current scenario
+  initialiseInterestFeatures(oldVersion, scenarioFeatures, allFeatures) {
+    var allInterestFeatures = [];
+    if (oldVersion === 'True') {
+      //if the database is from an old version of marxan then the interest features can only come from the list of features in the current scenario
+      allInterestFeatures = scenarioFeatures;
+    }
+    else {
+      //if the database is from marxan web then the interest features will come from the marxan postgis database metadata_interest_features table
+      allInterestFeatures = allFeatures;
+    }
+    //get a list of the ids for the features that are in this scenario
+    var ids = scenarioFeatures.map(function(item) {
+      return item.id;
+    });
+    //iterate through all the interest features to add the required attributes to be used in the app and to populate them based on the current scenario interest features
+    var outputInterestFeatures = allInterestFeatures.map(function(item) {
+      var scenarioFeature = (ids.indexOf(item.id) > -1) ? scenarioFeatures[ids.indexOf(item.id)] : null;
+      if (scenarioFeature){
+        item['selected'] = true;
+        item['spf'] = scenarioFeature['spf'];
+        item['targetValue'] = scenarioFeature['targetValue'];
+      }else{
+        item['selected'] = false;
+        item['spf'] = 40;
+        item['targetValue'] = 17;
+      }
+      return item;
+    });
+    this.setState({ interestFeatures: outputInterestFeatures });
   }
 
   //resets various variables and state in between users
@@ -503,7 +538,7 @@ class App extends React.Component {
     var interest_features = [];
     var target_values = [];
     var spf_values = [];
-    this.state.selectedInterestFeatures.map((item) => {
+    this.state.scenarioFeatures.map((item) => {
       interest_features.push(item.id);
       target_values.push(item.targetValue);
       spf_values.push(40);
@@ -526,6 +561,7 @@ class App extends React.Component {
     //check there are no errors from the server
     if (!this.isServerError(response)) {
       this.setState({ snackbarOpen: true, snackbarMessage: response.info });
+      this.loadScenario(response.name);
     }
     else {
       this.setState({ snackbarOpen: true, snackbarMessage: response.error });
@@ -654,6 +690,63 @@ class App extends React.Component {
     }
   }
 
+  //run a marxan job on the server
+  runMarxan(e) {
+    //update the spec.dat file with any that have changed target or spf - this runs and then calls update pu.dat and then calls createPuvspr.dat
+    this.updateSpecFile();
+  }
+
+  //updates the species file with any target values that have changed
+  updateSpecFile() {
+    let formData = new FormData();
+    formData.append('user', this.state.user);
+    formData.append('scenario', this.state.scenario);
+    var interest_features = [];
+    var target_values = [];
+    var spf_values = [];
+    this.state.scenarioFeatures.map((item) => {
+      interest_features.push(item.id);
+      target_values.push(item.targetValue);
+      spf_values.push(40);
+    });
+    //prepare the data that will populate the spec.dat file
+    formData.append('interest_features', interest_features.join(","));
+    formData.append('target_values', target_values.join(","));
+    formData.append('spf_values', spf_values.join(","));
+    const config = {
+      headers: {
+        'content-type': 'multipart/form-data'
+      }
+    };
+    post(MARXAN_ENDPOINT + "createSpecFile", formData, config).then((response) => this.parseupdateSpecFile(response.data));
+  }
+
+  parseupdateSpecFile(response) {
+    //check if there are no timeout errors or empty responses
+    if (!this.responseIsTimeoutOrEmpty(undefined, response)) {
+      //check there are no errors from the server
+      if (!this.isServerError(response)) {
+        this.setState({ snackbarOpen: true, snackbarMessage: response.info });
+        //update the pu.dat file with any that have changed
+        this.updatePuFile();
+      }
+    }
+  }
+
+  updatePuFile() {
+    this.updatePuvsprFile();
+  }
+
+  updatePuvsprFile() {
+    //preprocess the Conservation features to create the puvspr.dat file on the server - this is done on demand when the scenario is run because the user may add/remove Conservation features willy nilly
+    if (this.state.metadata.OLDVERSION === 'False') {
+      this.createPuvsprFile();
+    }
+    else {
+      this.startMarxanJob();
+    }
+  }
+
   //creates the puvspr.dat file on the server for the current scenario
   createPuvsprFile() {
     this.setState({ creatingPuvsprFile: true });
@@ -667,20 +760,18 @@ class App extends React.Component {
       //check there are no errors from the server
       if (!this.isServerError(response)) {
         this.setState({ snackbarOpen: true, snackbarMessage: response.info });
-        //RUN MARXAN!!!
-        //update the ui to reflect the fact that a job is running
-        this.setState({ running: true, log: 'Running...', active_pu: undefined, outputsTabString: 'Running...' });
-        //make the request to get the marxan data
-        jsonp(MARXAN_ENDPOINT + "runMarxan?user=" + this.state.user + "&scenario=" + this.state.scenario);
-        this.timer = setInterval(() => this.pollResults(false), 3000);
+        this.startMarxanJob();
       }
     }
   }
 
-  //run a marxan job on the server
-  runMarxan(e) {
-    //preprocess the interest features to create the puvspr.dat file on the server - this is done on demand when the scenario is run because the user may add/remove interest features willy nilly
-    this.createPuvsprFile();
+  //calls the marxan executeable and runs it
+  startMarxanJob() {
+    //update the ui to reflect the fact that a job is running
+    this.setState({ running: true, log: 'Running...', active_pu: undefined, outputsTabString: 'Running...' });
+    //make the request to get the marxan data
+    jsonp(MARXAN_ENDPOINT + "runMarxan?user=" + this.state.user + "&scenario=" + this.state.scenario);
+    this.timer = setInterval(() => this.pollResults(false), 3000);
   }
 
   //poll the server to see if the run has completed
@@ -929,7 +1020,7 @@ class App extends React.Component {
 
   spatialLayerChanged(tileset, zoomToBounds) {
     //save the name of the layer in the input.dat file in the PLANNING_UNIT_NAME parameter
-    this.updateParameter("PLANNING_UNIT_NAME", tileset.id);
+    this.updateParameter("PLANNING_UNIT_NAME", tileset.name);
     //remove the existing spatial layer
     this.removeSpatialLayer();
     //add in the new one
@@ -1096,18 +1187,20 @@ class App extends React.Component {
   }
 
   getInterestFeatures() {
-    jsonp(REST_ENDPOINT + "get_interest_features?format=json", { timeout: 10000 }, this.parsegetInterestFeatures.bind(this));
+    if (this.state.metadata.OLDVERSION === 'True') {
+      //load the interest features as all of the features from the current scenario
+      this.setState({ interestFeatures: this.state.scenarioFeatures });
+    }
+    else {
+      //load the interest features as all of the interest features from the marxan web database
+      jsonp(REST_ENDPOINT + "get_interest_features?format=json", { timeout: 10000 }, this.parsegetInterestFeatures.bind(this));
+    }
   }
   parsegetInterestFeatures(err, response) {
     //check if there are no timeout errors or empty responses
     if (!this.responseIsTimeoutOrEmpty(err, response)) {
       //check there are no errors from the server
       if (!this.isServerError(response)) {
-        //add the properties for managing the interest features in this app
-        response.records.map((item) => {
-          item['selected'] = false;
-          return null;
-        });
         this.setState({ interestFeatures: response.records });
       }
       else {}
@@ -1124,7 +1217,6 @@ class App extends React.Component {
   }
   closeAllInterestFeaturesDialog() {
     this.setState({ AllInterestFeaturesDialogOpen: false });
-    this.setSelectedFeatures(); //update the selected features to reflect what the user has selected in the AllInterestFeaturesDialog box
   }
   openAllCostsDialog() {
     this.setState({ AllCostsDialogOpen: true });
@@ -1140,6 +1232,9 @@ class App extends React.Component {
   }
   setNewFeatureDatasetFilename(filename) {
     this.setState({ featureDatasetFilename: filename });
+  }
+  resetNewConservationFeature() {
+    this.setState({ featureDatasetName: '', featureDatasetDescription: '', featureDatasetFilename: '' });
   }
   createNewInterestFeature() {
     //the zipped shapefile has been uploaded to the MARXAN folder and the metadata are in the featureDatasetName, featureDatasetDescription and featureDatasetFilename state variables - 
@@ -1158,61 +1253,49 @@ class App extends React.Component {
       }
     }
   }
-  deleteInterestFeature(selectedFeature) {
-    jsonp(REST_ENDPOINT + "delete_interest_features?interest_feature_name=" + selectedFeature, { timeout: TIMEOUT }, this.parsedeleteInterestFeature.bind(this));
+  deleteInterestFeature(feature) {
+    jsonp(MARXAN_ENDPOINT + "deleteInterestFeature?interest_feature_name=" + feature.feature_class_name, { timeout: TIMEOUT }, this.parsedeleteInterestFeature.bind(this));
   }
   parsedeleteInterestFeature(err, response) {
     //check if there are no timeout errors or empty responses
     if (!this.responseIsTimeoutOrEmpty(err, response)) {
       //check there are no errors from the server
       if (!this.isServerError(response)) {
-        if (response.records.length > 0) {
-          if (response.records[0].delete_interest_features === 1) {
-            this.setState({ snackbarOpen: true, snackbarMessage: "Interest feature deleted" });
-            this.getInterestFeatures();
-          }
-          else {
-            this.setState({ snackbarOpen: true, snackbarMessage: "Interest feature not deleted" });
-          }
-        }
+        this.setState({ snackbarOpen: true, snackbarMessage: "Conservation feature deleted" });
+        this.getInterestFeatures();
       }
       else {
-        //server error
+        this.setState({ snackbarOpen: true, snackbarMessage: "Conservation feature not deleted" });
       }
     }
   }
-  //gets the interest features for the current scenario
-  getInterestFeaturesForScenario() {
 
-  }
+  ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  ////////////////////////// MANAGING INTEREST FEATURES SECTION
+  ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-  //sets the selected interest features by filtering the interestFeatures for all those objects that have the selected value of true
-  setSelectedFeatures() {
-    this.setState({ selectedInterestFeatures: this.state.interestFeatures.filter(function(item) { return item.selected }) });
-  }
-
-  //update interest feature value by finding the object and setting the value for the key - set override to true to overwrite an existing key value
+  //update Conservation feature value by finding the object and setting the value for the key - set override to true to overwrite an existing key value
   updateInterestFeature(features, id, key, value, override) {
     //get the position of the feature 
     var index = features.findIndex(function(element) { return element.id === id; });
     var updatedFeature = features[index];
     //update the target value if either the property doesn't exist (i.e. new value) or it does and override is set to true
     if (!(updatedFeature.hasOwnProperty(key) && !override)) updatedFeature[key] = value;
-    this.setState({ interestFeatures: features });
+    this.setState({ interestFeatures: features, scenarioFeatures: features.filter(function(item) { return item.selected }) });
   }
 
-  //selects a single interest feature
+  //selects a single Conservation feature
   selectItem(interestFeature) {
-    this.updateInterestFeature(this.state.interestFeatures, interestFeature.id, "selected", true, true); //select the interest feature
+    this.updateInterestFeature(this.state.interestFeatures, interestFeature.id, "selected", true, true); //select the Conservation feature
     this.updateInterestFeature(this.state.interestFeatures, interestFeature.id, "targetValue", 17, false); //set a default target value if one is not already set
   }
 
-  //unselects a single interest feature
+  //unselects a single Conservation feature
   unselectItem(interestFeature) {
-    this.updateInterestFeature(this.state.interestFeatures, interestFeature.id, "selected", false, true); //select the interest feature
+    this.updateInterestFeature(this.state.interestFeatures, interestFeature.id, "selected", false, true); //select the Conservation feature
   }
 
-  //selects all the interest features
+  //selects all the Conservation features
   selectAll() {
     var features = this.state.interestFeatures;
     features.map((item) => {
@@ -1224,10 +1307,10 @@ class App extends React.Component {
       item['selected'] = true;
       return null;
     });
-    this.setState({ interestFeatures: features });
+    this.setState({ interestFeatures: features, scenarioFeatures: features });
   }
 
-  //clears all the interest features
+  //clears all the Conservation features
   clearAll() {
     var features = this.state.interestFeatures;
     features.map((item) => {
@@ -1235,13 +1318,17 @@ class App extends React.Component {
       item['selected'] = false;
       return null;
     });
-    this.setState({ interestFeatures: features });
+    this.setState({ interestFeatures: features, scenarioFeatures: [] });
   }
 
-  //sets the target value of an interest feature
+  //sets the target value of an Conservation feature
   updateTargetValue(interestFeature, newTargetValue) {
     this.updateInterestFeature(this.state.interestFeatures, interestFeature.id, "targetValue", newTargetValue, true);
   }
+
+  ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  ////////////////////////// END OF MANAGING INTEREST FEATURES SECTION
+  ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
   render() {
     return (
@@ -1304,6 +1391,8 @@ class App extends React.Component {
             summaryStats={this.state.summaryStats}
             brew={this.state.brew}
             dataBreaks={this.state.dataBreaks}
+            scenarioFeatures={this.state.scenarioFeatures}
+            updateTargetValue={this.updateTargetValue.bind(this)}
             />
           <div className="runningSpinner"><FontAwesome spin name='sync' size='2x' style={{'display': (this.state.running ? 'block' : 'none')}}/></div>
           <Popup
@@ -1340,7 +1429,7 @@ class App extends React.Component {
             openNewPlanningUnitDialog={this.openNewPlanningUnitDialog.bind(this)}
             createNewScenario={this.createNewScenarioFromWizard.bind(this)}
             openAllInterestFeaturesDialog={this.openAllInterestFeaturesDialog.bind(this)}
-            selectedInterestFeatures={this.state.selectedInterestFeatures}
+            scenarioFeatures={this.state.scenarioFeatures}
             updateTargetValue={this.updateTargetValue.bind(this)}
             openAllCostsDialog={this.openAllCostsDialog.bind(this)}
             selectedCosts={this.state.selectedCosts}
@@ -1364,7 +1453,8 @@ class App extends React.Component {
             open={this.state.AllInterestFeaturesDialogOpen}
             getInterestFeatures={this.getInterestFeatures.bind(this)}
             interestFeatures={this.state.interestFeatures}
-            selectedInterestFeatures={this.state.selectedInterestFeatures}
+            scenarioFeatures={this.state.scenarioFeatures}
+            deleteInterestFeature={this.deleteInterestFeature.bind(this)}
             closeAllInterestFeaturesDialog={this.closeAllInterestFeaturesDialog.bind(this)}
             openNewInterestFeatureDialog={this.openNewInterestFeatureDialog.bind(this)}
             selectItem={this.selectItem.bind(this)}
@@ -1387,7 +1477,9 @@ class App extends React.Component {
             description={this.state.featureDatasetDescription}
             filename={this.state.featureDatasetFilename}
             createNewInterestFeature={this.createNewInterestFeature.bind(this)}
+            resetNewConservationFeature={this.resetNewConservationFeature.bind(this)}
           />
+        
         </React.Fragment>
       </MuiThemeProvider>
     );

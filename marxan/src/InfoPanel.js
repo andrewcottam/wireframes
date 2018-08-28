@@ -11,11 +11,12 @@ import SpatialDataSelector from './SpatialDataSelector.js';
 import LogDialog from './LogDialog.js';
 import ParametersDialog from './ParametersDialog.js';
 import ClassificationDialog from './ClassificationDialog.js';
+import InterestFeaturesReportPanel from './InterestFeaturesReportPanel';
 
 class InfoPanel extends React.Component {
   constructor(props) {
     super(props);
-    this.state = { 'allFilesUploaded': true,  logDialogOpen: false, classificationDialogOpen: false };
+    this.state = { 'allFilesUploaded': true, logDialogOpen: false, classificationDialogOpen: false };
     this.nUploading = 0;
   }
   componentDidUpdate(prevProps, prevState, snapshot) {
@@ -63,9 +64,10 @@ class InfoPanel extends React.Component {
   }
 
   onBlur(e) {
-    if (e.nativeEvent.target.id === 'scenarioName'){
+    if (e.nativeEvent.target.id === 'scenarioName') {
       this.props.renameScenario(e.target.value);
-    }else{
+    }
+    else {
       this.props.renameDescription(e.target.value);
     }
   }
@@ -134,13 +136,17 @@ class InfoPanel extends React.Component {
                     updateUser={this.props.updateUser}
                     />}/>
           <Tabs contentContainerStyle={{'margin':'20px'}}>
-            <Tab label="Case study">
+            <Tab label="Scenario">
               <div>
                 <div className={'tabTitle'}>Description</div>
                 <input id="descriptionEdit" style={{'display': (this.props.editingDescription) ? 'block' : 'none'}} className={'descriptionEditBox'} onKeyPress={this.onKeyPress.bind(this)} onBlur={this.onBlur.bind(this)}/>
                 <div className={'description'} onClick={this.startEditingDescription.bind(this)} style={{'display': (!this.props.editingDescription) ? 'block' : 'none'}}>{this.props.metadata.DESCRIPTION}</div>
                 <div className={'tabTitle'} style={{marginTop:'10px'}}>Created</div>
                 <div className={'createDate'}>{this.props.metadata.CREATEDATE}</div>
+              <InterestFeaturesReportPanel
+                scenarioFeatures={this.props.scenarioFeatures}
+                updateTargetValue={this.props.updateTargetValue}
+              />
               </div>
             </Tab>
             <Tab label="Inputs">

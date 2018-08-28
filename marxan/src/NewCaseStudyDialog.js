@@ -13,13 +13,13 @@ class NewCaseStudyDialog extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
-            steps: ['Info', 'Planning Units', 'Features', 'Costs', 'Options'],
+            steps: ['Info', 'Planning units', 'Conservation features', 'Costs', 'Options'],
             finished: false,
             stepIndex: 0,
             name: '',
             description: '',
             pu: '',
-            selectedInterestFeatures: [] //an array of ids
+            scenarioFeatures: [] //an array of ids
         };
     }
     handleNext = () => {
@@ -39,6 +39,8 @@ class NewCaseStudyDialog extends React.Component {
         this.closeNewCaseStudyDialog();
     }
     closeNewCaseStudyDialog() {
+        //reset to the beginning
+        this.setState({stepIndex:0});
         this.props.closeNewCaseStudyDialog();
     }
     setName(value) {
@@ -72,7 +74,7 @@ class NewCaseStudyDialog extends React.Component {
                     {stepIndex === 1 ? <PlanningUnits getPlanningUnits={this.props.getPlanningUnits} planningUnits={this.props.planningUnits} changeItem={this.changePU.bind(this)} pu={this.state.pu} openNewPlanningUnitDialog={this.props.openNewPlanningUnitDialog} /> : null}
                     {stepIndex === 2 ? <SelectInterestFeatures 
                         openAllInterestFeaturesDialog={this.props.openAllInterestFeaturesDialog} 
-                        selectedInterestFeatures={this.props.selectedInterestFeatures}
+                        scenarioFeatures={this.props.scenarioFeatures}
                         updateTargetValue={this.props.updateTargetValue}
                     /> : null}
                     {stepIndex === 3 ? <SelectCostFeatures
@@ -86,8 +88,8 @@ class NewCaseStudyDialog extends React.Component {
                 children={c} 
                 actions={actions} 
                 open={this.props.open} 
-                onRequestClose={this.props.closeNewCaseStudyDialog} 
-                contentStyle={{width:'700px'}} 
+                onRequestClose={this.closeNewCaseStudyDialog.bind(this)} 
+                contentStyle={{width:'550px'}} 
             />
         );
     }

@@ -60,7 +60,7 @@ class UserMenu extends React.Component {
                 onRequestClose={this.props.hideUserMenu.bind(this)}
               >
                 <Menu desktop={true} menuItemStyle={{backgroundColor:'rgb(0, 188, 212)', color:'white'}} listStyle={{width:'120px',backgroundColor:'rgb(0, 188, 212)'}} selectedMenuItemStyle={{color:'rgb(24,24,24)'}} width={'102px'}>
-                  <MenuItem primaryText="Case studies" onClick={this.openScenariosDialog.bind(this)} leftIcon={<FontAwesome name='list-alt' style={{top:'8px'}}/>}/>
+                  <MenuItem primaryText="Scenarios" onClick={this.openScenariosDialog.bind(this)} leftIcon={<FontAwesome name='list-alt' style={{top:'8px'}}/>}/>
                   <MenuItem primaryText="Options" onClick={this.openOptionsDialog.bind(this)} leftIcon={<FontAwesome name='cog' style={{top:'8px'}}/>}/>
                   <MenuItem primaryText="Profile" onClick={this.openUserDialog.bind(this)} leftIcon={<FontAwesome name='user' style={{top:'8px'}}/>}/>
                   <MenuItem primaryText="Log out" onClick={this.props.logout.bind(this)} leftIcon={<FontAwesome name='sign-out-alt' style={{top:'8px'}}/>}/>
