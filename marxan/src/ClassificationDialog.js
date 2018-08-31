@@ -26,7 +26,7 @@ class ClassificationDialog extends React.Component {
                       <CartesianGrid strokeDasharray="1" stroke="#f4f4f4"/>
                       <XAxis dataKey="number" tick={{fontSize:11}} type={'number'}>
                         <Label value="Sum solutions" offset={0} position="insideBottom" style={{fontSize:'11px',color:'#222222'}} />
-                      </XAxis>
+                      </XAxis> 
                       <YAxis tick={{fontSize:11}}>
                         <Label value='Count' angle={-90} position='insideLeft' style={{fontSize:'11px',color:'#222222'}}/>
                       </YAxis>

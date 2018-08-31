@@ -22,7 +22,7 @@ class PlanningUnits extends React.Component {
                 <div className={'newPUDialogPane'}>
                     <div ref={el => this.mapContainer = el} className="absolute top right left bottom" style={{width:'500px',height:'300px', marginTop: '71px',marginLeft: '25px'}}/>
                     <div style={{'paddingTop': '27px'}}>
-                        <SelectFieldMapboxLayer selectedValue={this.props.pu} map={this.map} mapboxUser={'blishten'} items={this.props.planningUnits} changeItem={this.props.changeItem}/>
+                        <SelectFieldMapboxLayer selectedValue={this.props.pu} map={this.map} mapboxUser={'blishten'} items={this.props.planningUnitGrids} changeItem={this.props.changeItem}/>
                         <RaisedButton 
                             label="New" 
                             onClick={this.openNewPlanningUnitDialog.bind(this)}

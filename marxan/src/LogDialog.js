@@ -10,7 +10,15 @@ class LogDialog extends React.Component {
         ];
         let c = <div id="log" dangerouslySetInnerHTML={{__html:this.props.log}}></div>;
         return (
-            <Dialog overlayStyle={{display:'none'}} className={'dialog'} title="Log" children={c} actions={actions} open={this.props.open} onRequestClose={this.props.closeLogDialog} contentStyle={{width:'500px'}}/>
+            <Dialog 
+                overlayStyle={{display:'none'}} 
+                className={'dialog'} 
+                title="Log" 
+                children={c} 
+                actions={actions} 
+                open={this.props.open} 
+                onRequestClose={this.props.closeLogDialog} 
+                contentStyle={{width:'500px'}}/>
         );
     }
 }

@@ -3,7 +3,7 @@ import TextField from 'material-ui/TextField';
 
 class Metadata extends React.Component {
     constructor(props) {
-        super(props);
+        super(props); 
         this.state = {
             validName: undefined
         };

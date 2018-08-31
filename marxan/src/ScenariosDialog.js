@@ -3,15 +3,15 @@ import PropTypes from 'prop-types';
 import Dialog from 'material-ui/Dialog';
 import RaisedButton from 'material-ui/RaisedButton';
 import { List, ListItem, makeSelectable } from 'material-ui/List';
-import FontAwesome from 'react-fontawesome'; 
+import FontAwesome from 'react-fontawesome';
 
 let SelectableList = makeSelectable(List);
 
 function wrapState(ComposedComponent) {
-    return class SelectableList extends Component { 
+    return class SelectableList extends Component {
         static propTypes = {
             children: PropTypes.node.isRequired,
-            defaultValue: PropTypes.number.isRequired,
+            defaultValue: PropTypes.string.isRequired,
         };
 
         componentWillMount() {
@@ -20,7 +20,7 @@ function wrapState(ComposedComponent) {
             });
         }
 
-        handleRequestChange = (event, index) => {
+        handleRequestChange = (event, index) => { 
             this.setState({
                 selectedIndex: index,
             });
@@ -58,26 +58,31 @@ class ScenariosDialog extends React.Component {
     _new() {
         this.props.openNewCaseStudyDialog();
     }
+    cloneScenario(){
+        this.props.cloneScenario(this.state.selectedScenario);
+    }
     changeScenario(event, scenario) {
         this.setState({ selectedScenario: scenario });
     }
     render() {
         const actions = [
-            <RaisedButton label="Import" primary={true} />,
+            <RaisedButton icon={<FontAwesome name='file-medical' title='New scenario'/>} keyboardFocused={true} style={{'minWidth':'50px',margin:'5px'}} onClick={this._new.bind(this)} disabled={this.props.loadingScenarios || this.props.loadingScenario} />,
+            <RaisedButton icon={<FontAwesome name='cloud-upload-alt' title='Upload Marxan project from local machine'/>} onClick={this.props.openImportWizard} style={{'minWidth':'50px',margin:'5px'}}/>,
+            <RaisedButton icon={<FontAwesome name='copy' title='Clone scenario'/>} style={{'minWidth':'50px',margin:'5px'}} onClick={this.cloneScenario.bind(this)} disabled={!this.state.selectedScenario || this.props.loadingScenarios || this.props.loadingScenario} />,
+            <RaisedButton icon={<FontAwesome name='trash-alt' title='Delete scenario'/>} style={{'minWidth':'50px',margin:'5px'}} onClick={this._delete.bind(this)} disabled={!this.state.selectedScenario || this.props.loadingScenarios || this.props.loadingScenario} />,
+            <RaisedButton icon={<FontAwesome name='folder-open' title='Open scenario'/>} style={{'minWidth':'50px',margin:'5px'}} onClick={this.load.bind(this)} disabled={!this.state.selectedScenario || this.props.loadingScenarios || this.props.loadingScenario} />,
             <RaisedButton label="Close" primary={true} onClick={this.props.closeScenariosDialog} disabled={this.props.loadingScenarios || this.props.loadingScenario} className="scenariosBtn"/>,
-            <RaisedButton label="Delete" primary={true} onClick={this._delete.bind(this)} disabled={!this.state.selectedScenario || this.props.loadingScenarios || this.props.loadingScenario} className="scenariosBtn"/>,
-            <RaisedButton label="Load" primary={true} onClick={this.load.bind(this)} disabled={!this.state.selectedScenario || this.props.loadingScenarios || this.props.loadingScenario} className="scenariosBtn"/>,
-            <RaisedButton label="New" primary={true} keyboardFocused={true} onClick={this._new.bind(this)} disabled={this.props.loadingScenarios || this.props.loadingScenario} className="scenariosBtn"/>,
         ];
         let listitems = this.props.scenarios && this.props.scenarios.map((scenario) => {
             let primary = <div style={{fontSize:'13px'}}>{scenario.name}</div>;
-            let secondary = <div style={{fontSize:'12px'}}>{scenario.description + " (created: " + scenario.createdate + ")"}</div>;
+            var oldVersion = (scenario.oldVersion === 'True') ? 'OLD VERSION' : '';
+            let secondary = <div style={{fontSize:'12px'}}>{scenario.description + " (created: " + scenario.createdate + ") " + oldVersion}</div>;
             return (<ListItem key={scenario.name} value={scenario.name} primaryText={primary} secondaryText={secondary} />);
         });
         if (!listitems) listitems = <div></div>; //to stop console warnings
 
         let c = <React.Fragment>
-            <SelectableList defaultValue ={0} children={listitems} changeScenario={this.changeScenario.bind(this)} style={{'height':'600px'}}/>
+            <SelectableList defaultValue ={this.props.scenario} children={listitems} changeScenario={this.changeScenario.bind(this)} style={{'height':'600px'}}/>
             <div id="spinner"><FontAwesome spin name='sync' style={{'display': (this.props.loadingScenarios || this.props.loadingScenario ? 'inline-block' : 'none')}} className={'scenarioSpinner'}/></div>
         </React.Fragment>;
 

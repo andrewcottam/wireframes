@@ -50,7 +50,7 @@ class ParametersDialog extends React.Component {
               />
         );
     }
-    render() {
+    render() { 
         const actions = [
             <RaisedButton label="Close" primary={true} onClick={this.props.closeParametersDialog} className="scenariosBtn"/>,
             <RaisedButton label="Save" primary={true} onClick={this.updateRunParams.bind(this)} className="scenariosBtn" disabled={!this.state.updateEnabled}/>,
@@ -83,7 +83,15 @@ class ParametersDialog extends React.Component {
         </React.Fragment>;
 
         return (
-            <Dialog overlayStyle={{display:'none'}} className={'dialog'} title="Run parameters" children={c} actions={actions} open={this.props.open} onRequestClose={this.props.closeParametersDialog} contentStyle={{width:'500px'}}/>
+            <Dialog 
+            overlayStyle={{display:'none'}} 
+            className={'dialog'} 
+            title="Run parameters" 
+            children={c} 
+            actions={actions} 
+            open={this.props.open} 
+            onRequestClose={this.props.closeParametersDialog} 
+            contentStyle={{width:'382px'}}/>
         );
     }
 }

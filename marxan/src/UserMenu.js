@@ -72,10 +72,13 @@ class UserMenu extends React.Component {
                 loadingScenario={this.props.loadingScenario}
                 closeScenariosDialog={this.closeScenariosDialog.bind(this)}
                 scenarios={this.props.scenarios}
+                scenario={this.props.scenario}
                 createNewScenario={this.props.createNewScenario}
                 deleteScenario={this.props.deleteScenario}
                 loadScenario={this.loadScenario.bind(this)}
+                cloneScenario={this.props.cloneScenario}
                 openNewCaseStudyDialog={this.props.openNewCaseStudyDialog}
+                openImportWizard={this.props.openImportWizard}
               />
               <OptionsDialog 
                 userData={this.props.userData}

@@ -21,6 +21,12 @@ import NewPlanningUnitDialog from './newCaseStudySteps/NewPlanningUnitDialog';
 import NewInterestFeatureDialog from './newCaseStudySteps/NewInterestFeatureDialog';
 import AllInterestFeaturesDialog from './AllInterestFeaturesDialog';
 import AllCostsDialog from './AllCostsDialog';
+import SettingsDialog from './SettingsDialog';
+import ParametersDialog from './ParametersDialog';
+import ResultsPane from './ResultsPane';
+import LogDialog from './LogDialog';
+import ClassificationDialog from './ClassificationDialog';
+import ImportWizard from './ImportWizard';
 
 //CONSTANTS
 //THE MARXAN_ENDPOINT MUST ALSO BE CHANGED IN THE FILEUPLOAD.JS FILE 
@@ -68,6 +74,10 @@ class App extends React.Component {
       NewInterestFeatureDialogOpen: false,
       AllInterestFeaturesDialogOpen: false,
       AllCostsDialogOpen: false,
+      settingsDialogOpen: false,
+      logDialogOpen: false,
+      classificationDialogOpen: false,
+      importDialogOpen: false,
       featureDatasetName: '',
       featureDatasetDescription: '',
       featureDatasetFilename: '',
@@ -75,7 +85,7 @@ class App extends React.Component {
       creatingPuvsprFile: false, //true when the puvspr.dat file is being created on the server
       savingOptions: false,
       dataBreaks: [],
-      planningUnits: [],
+      planningUnitGrids: [],
       interestFeatures: [],
       scenarioFeatures: [],
       costs: [],
@@ -83,7 +93,8 @@ class App extends React.Component {
       iso3: '',
       domain: '',
       areakm2: undefined,
-      countries: []
+      countries: [],
+      puidsToExclude: []
     };
   }
 
@@ -97,6 +108,8 @@ class App extends React.Component {
       zoom: 2
     });
     this.map.on("load", this.mapLoaded.bind(this));
+    //set a reference to this App in the map object 
+    this.map.App = this;
     //instantiate the classybrew to get the color ramps for the renderers
     this.setState({ brew: new classyBrew() });
     //if disabling the login, then programatically log in
@@ -428,7 +441,10 @@ class App extends React.Component {
         //get the number of runs from the run parameters array
         let numReps = response.runParameters.filter(function(item) { return item.key === "NUMREPS" })[0].value;
         //set the state for the app based on the data that is returned from the server
-        this.setState({ loggedIn: true, scenario: response.scenario, runParams: response.runParameters, numReps: numReps, files: Object.assign(response.files), metadata: response.metadata, renderer: response.renderer, scenarioFeatures: response.features });
+        this.setState({ loggedIn: true, scenario: response.scenario, runParams: response.runParameters, numReps: numReps, files: Object.assign(response.files), metadata: response.metadata, renderer: response.renderer, scenarioFeatures: response.features, planning_units: response.planning_units });
+        //set the puidsToExclude from the pu.dat file
+        var puidsToExclude = (response.planning_units.length > 1) && (response.planning_units[1].length > 1) ? response.planning_units[1][1] : [];
+        this.setState({ puidsToExclude: puidsToExclude });
         //initialise all the interest features with the interest features for this scenario
         this.initialiseInterestFeatures(response.metadata.OLDVERSION, response.features, response.allFeatures);
         //if there is a PLANNING_UNIT_NAME passed then programmatically change the select box to this map 
@@ -459,11 +475,12 @@ class App extends React.Component {
     //iterate through all the interest features to add the required attributes to be used in the app and to populate them based on the current scenario interest features
     var outputInterestFeatures = allInterestFeatures.map(function(item) {
       var scenarioFeature = (ids.indexOf(item.id) > -1) ? scenarioFeatures[ids.indexOf(item.id)] : null;
-      if (scenarioFeature){
+      if (scenarioFeature) {
         item['selected'] = true;
         item['spf'] = scenarioFeature['spf'];
         item['targetValue'] = scenarioFeature['targetValue'];
-      }else{
+      }
+      else {
         item['selected'] = false;
         item['spf'] = 40;
         item['targetValue'] = 17;
@@ -607,6 +624,29 @@ class App extends React.Component {
           this.setState({ snackbarOpen: true, snackbarMessage: "Current scenario deleted - loading next available" });
           this.state.scenarios.map((scenario) => { if (scenario.name !== this.state.scenario) this.loadScenario(scenario.name); return undefined; });
         }
+      }
+      else {
+        //ui feedback
+        this.setState({ loadingScenarios: false });
+      }
+    }
+  }
+
+  cloneScenario(name) {
+    this.setState({ loadingScenarios: true });
+    jsonp(MARXAN_ENDPOINT + "cloneScenario?user=" + this.state.user + "&scenario=" + name, { timeout: TIMEOUT }, this.parsecloneScenarioResponse.bind(this));
+  }
+
+  //callback function after cloning a specific scenario on the server
+  parsecloneScenarioResponse(err, response) {
+    //check if there are no timeout errors or empty responses
+    if (!this.responseIsTimeoutOrEmpty(err, response)) {
+      //check there are no errors from the server
+      if (!this.isServerError(response)) {
+        //refresh the scenarios list
+        this.listScenarios();
+        //ui feedback
+        this.setState({ snackbarOpen: true, snackbarMessage: response.info });
       }
       else {
         //ui feedback
@@ -851,12 +891,9 @@ class App extends React.Component {
   }
 
   setPaintProperty(expression) {
-    //get the name of the render layer
-    if (this.state.marxanLayer) {
-      this.map.setPaintProperty(this.state.marxanLayer.id, "fill-color", expression);
-      this.map.setPaintProperty(this.state.marxanLayer.id, "fill-opacity", 0.6);
-      // this.map.setPaintProperty(this.state.marxanLayer.id, "fill-outline-color", "#888888");
-    }
+    this.map.setPaintProperty("results_layer", "fill-color", expression);
+    this.map.setPaintProperty("results_layer", "fill-opacity", 0.6);
+    // this.map.setPaintProperty("results_layer", "fill-outline-color", "#888888");
   }
 
   //gets the total number of planning units in the ssoln and outputs the statistics of the distribution to state, e.g. 2 PUs with a value of 1, 3 with a value of 2 etc.
@@ -984,13 +1021,43 @@ class App extends React.Component {
     this.setPaintProperty(expression);
   }
 
+  //renders the planning units according to their status - 0: included, 1: excluded
+  renderPU() {
+    var color;
+    //build an expression to get the matching puids with different statuses in the planning units data
+    var expression = ["match", ["get", "puid"]];
+    // the rest service sends the data grouped by the status, e.g. [23,34,36,43,98], 0
+    this.state.planning_units.forEach(function(row, index) {
+      //get the status
+      switch (row[0]) {
+        case 0: //included
+          color = "rgba(150, 150, 150, 1)";
+          break;
+        case 1: //The PU will be included in the initial reserve system but may or may not be in the final solution.
+          break;
+        case 2: //The PU is fixed in the reserve system (“locked in”). It starts in the initial reserve system and cannot be removed.
+          break;
+        case 3: //The PU is fixed outside the reserve system (“locked out”). It is not included in the initial reserve system and cannot be added.
+          color = "rgba(255, 150, 150, 1)";
+          break;
+      }
+      //add the color to the expression 
+      expression.push(row[1], color);
+    });
+    // Last value is the default, used where there is no data
+    expression.push("rgba(0,0,0,0)");
+    //set the render paint property
+    this.map.setPaintProperty("planning_units_layer", "fill-color", "rgba(0, 0, 0, 0)");
+    this.map.setPaintProperty("planning_units_layer", "fill-outline-color", expression);
+  }
+
   mouseMove(e) {
     //error check
-    if (!this.state.userData.SHOWPOPUP || this.state.marxanLayer === undefined) return;
+    if (!this.state.userData.SHOWPOPUP) return;
     //get the features under the mouse
-    var features = this.map.queryRenderedFeatures(e.point);
+    var features = this.map.queryRenderedFeatures(e.point, { layers: ["planning_units_layer"] });
     //see if there are any planning unit features under the mouse
-    if ((features.length) && (features[0].layer.id === this.state.marxanLayer.id)) {
+    if (features.length) {
       //set the location for the popup
       if (!this.state.active_pu || (this.state.active_pu && this.state.active_pu.puid !== features[0].properties.puid)) this.setState({ popup_point: e.point });
       //get the properties from the vector tile
@@ -1018,36 +1085,51 @@ class App extends React.Component {
     this.setState({ active_pu: undefined });
   }
 
+  ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  ///MAP LAYERS ADDING/REMOVING AND INTERACTION
+  ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
   spatialLayerChanged(tileset, zoomToBounds) {
     //save the name of the layer in the input.dat file in the PLANNING_UNIT_NAME parameter
     this.updateParameter("PLANNING_UNIT_NAME", tileset.name);
-    //remove the existing spatial layer
-    this.removeSpatialLayer();
-    //add in the new one
-    this.addSpatialLayer(tileset);
-    //set the state for the marxan layer
-    let marxanLayer = this.map.getStyle().layers[this.map.getStyle().layers.length - 1];
-    this.setState({ marxanLayer: marxanLayer });
+    //remove the existing results layer and planning unit layer
+    this.removeSpatialLayers();
+    //add a new results layer and planning unit layer
+    this.addSpatialLayers(tileset);
     //zoom to the layers extent
     this.zoomToBounds(tileset.bounds);
     //set the state
     this.setState({ tileset: tileset });
   }
 
-  removeSpatialLayer() {
+  removeSpatialLayers() {
     let layers = this.map.getStyle().layers;
-    let layerId = layers[layers.length - 1].id;
-    let sourceId = layers[layers.length - 1].source;
-    //remove the layer and source if it is not from the mapbox map, i.e. added manually in spatialLayerChanged
-    if (sourceId !== "composite") {
-      this.map.removeLayer(layerId);
-      this.map.removeSource(sourceId);
-    }
+    //get the dynamically added layers
+    let dynamicLayers = layers.filter((item) => {
+      return !(item.source === 'composite' || item.id === 'background');
+    });
+    //remove them from the map
+    dynamicLayers.map(function(item) {
+      this.map.removeLayer(item.id);
+      this.map.removeSource(item.source);
+    }, this);
+  }
+  //adds the results layer and planning unit layer to the map
+  addSpatialLayers(tileset) {
+    //add the results layer
+    this.addSpatialLayer(tileset, "results_layer");
+    //add the planning unit layer
+    this.addSpatialLayer(tileset, "planning_units_layer");
+    //add the highlight layer to show which planning units are selected
+    this.addSpatialLayer(tileset, "highlighted_planning_units_layer");
+    //set the default paint properties of the highlighted layer
+    this.map.setPaintProperty("highlighted_planning_units_layer", "fill-color", "rgba(255,0,0,0.1)");
+    this.map.setPaintProperty("highlighted_planning_units_layer", "fill-outline-color", "rgba(255,0,0,1)");
   }
 
-  addSpatialLayer(tileset) {
+  addSpatialLayer(tileset, id) {
     this.map.addLayer({
-      'id': tileset.name,
+      'id': id,
       'type': "fill",
       'source': {
         'type': "vector",
@@ -1055,11 +1137,113 @@ class App extends React.Component {
       },
       'source-layer': tileset.name,
       'paint': {
-        'fill-color': '#f08',
-        'fill-opacity': 0.4
+        'fill-color': "rgba(255,0,0,0)",
+        'fill-opacity': 0
       }
     });
   }
+
+  //fired when the features tab is selected
+  features_tab_active() {
+    if (this.state.dataAvailable) {
+      //render the sum solution map
+      this.renderSolution(this.runMarxanResponse.ssoln, true);
+      //hide the planning units layer
+      this.hideLayer("planning_units_layer");
+    }
+  }
+
+  //fired when the planning unit tab is selected
+  pu_tab_active() {
+    //render the planning units layer using the data from the planning_units state
+    this.renderPU();
+    this.showLayer("planning_units_layer");
+  }
+
+  showLayer(id) {
+    this.map.setPaintProperty(id, "fill-opacity", 1);
+  }
+  hideLayer(id) {
+    this.map.setPaintProperty(id, "fill-opacity", 0);
+  }
+
+  startPuEditSession() {
+    //set the cursor to a crosshair
+    this.map.getCanvas().style.cursor = "crosshair";
+    //add the mouse click event to the planning unit layer
+    this.map.on("click", "planning_units_layer", this.editPu);
+    //set the filter for the selected planning units
+    this.map.setFilter("highlighted_planning_units_layer", ["in", "puid"].concat(this.state.puidsToExclude));
+    //show the layer
+    this.showLayer("highlighted_planning_units_layer");
+  }
+
+  stopPuEditSession() {
+    //reset the cursor
+    this.map.getCanvas().style.cursor = "pointer";
+    //remove the mouse click event
+    this.map.off("click", "planning_units_layer", this.editPu);
+    //update the pu.dat file
+    this.updatePuDatFile();
+    //hide the layer
+    this.hideLayer("highlighted_planning_units_layer");
+  }
+
+  //sends a list of puids that should be excluded from the run to upddate the pu.dat file
+  updatePuDatFile() {
+    //initialise the form data
+    let formData = new FormData();
+    //add the current user
+    formData.append("user", this.state.user);
+    //add the current scenario
+    formData.append("scenario", this.state.scenario);
+    //add the puidsToExclude
+    formData.append("puidsToExclude", this.state.puidsToExclude);
+    const config = {
+      headers: {
+        'content-type': 'multipart/form-data'
+      }
+    };
+    //post to the server
+    post(MARXAN_ENDPOINT + "updatePlanningUnitStatuses", formData, config).then((response) => this.parseupdatePuDatFileResponse(response.data));
+  }
+
+  //callback function after updating the pu.dat file with the passed parameters
+  parseupdatePuDatFileResponse(response) {
+    //check if there are no timeout errors or empty responses
+    if (!this.responseIsTimeoutOrEmpty(undefined, response)) {
+      //check there are no errors from the server
+      if (!this.isServerError(response)) {
+        //if succesfull write the state back to the userData key
+        this.setState({ snackbarOpen: true, snackbarMessage: response.info });
+      }
+    }
+  }
+
+  editPu(e) {
+    //the this object refers to the map object
+    var features = this.queryRenderedFeatures(e.point, { layers: ["planning_units_layer"] });
+    var filter = features.reduce(function(memo, feature) {
+      //see if the puid is already in the list  - if it is then the used is unselecting a planning unit
+      var index = memo.slice(2).indexOf(feature.properties.puid);
+      if (index === -1) {
+        //add the item to the selected planning units
+        memo.push(feature.properties.puid);
+      }
+      else {
+        //remove the item from the selected planning units
+        memo.splice(index + 2, 1);
+      }
+      return memo;
+    }, ['in', 'puid'].concat(this.App.state.puidsToExclude));
+    this.App.setState({ puidsToExclude: filter.slice(2) });
+    this.setFilter("highlighted_planning_units_layer", filter);
+  }
+
+  ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  ///END OF MAP LAYERS ADDING/REMOVING AND INTERACTION
+  ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
   zoomToBounds(bounds) {
     let minLng = (bounds[0] < -180) ? -180 : bounds[0];
     let minLat = (bounds[1] < -90) ? -90 : bounds[1];
@@ -1090,7 +1274,7 @@ class App extends React.Component {
       //check there are no errors from the server
       if (!this.isServerError(response)) {
         //valid response
-        this.setState({ planningUnits: response.records });
+        this.setState({ planningUnitGrids: response.records });
       }
       else {
         this.setState({ loggingIn: false });
@@ -1238,7 +1422,7 @@ class App extends React.Component {
   }
   createNewInterestFeature() {
     //the zipped shapefile has been uploaded to the MARXAN folder and the metadata are in the featureDatasetName, featureDatasetDescription and featureDatasetFilename state variables - 
-    jsonp(MARXAN_ENDPOINT + "importShapefile?filename=" + this.state.featureDatasetFilename + "&name=" + this.state.featureDatasetName + "&description=" + this.state.featureDatasetDescription + "&dissolve=true", { timeout: TIMEOUT }, this.parsecreateNewInterestFeature.bind(this));
+    jsonp(MARXAN_ENDPOINT + "importShapefile?filename=" + this.state.featureDatasetFilename + "&name=" + this.state.featureDatasetName + "&description=" + this.state.featureDatasetDescription + "&dissolve=true&type=interest_feature", { timeout: TIMEOUT }, this.parsecreateNewInterestFeature.bind(this));
   }
   parsecreateNewInterestFeature(err, response) {
     //check if there are no timeout errors or empty responses
@@ -1247,6 +1431,25 @@ class App extends React.Component {
       if (!this.isServerError(response)) {
         this.setState({ snackbarOpen: true, snackbarMessage: response.info });
         this.getInterestFeatures();
+      }
+      else {
+        //server error
+      }
+    }
+  }
+  //used by the import wizard to import a users zipped shapefile as the planning units
+  importZippedShapefileAsPu(zipname, alias, description) {
+    //the zipped shapefile has been uploaded to the MARXAN folder - it will be imported to PostGIS and a record will be entered in the metadata_planning_units table
+    jsonp(MARXAN_ENDPOINT + "importShapefile?filename=" + zipname + "&name=" + alias + "&description=" + description + "&dissolve=false&type=planning_unit", { timeout: TIMEOUT }, this.parseimportZippedShapefileAsPu.bind(this));
+  }
+  parseimportZippedShapefileAsPu(err, response) {
+    //check if there are no timeout errors or empty responses
+    if (!this.responseIsTimeoutOrEmpty(err, response)) {
+      //check there are no errors from the server
+      if (!this.isServerError(response)) {
+        this.setState({ snackbarOpen: true, snackbarMessage: response.info });
+        var zipName = response.file.slice(0, -4);
+        this.uploadToMapBox(zipName, zipName);
       }
       else {
         //server error
@@ -1330,6 +1533,37 @@ class App extends React.Component {
   ////////////////////////// END OF MANAGING INTEREST FEATURES SECTION
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+  showSettingsDialog() {
+    this.setState({ settingsDialogOpen: true });
+  }
+  closeSettingsDialog() {
+    this.setState({ settingsDialogOpen: false });
+  }
+
+  openLogDialog() {
+    this.setState({ logDialogOpen: true });
+  }
+  closeLogDialog() {
+    this.setState({ logDialogOpen: false });
+  }
+  openClassificationDialog() {
+    this.setState({ classificationDialogOpen: true });
+  }
+  closeClassificationDialog() {
+    this.setState({ classificationDialogOpen: false });
+  }
+
+  openImportWizard() {
+    this.setState({ importDialogOpen: true });
+  }
+  closeImportWizard() {
+    this.setState({ importDialogOpen: false });
+  }
+
+  uploadPlanningUnitFromShapefile() {
+
+  }
+
   render() {
     return (
       <MuiThemeProvider>
@@ -1343,23 +1577,14 @@ class App extends React.Component {
             scenarios={this.state.scenarios}
             scenario={this.state.scenario}
             metadata={this.state.metadata}
-            renderer={this.state.renderer}
             logout={this.logout.bind(this)}
-            runParams={this.state.runParams} 
-            files={this.state.files}
-            fileUploaded={this.fileUploaded.bind(this)}
             runMarxan={this.runMarxan.bind(this)} 
-            loadSolution={this.loadSolution.bind(this)} 
             running={this.state.running} 
-            outputsTabString={this.state.outputsTabString} 
-            dataAvailable={this.state.dataAvailable} 
-            solutions={this.state.solutions}
-            log={this.state.log} 
             runnable={this.state.runnable}
-            spatialLayerChanged={this.spatialLayerChanged.bind(this)}
             createNewScenario={this.createNewScenario.bind(this)}
             deleteScenario={this.deleteScenario.bind(this)}
             loadScenario={this.loadScenario.bind(this)}
+            cloneScenario={this.cloneScenario.bind(this)}
             renameScenario={this.renameScenario.bind(this)}
             renameDescription={this.renameDescription.bind(this)}
             startEditingScenarioName={this.startEditingScenarioName.bind(this)}
@@ -1368,9 +1593,6 @@ class App extends React.Component {
             editingDescription={this.state.editingDescription}
             loadingScenarios={this.state.loadingScenarios}
             loadingScenario={this.state.loadingScenario}
-            tilesets={this.state.tilesets}
-            changeTileset={this.changeTileset.bind(this)}
-            tilesetid={this.state.tilesetid}
             saveOptions={this.saveOptions.bind(this)}
             savingOptions={this.state.savingOptions}
             optionsDialogOpen={this.state.optionsDialogOpen}
@@ -1378,22 +1600,16 @@ class App extends React.Component {
             closeOptionsDialog={this.closeOptionsDialog.bind(this)}
             hidePopup={this.hidePopup.bind(this)}
             updateUser={this.updateUser.bind(this)}
-            updateRunParams={this.updateRunParams.bind(this)}
-            openParametersDialog={this.openParametersDialog.bind(this)}
-            closeParametersDialog={this.closeParametersDialog.bind(this)}
-            parametersDialogOpen={this.state.parametersDialogOpen}
             openNewCaseStudyDialog={this.openNewCaseStudyDialog.bind(this)}
-            updatingRunParameters={this.state.updatingRunParameters}
-            changeRenderer={this.changeRenderer.bind(this)}
-            changeNumClasses={this.changeNumClasses.bind(this)}
-            changeColorCode={this.changeColorCode.bind(this)}
-            changeShowTopClasses={this.changeShowTopClasses.bind(this)}
-            summaryStats={this.state.summaryStats}
-            brew={this.state.brew}
-            dataBreaks={this.state.dataBreaks}
             scenarioFeatures={this.state.scenarioFeatures}
             updateTargetValue={this.updateTargetValue.bind(this)}
-            />
+            features_tab_active={this.features_tab_active.bind(this)}
+            pu_tab_active={this.pu_tab_active.bind(this)}
+            startPuEditSession={this.startPuEditSession.bind(this)}
+            stopPuEditSession={this.stopPuEditSession.bind(this)}
+            showSettingsDialog={this.showSettingsDialog.bind(this)}
+            openImportWizard={this.openImportWizard.bind(this)}
+          />
           <div className="runningSpinner"><FontAwesome spin name='sync' size='2x' style={{'display': (this.state.running ? 'block' : 'none')}}/></div>
           <Popup
             active_pu={this.state.active_pu} 
@@ -1425,7 +1641,7 @@ class App extends React.Component {
             open={this.state.newCaseStudyDialogOpen}
             closeNewCaseStudyDialog={this.closeNewCaseStudyDialog.bind(this)}
             getPlanningUnits={this.getPlanningUnits.bind(this)}
-            planningUnits={this.state.planningUnits}
+            planningUnitGrids={this.state.planningUnitGrids}
             openNewPlanningUnitDialog={this.openNewPlanningUnitDialog.bind(this)}
             createNewScenario={this.createNewScenarioFromWizard.bind(this)}
             openAllInterestFeaturesDialog={this.openAllInterestFeaturesDialog.bind(this)}
@@ -1451,7 +1667,6 @@ class App extends React.Component {
           />
           <AllInterestFeaturesDialog
             open={this.state.AllInterestFeaturesDialogOpen}
-            getInterestFeatures={this.getInterestFeatures.bind(this)}
             interestFeatures={this.state.interestFeatures}
             scenarioFeatures={this.state.scenarioFeatures}
             deleteInterestFeature={this.deleteInterestFeature.bind(this)}
@@ -1479,7 +1694,54 @@ class App extends React.Component {
             createNewInterestFeature={this.createNewInterestFeature.bind(this)}
             resetNewConservationFeature={this.resetNewConservationFeature.bind(this)}
           />
-        
+          <SettingsDialog
+              open={this.state.settingsDialogOpen}
+              closeSettingsDialog={this.closeSettingsDialog.bind(this)}
+              openParametersDialog={this.openParametersDialog.bind(this)}
+              closeParametersDialog={this.closeParametersDialog.bind(this)}
+              files={this.state.files}
+          />
+          <ParametersDialog
+            open={this.state.parametersDialogOpen}
+            closeParametersDialog={this.closeParametersDialog.bind(this)}
+            runParams={this.state.runParams}
+            updateRunParams={this.updateRunParams.bind(this)}
+            updatingRunParameters={this.state.updatingRunParameters}
+          />
+          <ResultsPane
+            running={this.state.running} 
+            dataAvailable={this.state.dataAvailable} 
+            solutions={this.state.solutions}
+            loadSolution={this.loadSolution.bind(this)} 
+            openLogDialog={this.openLogDialog.bind(this)}
+            openClassificationDialog={this.openClassificationDialog.bind(this)}
+            outputsTabString={this.state.outputsTabString} 
+          />
+          <LogDialog 
+            log={this.state.log} 
+            open={this.state.logDialogOpen}
+            closeLogDialog={this.closeLogDialog.bind(this)}
+          />
+          <ClassificationDialog 
+            open={this.state.classificationDialogOpen}
+            renderer={this.state.renderer}
+            closeClassificationDialog={this.closeClassificationDialog.bind(this)}
+            changeColorCode={this.changeColorCode.bind(this)}
+            changeRenderer={this.changeRenderer.bind(this)}
+            changeNumClasses={this.changeNumClasses.bind(this)}
+            changeShowTopClasses={this.changeShowTopClasses.bind(this)}
+            summaryStats={this.state.summaryStats}
+            brew={this.state.brew}
+            dataBreaks={this.state.dataBreaks}
+          />
+          <ImportWizard 
+            open={this.state.importDialogOpen}
+            user={this.state.user}
+            setFilename={this.uploadPlanningUnitFromShapefile.bind(this)}
+            closeImportWizard={this.closeImportWizard.bind(this)}
+            MARXAN_ENDPOINT={MARXAN_ENDPOINT}
+            uploadShapefile={this.importZippedShapefileAsPu.bind(this)}
+          />
         </React.Fragment>
       </MuiThemeProvider>
     );

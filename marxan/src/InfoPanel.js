@@ -4,20 +4,16 @@ import Paper from 'material-ui/Paper';
 import AppBar from 'material-ui/AppBar';
 import { Tabs, Tab } from 'material-ui/Tabs';
 import RaisedButton from 'material-ui/RaisedButton';
-import ReactTable from "react-table";
-import FileUpload from './FileUpload.js';
 import UserMenu from './UserMenu.js';
-import SpatialDataSelector from './SpatialDataSelector.js';
-import LogDialog from './LogDialog.js';
-import ParametersDialog from './ParametersDialog.js';
-import ClassificationDialog from './ClassificationDialog.js';
+import SelectField from 'material-ui/SelectField';
 import InterestFeaturesReportPanel from './InterestFeaturesReportPanel';
+import MenuItem from 'material-ui/MenuItem';
+import FontAwesome from 'react-fontawesome';
 
 class InfoPanel extends React.Component {
   constructor(props) {
     super(props);
-    this.state = { 'allFilesUploaded': true, logDialogOpen: false, classificationDialogOpen: false };
-    this.nUploading = 0;
+    this.state = {  puEditing: false };
   }
   componentDidUpdate(prevProps, prevState, snapshot) {
     //if the input box for renaming the scenario has been made visible and it has no value, then initialise it with the scenario name and focus it
@@ -31,15 +27,6 @@ class InfoPanel extends React.Component {
       document.getElementById("descriptionEdit").focus();
     }
   }
-  loadSolution(solution) {
-    this.props.loadSolution(solution);
-  }
-  validateUploads(validated, parameter, filename) {
-    //each time we upload a file we increment the uploading files counter - when it has finished then we decrement the counter
-    validated ? this.nUploading -= 1 : this.nUploading += 1;
-    (this.nUploading === 0) ? this.setState({ 'allFilesUploaded': true }): this.setState({ 'allFilesUploaded': false });
-    if (validated) this.props.fileUploaded(parameter, filename);
-  }
   showUserMenu(e) {
     e.preventDefault();
     this.setState({ userMenuOpen: true, anchorEl: e.currentTarget });
@@ -51,10 +38,6 @@ class InfoPanel extends React.Component {
   logout() {
     this.hideUserMenu();
     this.props.logout();
-  }
-
-  spatialLayerChanged(tileset, zoomToBounds) {
-    this.props.spatialLayerChanged(tileset, zoomToBounds);
   }
 
   onKeyPress(e) {
@@ -82,28 +65,31 @@ class InfoPanel extends React.Component {
       this.props.startEditingDescription();
     }
   }
-  openLogDialog() {
-    this.setState({ logDialogOpen: true });
+
+  features_tab_active() {
+    this.props.features_tab_active();
   }
-  closeLogDialog() {
-    this.setState({ logDialogOpen: false });
+  pu_tab_active() {
+    this.props.pu_tab_active();
+  }
+  startStopPuEditSession() {
+    (this.state.puEditing) ? this.stopPuEditSession(): this.startPuEditSession();
+  }
+  startPuEditSession() {
+    this.setState({ puEditing: true });
+    this.props.startPuEditSession();
   }
 
-  openParametersDialog() {
-    this.props.openParametersDialog();
+  stopPuEditSession() {
+    this.setState({ puEditing: false });
+    this.props.stopPuEditSession();
   }
-  closeParametersDialog() {
-    this.props.closeParametersDialog();
+  showSettingsDialog() {
+    this.props.showSettingsDialog();
   }
-
-  openClassificationDialog() {
-    this.setState({ classificationDialogOpen: true });
-  }
-  closeClassificationDialog() {
-    this.setState({ classificationDialogOpen: false });
-  }
-
+  
   render() {
+    var puEditIconColor = this.state.puEditing ? "rgb(255, 64, 129)" : "rgba(0, 0, 0, 0.87)";
     return (
       <div style={{'position':'absolute', display: this.props.loggedIn ? 'block' : 'none'}}>
         <Paper zDepth={2} className='InfoPanelPaper'>
@@ -123,9 +109,11 @@ class InfoPanel extends React.Component {
                     loadingScenarios={this.props.loadingScenarios}
                     listScenarios={this.props.listScenarios}
                     scenarios={this.props.scenarios}
+                    scenario={this.props.scenario}
                     createNewScenario={this.props.createNewScenario}
                     deleteScenario={this.props.deleteScenario}
                     loadScenario={this.props.loadScenario}
+                    cloneScenario={this.props.cloneScenario}
                     saveOptions={this.props.saveOptions}
                     savingOptions={this.props.savingOptions}
                     openOptionsDialog={this.props.openOptionsDialog}
@@ -134,6 +122,7 @@ class InfoPanel extends React.Component {
                     openNewCaseStudyDialog={this.props.openNewCaseStudyDialog}
                     hidePopup={this.props.hidePopup}
                     updateUser={this.props.updateUser}
+                    openImportWizard={this.props.openImportWizard}
                     />}/>
           <Tabs contentContainerStyle={{'margin':'20px'}}>
             <Tab label="Scenario">
@@ -143,130 +132,29 @@ class InfoPanel extends React.Component {
                 <div className={'description'} onClick={this.startEditingDescription.bind(this)} style={{'display': (!this.props.editingDescription) ? 'block' : 'none'}}>{this.props.metadata.DESCRIPTION}</div>
                 <div className={'tabTitle'} style={{marginTop:'10px'}}>Created</div>
                 <div className={'createDate'}>{this.props.metadata.CREATEDATE}</div>
+              </div>
+            </Tab>
+            <Tab label="Features" onActive={this.features_tab_active.bind(this)}>
+              <div>
               <InterestFeaturesReportPanel
                 scenarioFeatures={this.props.scenarioFeatures}
                 updateTargetValue={this.props.updateTargetValue}
               />
               </div>
             </Tab>
-            <Tab label="Inputs">
+            <Tab label="Planning units" onActive={this.pu_tab_active.bind(this)}>
               <div>
                 <div className={'tabTitle'}>Planning area</div>
-                <SpatialDataSelector spatialLayerChanged={this.spatialLayerChanged.bind(this)} tilesets={this.props.tilesets} changeTileset={this.props.changeTileset} value={this.props.tilesetid}/>
-                <div className={'tabTitle'} style={{marginTop:'10px'}}>Input files</div>
-                <div className={'uploadControls'}>
-                  <FileUpload parameter="SPECNAME" mandatory={true} value={this.props.files.SPECNAME} label="Species file" fileUploaded={this.validateUploads.bind(this)} user={this.props.user} scenario={this.props.scenario}/>
-                  <FileUpload parameter="PUNAME" mandatory={true} value={this.props.files.PUNAME} label="Planning unit file" fileUploaded={this.validateUploads.bind(this)} user={this.props.user} scenario={this.props.scenario}/>
-                  <FileUpload parameter="PUVSPRNAME" value={this.props.files.PUVSPRNAME} label="Planning unit vs species file" fileUploaded={this.validateUploads.bind(this)} user={this.props.user} scenario={this.props.scenario}/>
-                  <FileUpload parameter="BOUNDNAME" value={this.props.files.BOUNDNAME} label="Boundary length file" fileUploaded={this.validateUploads.bind(this)} user={this.props.user} scenario={this.props.scenario}/>
-                  <FileUpload parameter="BLOCKDEFNAME" value={this.props.files.BLOCKDEFNAME} label="Block definitions" fileUploaded={this.validateUploads.bind(this)} user={this.props.user} scenario={this.props.scenario}/>
-                </div>
-                <RaisedButton
-                  title="Click to change the run parameters"
-                  label={'Params'} 
-                  style={{minWidth: '66px',width: '30px',height: '23px'}}
-                  labelStyle={{'fontSize':'12px','paddingLeft':'11px'}}
-                  onClick={this.openParametersDialog.bind(this)} 
-                  className={'logButton'}
-                />
-              </div>
-            </Tab>
-            <Tab label="Outputs">
-              <div>
-                <div className="tabTitle">Solutions</div>
-                <div id="solutionsPanel" style={{'display': (this.props.dataAvailable && !this.props.running ? 'block' : 'none')}}>
-                  <ReactTable
-                    infoPanel={this}
-                    getTrProps={(state, rowInfo, column, instance) => {
-                        return {
-                          onClick: (e, handleOriginal) => {
-                            if (instance.lastSelectedRow) instance.lastSelectedRow.style['background-color'] = '';
-                            instance.lastSelectedRow = e.currentTarget;
-                            e.currentTarget.style['background-color'] = 'lightgray';
-                            instance.props.infoPanel.loadSolution(rowInfo.original.Run_Number);
-                          },
-                          title: 'Click to show on the map'
-                        };
-                      }}
-                    className={'summary_infoTable -highlight'}
-                    showPagination={false}
-                    minRows={0}
-                    pageSize={200}
-                    noDataText=''
-                    data={this.props.solutions}
-                    columns={[{
-                       Header: 'Run', 
-                       accessor: 'Run_Number',
-                       width:40,
-                       headerStyle:{'textAlign':'left'}                             
-                    },{
-                       Header: 'Score',
-                       accessor: 'Score',
-                       width:80,
-                      headerStyle:{'textAlign':'left'}
-                    },{
-                       Header: 'Cost',
-                       accessor: 'Cost' ,
-                       width:80,
-                       headerStyle:{'textAlign':'left'}
-                    },{
-                       Header: 'Planning Units',
-                       accessor: 'Planning_Units' ,
-                       width:50,
-                       headerStyle:{'textAlign':'left'}
-                    },{
-                       Header: 'Missing Values',
-                       accessor: 'Missing_Values' ,
-                       width:105,
-                       headerStyle:{'textAlign':'left'}
-                    }]}
-                  />
-                </div>
-                <div style={{'paddingBottom':'8px',marginTop:'17px','fontSize':'13px'}}>{this.props.outputsTabString}</div>
-                <RaisedButton 
-                  title="Click to view the Marxan log"
-                  label={'Log'} 
-                  style={{minWidth: '66px',width: '30px',height: '23px'}}
-                  labelStyle={{'fontSize':'12px'}}
-                  onClick={this.openLogDialog.bind(this)} 
-                  className={'logButton'}
-                  disabled={!this.props.dataAvailable}/>
-                <RaisedButton 
-                  title="Click to view the classifcation"
-                  label={'Classify'} 
-                  style={{minWidth: '66px',width: '30px',height: '23px'}}
-                  labelStyle={{'fontSize':'12px','paddingLeft':'7px'}}
-                  onClick={this.openClassificationDialog.bind(this)} 
-                  className={'classificationButton'}
-                  disabled={!this.props.dataAvailable}/>
+                <div>{this.props.metadata.pu_alias}</div>
+                <div className={'tabTitle'} style={{'marginTop': '25px'}}>Protected areas</div>
+                <SelectField floatingLabelText={'Include'} floatingLabelFixed={true} value={'None'} children={<MenuItem value={'None'} key={'None'} primaryText={'None'}/>} />
+                <div className={'tabTitle'} style={{'marginTop': '25px'}}>Manual exceptions</div>
+                <RaisedButton icon={<FontAwesome name='eraser' title='Remove  planning units from analysis' style={{color:puEditIconColor}}/>} onClick={this.startStopPuEditSession.bind(this)}/>
               </div>
             </Tab>
           </Tabs>                        
-          <RaisedButton title="Click to run this scenario" label={this.props.running ? "Running" : "Run"} secondary={true} className={'run'} onClick={this.props.runMarxan} disabled={!this.props.runnable || this.props.running || (this.state && this.state.allFilesUploaded === false)}/>
-          <ParametersDialog
-            open={this.props.parametersDialogOpen}
-            closeParametersDialog={this.closeParametersDialog.bind(this)}
-            runParams={this.props.runParams}
-            updateRunParams={this.props.updateRunParams}
-            updatingRunParameters={this.props.updatingRunParameters}
-          />
-          <LogDialog 
-            log={this.props.log} 
-            open={this.state.logDialogOpen}
-            closeLogDialog={this.closeLogDialog.bind(this)}
-          />
-          <ClassificationDialog 
-            open={this.state.classificationDialogOpen}
-            renderer={this.props.renderer}
-            closeClassificationDialog={this.closeClassificationDialog.bind(this)}
-            changeColorCode={this.props.changeColorCode.bind(this)}
-            changeRenderer={this.props.changeRenderer.bind(this)}
-            changeNumClasses={this.props.changeNumClasses.bind(this)}
-            changeShowTopClasses={this.props.changeShowTopClasses.bind(this)}
-            summaryStats={this.props.summaryStats}
-            brew={this.props.brew}
-            dataBreaks={this.props.dataBreaks}
-          />
+          <RaisedButton title="Run Settings" className={'settings'} onClick={this.showSettingsDialog.bind(this)} icon={<FontAwesome name='cog' title='Run Settings'/>}/>
+          <RaisedButton title="Click to run this scenario" label={this.props.running ? "Running" : "Run"} secondary={true} className={'run'} onClick={this.props.runMarxan} disabled={!this.props.runnable || this.props.running}/>
           <div className='footer'>
             <div>v1.0 Feedback: <a href='mailto:andrew.cottam@ec.europa.eu' className='email'>Andrew Cottam</a></div>
             <div>Marxan 2.4.3 - Ian Ball, Matthew Watts &amp; Hugh Possingham</div>
