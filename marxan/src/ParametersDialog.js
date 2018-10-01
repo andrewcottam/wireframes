@@ -91,7 +91,9 @@ class ParametersDialog extends React.Component {
             actions={actions} 
             open={this.props.open} 
             onRequestClose={this.props.closeParametersDialog} 
-            contentStyle={{width:'382px'}}/>
+            contentStyle={{width:'382px'}}
+            titleClassName={'dialogTitleStyle'}
+            />
         );
     }
 }

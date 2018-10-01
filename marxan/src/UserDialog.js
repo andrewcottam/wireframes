@@ -55,7 +55,7 @@ class UserDialog extends React.Component {
                     </span>
                 </div>;
         return (
-            <Dialog overlayStyle={{display:'none'}} className={'dialog'} title="Profile" children={c} actions={actions} open={this.props.open} onRequestClose={this.closeUserDialog.bind(this)} contentStyle={{width:'350px'}}/>
+            <Dialog overlayStyle={{display:'none'}} className={'dialog'} title="Profile" children={c} actions={actions} open={this.props.open} onRequestClose={this.closeUserDialog.bind(this)} contentStyle={{width:'350px'}} titleClassName={'dialogTitleStyle'}/>
         );
     }
 }

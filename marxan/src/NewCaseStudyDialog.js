@@ -90,6 +90,7 @@ class NewCaseStudyDialog extends React.Component {
                 open={this.props.open} 
                 onRequestClose={this.closeNewCaseStudyDialog.bind(this)} 
                 contentStyle={{width:'550px'}} 
+                titleClassName={'dialogTitleStyle'}
             />
         );
     }

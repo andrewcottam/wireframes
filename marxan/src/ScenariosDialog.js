@@ -88,7 +88,7 @@ class ScenariosDialog extends React.Component {
 
         return (
             <React.Fragment>
-                <Dialog overlayStyle={{display:'none'}} className={'dialog'} children={c} title="Scenarios" actions={actions} open={this.props.open} onRequestClose={this.props.closeScenariosDialog} contentStyle={{width:'566px'}}/>
+                <Dialog overlayStyle={{display:'none'}} className={'dialog'} children={c} title="Scenarios" actions={actions} open={this.props.open} onRequestClose={this.props.closeScenariosDialog} titleClassName={'dialogTitleStyle'} contentStyle={{width:'566px'}}/>
             </React.Fragment>
         );
     }

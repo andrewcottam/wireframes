@@ -12,7 +12,7 @@ class ProgressDialog extends React.Component {
                     <div id="spinner"><FontAwesome spin name='sync' style={{'display': (this.props.open ? 'inline-block' : 'none')}} className={'progressSpinner'}/></div>
                 </div>;
         return (
-            <Dialog title="Running" children={c} open={this.props.open} contentStyle={{width:'308px'}}/>
+            <Dialog title="Running" children={c} open={this.props.open} contentStyle={{width:'308px'}} titleClassName={'dialogTitleStyle'}/>
         );
     }
 }

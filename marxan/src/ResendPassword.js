@@ -22,7 +22,7 @@ class ResendPassword extends React.Component {
                 </div>;
         return (
             <React.Fragment>
-                <Dialog actions={actions} title="Resend email" modal={true} children={c}  onRequestClose={this.props.closeNewUserDialog} open={this.props.open} contentStyle={{width:'308px'}}/>
+                <Dialog actions={actions} title="Resend email" modal={true} children={c}  onRequestClose={this.props.closeNewUserDialog} open={this.props.open} contentStyle={{width:'308px'}} titleClassName={'dialogTitleStyle'}/>
             </React.Fragment>
         );
     }

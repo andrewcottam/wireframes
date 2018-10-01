@@ -48,7 +48,7 @@ class Login extends React.Component {
                 </div>;
         return (
             <React.Fragment>
-                <Dialog actions={actions} title="Login" modal={true} children={c} open={this.props.open} contentStyle={{width:'358px'}}/>
+                <Dialog actions={actions} title="Login" modal={true} children={c} open={this.props.open} contentStyle={{width:'358px'}} titleClassName={'dialogTitleStyle'}/>
                 <NewUserDialog 
                     open={this.state.newUserDialogOpen} 
                     closeNewUserDialog={this.closeNewUserDialog.bind(this)} 

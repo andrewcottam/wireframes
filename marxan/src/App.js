@@ -33,7 +33,7 @@ import ImportWizard from './ImportWizard';
 let MARXAN_ENDPOINT = "https://db-server-blishten.c9users.io/marxan/webAPI.py/";
 let REST_ENDPOINT = "https://db-server-blishten.c9users.io/cgi-bin/services.py/biopama/marxan/";
 let TIMEOUT = 0; //disable timeout setting
-let DISABLE_LOGIN = false; //to not show the login form, set loggedIn to true
+let DISABLE_LOGIN = true; //to not show the login form, set loggedIn to true
 let MAPBOX_USER = "blishten";
 mapboxgl.accessToken = 'pk.eyJ1IjoiYmxpc2h0ZW4iLCJhIjoiMEZrNzFqRSJ9.0QBRA2HxTb8YHErUFRMPZg'; //this is my public access token for using in the Mapbox GL client - TODO change this to the logged in users public access token
 
@@ -42,12 +42,12 @@ class App extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      user: DISABLE_LOGIN ? 'asd' : '',
+      user: DISABLE_LOGIN ? 'andrew' : '',
       password: DISABLE_LOGIN ? 'asd' : '',
+      scenario: DISABLE_LOGIN ? 'Tonga marine' : '',
+      loggedIn: false, 
       userData: {},
       loggingIn: false,
-      loggedIn: false,
-      scenario: '',
       metadata: {},
       renderer: {},
       editingScenarioName: false,
@@ -1717,6 +1717,7 @@ class App extends React.Component {
             openLogDialog={this.openLogDialog.bind(this)}
             openClassificationDialog={this.openClassificationDialog.bind(this)}
             outputsTabString={this.state.outputsTabString} 
+            brew={this.state.brew}
           />
           <LogDialog 
             log={this.state.log} 

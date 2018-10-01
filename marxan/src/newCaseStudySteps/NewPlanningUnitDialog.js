@@ -65,7 +65,7 @@ class NewPlanningUnitDialog extends React.Component {
                 
             </React.Fragment>;
         return (
-            <Dialog title="New Planning Unit Grid" children={c} actions={actions} open={this.props.open} onRequestClose={this.props.closeNewPlanningUnitDialog} contentStyle={{width:'566px'}}/>
+            <Dialog title="New Planning Unit Grid" children={c} actions={actions} open={this.props.open} onRequestClose={this.props.closeNewPlanningUnitDialog} contentStyle={{width:'566px'}} titleClassName={'dialogTitleStyle'}/>
         );
     }
 }

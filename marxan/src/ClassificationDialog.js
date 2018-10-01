@@ -42,7 +42,7 @@ class ClassificationDialog extends React.Component {
                     </div>
                 </div>;
     return (
-      <Dialog overlayStyle={{display:'none'}} className={'dialog'} title="Classification" children={c} actions={actions} open={this.props.open} onRequestClose={this.props.closeClassificationDialog} contentStyle={{width:'475px'}}/>
+      <Dialog overlayStyle={{display:'none'}} className={'dialog'} title="Classification" children={c} actions={actions} open={this.props.open} onRequestClose={this.props.closeClassificationDialog} contentStyle={{width:'475px'}} titleClassName={'dialogTitleStyle'}/>
     );
   }
 }

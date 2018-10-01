@@ -18,7 +18,9 @@ class LogDialog extends React.Component {
                 actions={actions} 
                 open={this.props.open} 
                 onRequestClose={this.props.closeLogDialog} 
-                contentStyle={{width:'500px'}}/>
+                contentStyle={{width:'500px'}}
+                titleClassName={'dialogTitleStyle'}
+            />
         );
     }
 }

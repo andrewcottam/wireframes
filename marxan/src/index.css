@@ -11,11 +11,23 @@ body {
   left: 50%;
 }
 
+.infoPanel {
+  position: absolute;
+}
+
 .InfoPanelPaper {
-  height: 548px;
   width: 400px;
   margin: 20px;
 }
+
+.dialogTitleStyle{
+  font-size: 20px !important;
+}
+.lowerToolbar {
+  padding: 5px;
+  text-align: right;
+}
+
 .ResultsPanePaper {
   height: 349px;
   width: 400px;
@@ -36,7 +48,8 @@ body {
   bottom: 60px;
   right: 43px;
 }
-.settings{
+
+.settings {
   position: absolute;
   bottom: 60px;
   left: 43px;
@@ -44,7 +57,7 @@ body {
 
 .FileUploadForm {
   margin-bottom: 4px;
-  padding-top:10px;
+  padding-top: 10px;
 }
 
 .uploadControls {
@@ -81,11 +94,8 @@ body {
 .footer {
   background-color: rgb(0, 188, 212);
   color: white;
-  position: absolute;
-  bottom: -13px;
-  width: 400px;
   font-size: 13px;
-  padding: 5px 27px;
+  padding: 8px 27px;
 }
 
 .email {
@@ -93,6 +103,10 @@ body {
 }
 
 .tabPanel {}
+
+.tabs {
+  height: 500px;
+}
 
 #log {
   height: 275px;
@@ -144,16 +158,16 @@ table input {
 }
 
 .scenarioNameEditBox {
-  position: absolute;
   z-index: 1000000;
-  margin-left: 24px;
-  margin-top: 16px;
+  margin-top: 14px;
+  margin-left: 10px;
   font-family: Roboto, sans-serif;
   background-color: rgb(0, 188, 212);
   border: 0px;
   color: white;
-  font-size: 24px;
+  font-size: 20px;
   font-weight: 400;
+  position:static;
 }
 
 .descriptionEditBox {
@@ -296,6 +310,7 @@ div.rt-tbody>div>div>div>div {
   width: 500px !important;
   padding-top: 0px !important;
 }
+
 .dialog4 {
   margin-right: 73px;
   margin-top: 86px;

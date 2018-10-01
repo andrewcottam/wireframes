@@ -85,7 +85,7 @@ class NewUserDialog extends React.Component {
                     </span>
                 </div>;
         return (
-            <Dialog title="Register" children={c} actions={actions} open={this.props.open} onRequestClose={this.props.closeNewUserDialog} contentStyle={{width:'380px'}}/>
+            <Dialog title="Register" children={c} actions={actions} open={this.props.open} onRequestClose={this.props.closeNewUserDialog} contentStyle={{width:'380px'}} titleClassName={'dialogTitleStyle'}/>
         );
     }
 }
