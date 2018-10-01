@@ -790,7 +790,7 @@ class App extends React.Component {
   //creates the puvspr.dat file on the server for the current scenario
   createPuvsprFile() {
     this.setState({ creatingPuvsprFile: true });
-    jsonp(MARXAN_ENDPOINT + "createPUVSPRdatafile?user=" + this.state.user + "&scenario=" + this.state.scenario + "&planning_grid_name=" + this.state.metadata.PLANNING_UNIT_NAME, { timeout: TIMEOUT }, this.parsecreatePuvsprFile.bind(this));
+    jsonp(MARXAN_ENDPOINT + "createPuVSprFile?user=" + this.state.user + "&scenario=" + this.state.scenario + "&planning_grid_name=" + this.state.metadata.PLANNING_UNIT_NAME, { timeout: TIMEOUT }, this.parsecreatePuvsprFile.bind(this));
   }
 
   //the preprocessing has finished to create the puvspr.dat file
@@ -830,6 +830,7 @@ class App extends React.Component {
           this.runCompleted(response);
           //cancel the timer which polls the server to see when the run is complete
           clearInterval(this.timer);
+          this.timer = null;
         }
         else {
           this.setState({ runsCompleted: response.runsCompleted });
