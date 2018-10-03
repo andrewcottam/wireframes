@@ -15,7 +15,7 @@ class Login extends React.Component {
     handleKeyPress(e) {
         if (e.nativeEvent.key === "Enter") this.props.validateUser();
     }
-    registerNewUser() {
+    registerNewUser() { 
         this.setState({ newUserDialogOpen: true });
     }
     closeNewUserDialog() {
@@ -34,21 +34,27 @@ class Login extends React.Component {
         this.setState({ resendEmail: value });
     }
     render() {
-        const actions = [
-            <RaisedButton onClick={this.registerNewUser.bind(this)} label= "Register" className="scenariosBtn" primary={true} disabled={this.props.loggingIn ? true : false}/>,
-            <RaisedButton onClick={this.props.validateUser} label= {this.props.loggingIn ? "Logging in" : "Login"} disabled = {(!this.props.user || !this.props.password || this.props.loggingIn) ? true : false} primary={true} className="scenariosBtn" type="submit"/>
-        ];
-        let c = <div>
-                    <div>
-                        <FontAwesome spin name='sync' style={{'display': (this.props.loggingIn ? 'inline-block' : 'none')}} className='loginSpinner'/>
-                        <TextField floatingLabelText="Username" floatingLabelFixed={true} onChange = {(event, value)=>this.props.changeUserName(value)}  value={this.props.user} className='loginUserField' disabled = {this.props.loggingIn ? true : false} onKeyPress={this.handleKeyPress.bind(this)}/>
-                        <span><TextField floatingLabelText="Password" floatingLabelFixed={true} type="password" onChange = {(event, value)=>this.props.changePassword(value)}  value={this.props.password} className='loginUserField' disabled = {this.props.loggingIn ? true : false} onKeyPress={this.handleKeyPress.bind(this)}/></span>
-                        <span onClick={this.openResendPasswordDialog.bind(this)} className="forgotLink" title="Click to resend password">Forgot</span>
-                    </div>
-                </div>;
         return (
             <React.Fragment>
-                <Dialog actions={actions} title="Login" modal={true} children={c} open={this.props.open} contentStyle={{width:'358px'}} titleClassName={'dialogTitleStyle'}/>
+                <Dialog 
+                    actions={[
+                        <RaisedButton onClick={this.registerNewUser.bind(this)} label= "Register" className="scenariosBtn" primary={true} disabled={this.props.loggingIn ? true : false} style={{minWidth:'15px', minHeight:'15px',height:'22px',fontSize:'10px', verticalAlign:'middle', margin:'5px'}} />,
+                        <RaisedButton onClick={this.props.validateUser} label= {this.props.loggingIn ? "Logging in" : "Login"} disabled = {(!this.props.user || !this.props.password || this.props.loggingIn) ? true : false} primary={true} className="scenariosBtn" type="submit" style={{minWidth:'15px', minHeight:'15px',height:'22px',fontSize:'10px', verticalAlign:'middle', margin:'5px'}} />
+                    ]} 
+                    title="Login" 
+                    modal={true} 
+                    children={
+                        <div style={{height:'124px'}}>
+                            <FontAwesome spin name='sync' style={{'display': (this.props.loggingIn ? 'inline-block' : 'none')}} className='loginSpinner'/>
+                            <TextField floatingLabelText="Username" floatingLabelFixed={true} onChange = {(event, value)=>this.props.changeUserName(value)}  value={this.props.user} className='loginUserField' disabled = {this.props.loggingIn ? true : false} onKeyPress={this.handleKeyPress.bind(this)}/>
+                            <span><TextField floatingLabelText="Password" floatingLabelFixed={true} type="password" onChange = {(event, value)=>this.props.changePassword(value)}  value={this.props.password} className='loginUserField' disabled = {this.props.loggingIn ? true : false} onKeyPress={this.handleKeyPress.bind(this)}/></span>
+                            <span onClick={this.openResendPasswordDialog.bind(this)} className="forgotLink" title="Click to resend password">Forgot</span>
+                        </div>
+                    } 
+                    open={this.props.open} 
+                    contentStyle={{width:'358px'}} 
+                    titleClassName={'dialogTitleStyle'}
+                    />
                 <NewUserDialog 
                     open={this.state.newUserDialogOpen} 
                     closeNewUserDialog={this.closeNewUserDialog.bind(this)} 

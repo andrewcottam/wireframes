@@ -65,30 +65,45 @@ class ScenariosDialog extends React.Component {
         this.setState({ selectedScenario: scenario });
     }
     render() {
-        const actions = [
-            <RaisedButton icon={<FontAwesome name='file-medical' title='New scenario'/>} keyboardFocused={true} style={{'minWidth':'50px',margin:'5px'}} onClick={this._new.bind(this)} disabled={this.props.loadingScenarios || this.props.loadingScenario} />,
-            <RaisedButton icon={<FontAwesome name='cloud-upload-alt' title='Upload Marxan project from local machine'/>} onClick={this.props.openImportWizard} style={{'minWidth':'50px',margin:'5px'}}/>,
-            <RaisedButton icon={<FontAwesome name='copy' title='Clone scenario'/>} style={{'minWidth':'50px',margin:'5px'}} onClick={this.cloneScenario.bind(this)} disabled={!this.state.selectedScenario || this.props.loadingScenarios || this.props.loadingScenario} />,
-            <RaisedButton icon={<FontAwesome name='trash-alt' title='Delete scenario'/>} style={{'minWidth':'50px',margin:'5px'}} onClick={this._delete.bind(this)} disabled={!this.state.selectedScenario || this.props.loadingScenarios || this.props.loadingScenario} />,
-            <RaisedButton icon={<FontAwesome name='folder-open' title='Open scenario'/>} style={{'minWidth':'50px',margin:'5px'}} onClick={this.load.bind(this)} disabled={!this.state.selectedScenario || this.props.loadingScenarios || this.props.loadingScenario} />,
-            <RaisedButton label="Close" primary={true} onClick={this.props.closeScenariosDialog} disabled={this.props.loadingScenarios || this.props.loadingScenario} className="scenariosBtn"/>,
-        ];
         let listitems = this.props.scenarios && this.props.scenarios.map((scenario) => {
             let primary = <div style={{fontSize:'13px'}}>{scenario.name}</div>;
             var oldVersion = (scenario.oldVersion === 'True') ? 'OLD VERSION' : '';
             let secondary = <div style={{fontSize:'12px'}}>{scenario.description + " (created: " + scenario.createdate + ") " + oldVersion}</div>;
-            return (<ListItem key={scenario.name} value={scenario.name} primaryText={primary} secondaryText={secondary} />);
+            return (<ListItem 
+                key={scenario.name} 
+                value={scenario.name} 
+                primaryText={primary} 
+                secondaryText={secondary} 
+                innerDivStyle={{padding:'3px'}}
+            />);
         });
         if (!listitems) listitems = <div></div>; //to stop console warnings
-
-        let c = <React.Fragment>
-            <SelectableList defaultValue ={this.props.scenario} children={listitems} changeScenario={this.changeScenario.bind(this)} style={{'height':'600px'}}/>
-            <div id="spinner"><FontAwesome spin name='sync' style={{'display': (this.props.loadingScenarios || this.props.loadingScenario ? 'inline-block' : 'none')}} className={'scenarioSpinner'}/></div>
-        </React.Fragment>;
-
         return (
             <React.Fragment>
-                <Dialog overlayStyle={{display:'none'}} className={'dialog'} children={c} title="Scenarios" actions={actions} open={this.props.open} onRequestClose={this.props.closeScenariosDialog} titleClassName={'dialogTitleStyle'} contentStyle={{width:'566px'}}/>
+                <Dialog 
+                    style={{display: this.props.open ? 'block' : 'none', marginLeft: '60px', left:'0px', width:'400px !important'}}
+                    overlayStyle={{display:'none'}} 
+                    className={'dialogGeneric'} 
+                    children={
+                        <React.Fragment>
+                            <SelectableList defaultValue ={this.props.scenario} children={listitems} changeScenario={this.changeScenario.bind(this)} style={{'height':'600px'}}/>
+                            <div id="spinner"><FontAwesome spin name='sync' style={{'display': (this.props.loadingScenarios || this.props.loadingScenario ? 'inline-block' : 'none')}} className={'scenarioSpinner'}/></div>
+                        </React.Fragment>
+                    } 
+                    title="Scenarios" 
+                    actions={[
+                        <RaisedButton icon={<FontAwesome name='file-medical' title='New scenario'/>} keyboardFocused={true} onClick={this._new.bind(this)} disabled={this.props.loadingScenarios || this.props.loadingScenario} style={{minWidth:'15px', minHeight:'15px',height:'22px',width:'22px',fontSize:'10px', verticalAlign:'middle', margin:'5px'}}/>,
+                        <RaisedButton icon={<FontAwesome name='cloud-upload-alt' title='Upload Marxan project from local machine'/>} onClick={this.props.openImportWizard} style={{minWidth:'15px', minHeight:'15px',height:'22px',width:'22px',fontSize:'10px', verticalAlign:'middle', margin:'5px'}}/>,
+                        <RaisedButton icon={<FontAwesome name='copy' title='Duplicate scenario'/>} style={{minWidth:'15px', minHeight:'15px',height:'22px',width:'22px',fontSize:'10px', verticalAlign:'middle', margin:'5px'}} onClick={this.cloneScenario.bind(this)} disabled={!this.state.selectedScenario || this.props.loadingScenarios || this.props.loadingScenario} />,
+                        <RaisedButton icon={<FontAwesome name='trash-alt' title='Delete scenario' style={{color:'red'}}/>} style={{minWidth:'15px', minHeight:'15px',height:'22px',width:'22px',fontSize:'10px', verticalAlign:'middle', margin:'5px'}} onClick={this._delete.bind(this)} disabled={!this.state.selectedScenario || this.props.loadingScenarios || this.props.loadingScenario} />,
+                        <RaisedButton icon={<FontAwesome name='folder-open' title='Open scenario'/>} style={{minWidth:'15px', minHeight:'15px',height:'22px',width:'22px',fontSize:'10px', verticalAlign:'middle', margin:'5px'}} onClick={this.load.bind(this)} disabled={!this.state.selectedScenario || this.props.loadingScenarios || this.props.loadingScenario} />,
+                        <RaisedButton label="OK" primary={true} onClick={this.props.closeScenariosDialog} disabled={this.props.loadingScenarios || this.props.loadingScenario} className="scenariosBtn" style={{minWidth:'15px', minHeight:'15px', height:'22px', fontSize:'10px', verticalAlign:'middle', margin:'5px'}}/>,
+                    ]} 
+                    open={this.props.open} 
+                    onRequestClose={this.props.closeScenariosDialog} 
+                    titleClassName={'dialogTitleStyle'} 
+                    contentStyle={{width:'400px'}}
+                />
             </React.Fragment>
         );
     }

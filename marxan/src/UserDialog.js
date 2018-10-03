@@ -41,21 +41,33 @@ class UserDialog extends React.Component {
         this.setState({ updated: false, validEmail: true });
     }
     render() {
-        const actions = [
-            <RaisedButton label="Close" primary={true} onClick={this.closeUserDialog.bind(this)} className="scenariosBtn"/>,
-            <RaisedButton label="Save" primary={true} onClick={this.updateUser.bind(this)} className="scenariosBtn" disabled={!this.state.updated}/>,
-        ];
-        let c = <div>
-                    <TextField floatingLabelText="Full name" floatingLabelFixed={true} onChange = {(event,newValue) => this.updateState("NAME",newValue)} defaultValue ={this.props.userData && this.props.userData.NAME} onKeyPress={this.handleKeyPress.bind(this)} floatingLabelShrinkStyle={{fontSize:'16px'}} floatingLabelFocusStyle={{fontSize:'16px'}} style={{fontSize:'13px'}} />
-                    <TextField floatingLabelText="Email address" floatingLabelFixed={true} errorText={this.state.validEmail ?  '' : "Invalid email address"} onChange = {(event,newValue) => this.updateState("EMAIL",newValue)} defaultValue={this.props.userData && this.props.userData.EMAIL} onKeyPress={this.handleKeyPress.bind(this)} floatingLabelShrinkStyle={{fontSize:'16px'}} floatingLabelFocusStyle={{fontSize:'16px'}} style={{fontSize:'13px'}} />
-                    <span>
-                    <TextField floatingLabelText="Mapbox Access Token" floatingLabelFixed={true} type="password" errorText={this.state.mapboxAccessTokenError} onChange = {(event,newValue) => this.updateState("MAPBOXACCESSTOKEN",newValue)} defaultValue={this.props.userData && this.props.userData.MAPBOXACCESSTOKEN} onKeyPress={this.handleKeyPress.bind(this)}/>
-                    </span><span>
-                    <FontAwesome name='question-circle' className="mapboxHelp" title="If you have a Mapbox account you can enter an access token here to be able to access your own tilesets. Otherwise, leave it as it is."/>
-                    </span>
-                </div>;
         return (
-            <Dialog overlayStyle={{display:'none'}} className={'dialog'} title="Profile" children={c} actions={actions} open={this.props.open} onRequestClose={this.closeUserDialog.bind(this)} contentStyle={{width:'350px'}} titleClassName={'dialogTitleStyle'}/>
+            <Dialog 
+                style={{display: this.props.open ? 'block' : 'none', marginLeft: '300px', left:'0px', width:'330px !important'}}
+                overlayStyle={{display:'none'}} 
+                className={'dialogGeneric'} 
+                title="Profile" 
+                children={
+                    <div>
+                        <TextField floatingLabelText="Full name" floatingLabelFixed={true} onChange = {(event,newValue) => this.updateState("NAME",newValue)} defaultValue ={this.props.userData && this.props.userData.NAME} onKeyPress={this.handleKeyPress.bind(this)} floatingLabelShrinkStyle={{fontSize:'16px'}} floatingLabelFocusStyle={{fontSize:'16px'}} style={{fontSize:'13px'}} />
+                        <TextField floatingLabelText="Email address" floatingLabelFixed={true} errorText={this.state.validEmail ?  '' : "Invalid email address"} onChange = {(event,newValue) => this.updateState("EMAIL",newValue)} defaultValue={this.props.userData && this.props.userData.EMAIL} onKeyPress={this.handleKeyPress.bind(this)} floatingLabelShrinkStyle={{fontSize:'16px'}} floatingLabelFocusStyle={{fontSize:'16px'}} style={{fontSize:'13px'}} />
+                        <span>
+                            <TextField floatingLabelText="Mapbox Access Token" floatingLabelFixed={true} type="password" errorText={this.state.mapboxAccessTokenError} onChange = {(event,newValue) => this.updateState("MAPBOXACCESSTOKEN",newValue)} defaultValue={this.props.userData && this.props.userData.MAPBOXACCESSTOKEN} onKeyPress={this.handleKeyPress.bind(this)}/>
+                        </span>
+                        <span>
+                            <FontAwesome name='question-circle' className="mapboxHelp" title="If you have a Mapbox account you can enter an access token here to be able to access your own tilesets. Otherwise, leave it as it is."/>
+                        </span>
+                    </div>
+                } 
+                actions={[
+                    <RaisedButton label="Save" primary={true} onClick={this.updateUser.bind(this)} className="scenariosBtn" disabled={!this.state.updated} style={{minWidth:'15px', minHeight:'15px', height:'22px', fontSize:'10px', verticalAlign:'middle'}}/>,
+                    <RaisedButton label="OK" primary={true} onClick={this.closeUserDialog.bind(this)} className="scenariosBtn" style={{minWidth:'15px', minHeight:'15px', height:'22px', fontSize:'10px', verticalAlign:'middle'}}/>,
+                ]} 
+                open={this.props.open} 
+                onRequestClose={this.closeUserDialog.bind(this)} 
+                contentStyle={{width:'330px'}} 
+                titleClassName={'dialogTitleStyle'}
+            />
         );
     }
 }

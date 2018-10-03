@@ -84,7 +84,7 @@ class InfoPanel extends React.Component {
   }
   pu_tab_active() {
     this.props.pu_tab_active();
-  }
+  } 
   startStopPuEditSession() {
     (this.state.puEditing) ? this.stopPuEditSession(): this.startPuEditSession();
   }
@@ -171,12 +171,14 @@ class InfoPanel extends React.Component {
               </Tab>
             </Tabs>     
             <Paper className={'lowerToolbar'}>
-              <div>
-                <RaisedButton title="Run Settings" onClick={this.showSettingsDialog.bind(this)} icon={<FontAwesome name='cog' title='Run Settings' style={{paddingBottom:'2px'}}/>} 
-                style={{minWidth:'15px', minHeight:'15px',height:'21px',width:'21px',fontSize:'10px'}}/>
-                <RaisedButton title="Click to run this scenario" label={this.props.running ? "Running" : "Run"} secondary={true} onClick={this.props.runMarxan} disabled={!this.props.runnable || this.props.running} 
-                style={{minWidth:'15px', minHeight:'15px',height:'22px',fontSize:'10px', marginLeft: '13px', marginRight: '13px'}} 
-                labelStyle={{paddingRight:'10px',paddingLeft:'10px'}}/>
+              <div style={{position:'absolute',marginLeft:'10px'}}>
+                  <RaisedButton title="Run Settings" onClick={this.showSettingsDialog.bind(this)} icon={<FontAwesome name='cog' title='Run Settings' style={{paddingBottom:'2px'}}/>} 
+                  style={{minWidth:'15px', minHeight:'15px',height:'22px',width:'22px',fontSize:'10px', verticalAlign:'middle'}}/>
+                </div>
+                <div style={{position:'absolute',right:'23px'}}>
+                  <RaisedButton title="Click to run this scenario" label={this.props.running ? "Running" : "Run"} secondary={true} onClick={this.props.runMarxan} disabled={!this.props.runnable || this.props.running} 
+                  style={{minWidth:'15px', minHeight:'15px',height:'22px',fontSize:'10px', marginLeft: '13px', marginRight: '13px', verticalAlign:'middle'}} 
+                  labelStyle={{paddingRight:'10px',paddingLeft:'10px'}}/>
               </div>
             </Paper>
             <div className='footer'>

@@ -22,11 +22,11 @@ import NewInterestFeatureDialog from './newCaseStudySteps/NewInterestFeatureDial
 import AllInterestFeaturesDialog from './AllInterestFeaturesDialog';
 import AllCostsDialog from './AllCostsDialog';
 import SettingsDialog from './SettingsDialog';
-import ParametersDialog from './ParametersDialog';
+import FilesDialog from './FilesDialog';
 import ResultsPane from './ResultsPane';
-import LogDialog from './LogDialog';
 import ClassificationDialog from './ClassificationDialog';
 import ImportWizard from './ImportWizard';
+import FlatButton from 'material-ui/FlatButton';
 
 //CONSTANTS
 //THE MARXAN_ENDPOINT MUST ALSO BE CHANGED IN THE FILEUPLOAD.JS FILE 
@@ -66,7 +66,7 @@ class App extends React.Component {
       snackbarOpen: false,
       snackbarMessage: '',
       tilesets: [],
-      parametersDialogOpen: false,
+      filesDialogOpen: false,
       updatingRunParameters: false,
       optionsDialogOpen: false,
       newCaseStudyDialogOpen: false, //set to true to debug immediately
@@ -75,9 +75,9 @@ class App extends React.Component {
       AllInterestFeaturesDialogOpen: false,
       AllCostsDialogOpen: false,
       settingsDialogOpen: false,
-      logDialogOpen: false,
       classificationDialogOpen: false,
       importDialogOpen: false,
+      resultsPaneOpen: true,
       featureDatasetName: '',
       featureDatasetDescription: '',
       featureDatasetFilename: '',
@@ -321,13 +321,13 @@ class App extends React.Component {
   saveOptions(options) {
     this.updateUser(options);
   }
-  //opens the run parameters dialog whos open state is controlled
-  openParametersDialog() {
-    this.setState({ parametersDialogOpen: true });
+  //opens the filess dialog whos open state is controlled
+  openFilesDialog() {
+    this.setState({ filesDialogOpen: true });
   }
   //closes the run parameters dialog whos open state is controlled
-  closeParametersDialog() {
-    this.setState({ parametersDialogOpen: false });
+  closeFilesDialog() {
+    this.setState({ filesDialogOpen: false });
   }
 
   //updates the parameters for the current scenario back to the server
@@ -367,7 +367,7 @@ class App extends React.Component {
         //get the number of runs from the run parameters array
         let numReps = this.runParams.filter(function(item) { return item.key === "NUMREPS" })[0].value;
         //if succesfull write the state back 
-        this.setState({ snackbarOpen: true, snackbarMessage: response.info, runParams: this.runParams, parametersDialogOpen: false, numReps: numReps });
+        this.setState({ snackbarOpen: true, snackbarMessage: response.info, runParams: this.runParams, filesDialogOpen: false, numReps: numReps });
       }
     }
   }
@@ -1141,7 +1141,7 @@ class App extends React.Component {
         'fill-color': "rgba(255,0,0,0)",
         'fill-opacity': 0
       }
-    });
+    },'place-city-sm');
   }
 
   //fired when the features tab is selected
@@ -1541,12 +1541,6 @@ class App extends React.Component {
     this.setState({ settingsDialogOpen: false });
   }
 
-  openLogDialog() {
-    this.setState({ logDialogOpen: true });
-  }
-  closeLogDialog() {
-    this.setState({ logDialogOpen: false });
-  }
   openClassificationDialog() {
     this.setState({ classificationDialogOpen: true });
   }
@@ -1563,6 +1557,12 @@ class App extends React.Component {
 
   uploadPlanningUnitFromShapefile() {
 
+  }
+  hideResults(){
+    this.setState({resultsPaneOpen:false});
+  }
+  showResults(){
+    this.setState({resultsPaneOpen:true});
   }
 
   render() {
@@ -1696,33 +1696,32 @@ class App extends React.Component {
             resetNewConservationFeature={this.resetNewConservationFeature.bind(this)}
           />
           <SettingsDialog
-              open={this.state.settingsDialogOpen}
-              closeSettingsDialog={this.closeSettingsDialog.bind(this)}
-              openParametersDialog={this.openParametersDialog.bind(this)}
-              closeParametersDialog={this.closeParametersDialog.bind(this)}
-              files={this.state.files}
-          />
-          <ParametersDialog
-            open={this.state.parametersDialogOpen}
-            closeParametersDialog={this.closeParametersDialog.bind(this)}
-            runParams={this.state.runParams}
+            open={this.state.settingsDialogOpen}
+            closeSettingsDialog={this.closeSettingsDialog.bind(this)}
+            openFilesDialog={this.openFilesDialog.bind(this)}
             updateRunParams={this.updateRunParams.bind(this)}
             updatingRunParameters={this.state.updatingRunParameters}
+            runParams={this.state.runParams}
+          />
+          <FilesDialog
+            open={this.state.filesDialogOpen}
+            closeFilesDialog={this.closeFilesDialog.bind(this)}
+            fileUploaded={this.fileUploaded.bind(this)}
+            user={this.state.user}
+            scenario={this.state.scenario}
+            files={this.state.files}
           />
           <ResultsPane
             running={this.state.running} 
             dataAvailable={this.state.dataAvailable} 
             solutions={this.state.solutions}
             loadSolution={this.loadSolution.bind(this)} 
-            openLogDialog={this.openLogDialog.bind(this)}
             openClassificationDialog={this.openClassificationDialog.bind(this)}
             outputsTabString={this.state.outputsTabString} 
+            hideResults={this.hideResults.bind(this)}
+            open={this.state.resultsPaneOpen && this.state.loggedIn}
             brew={this.state.brew}
-          />
-          <LogDialog 
             log={this.state.log} 
-            open={this.state.logDialogOpen}
-            closeLogDialog={this.closeLogDialog.bind(this)}
           />
           <ClassificationDialog 
             open={this.state.classificationDialogOpen}
@@ -1744,6 +1743,15 @@ class App extends React.Component {
             MARXAN_ENDPOINT={MARXAN_ENDPOINT}
             uploadShapefile={this.importZippedShapefileAsPu.bind(this)}
           />
+          <div style={{position: 'absolute', display: this.state.resultsPaneOpen ? 'none' : 'block', backgroundColor: 'rgb(0, 188, 212)', right: '0px', top: '20px', width: '20px', borderRadius: '2px', height: '88px',boxShadow:'rgba(0, 0, 0, 0.16) 0px 3px 10px, rgba(0, 0, 0, 0.23) 0px 3px 10px'}} title={"Show results"}>
+            <FlatButton
+              onClick={this.showResults.bind(this)}
+              primary={true}
+              style={{minWidth:'0px',  marginLeft: '4px', marginTop:'7px'}}
+              title={"Show results"}
+              icon={<FontAwesome name='arrow-left' style={{top:'8px','color':'white'}}/>}
+            />
+          </div>
         </React.Fragment>
       </MuiThemeProvider>
     );
