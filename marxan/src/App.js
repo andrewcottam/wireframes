@@ -3,7 +3,7 @@ import React from 'react';
 import MuiThemeProvider from 'material-ui/styles/MuiThemeProvider';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import mapboxgl from 'mapbox-gl';
-import * as jsonp from 'jsonp';
+import * as jsonp from 'jsonp-promise';
 import InfoPanel from './InfoPanel.js';
 import Popup from './Popup.js';
 import Login from './login.js';
@@ -45,7 +45,7 @@ class App extends React.Component {
       user: DISABLE_LOGIN ? 'andrew' : '',
       password: DISABLE_LOGIN ? 'asd' : '',
       scenario: DISABLE_LOGIN ? 'Tonga marine' : '',
-      loggedIn: false, 
+      loggedIn: false,
       userData: {},
       loggingIn: false,
       metadata: {},
@@ -78,6 +78,7 @@ class App extends React.Component {
       classificationDialogOpen: false,
       importDialogOpen: false,
       resultsPaneOpen: true,
+      preprocessingFeature: false,
       featureDatasetName: '',
       featureDatasetDescription: '',
       featureDatasetFilename: '',
@@ -135,10 +136,9 @@ class App extends React.Component {
   }
 
   //checks the response from a REST call for timeout errors or empty responses
-  responseIsTimeoutOrEmpty(err, response) {
-    if (err || !response) {
-      let msg = err ? err.message : "No response received from server";
-      msg = (msg === "Timeout") ? "Timeout contacting server" : msg;
+  responseIsTimeoutOrEmpty(response) {
+    if (!response) {
+      let msg = "No response received from server";
       this.setState({ snackbarOpen: true, snackbarMessage: msg, loggingIn: false });
       return true;
     }
@@ -171,41 +171,37 @@ class App extends React.Component {
   validateUser() {
     this.setState({ loggingIn: true });
     //get a list of existing users 
-    jsonp(MARXAN_ENDPOINT + "validateUser?user=" + this.state.user + "&password=" + this.state.password, { timeout: 10000 }, this.parseValidateUserResponse.bind(this));
-  }
-
-  parseValidateUserResponse(err, response) {
-    //check if there are no timeout errors or empty responses
-    if (!this.responseIsTimeoutOrEmpty(err, response)) {
-      //check there are no errors from the server
-      if (!this.isServerError(response)) {
-        //user validated - log them in
-        this.login();
+    jsonp(MARXAN_ENDPOINT + "validateUser?user=" + this.state.user + "&password=" + this.state.password, { timeout: 10000 }).promise.then(function(response) {
+      //check if there are no timeout errors or empty responses
+      if (!this.responseIsTimeoutOrEmpty(response)) {
+        //check there are no errors from the server
+        if (!this.isServerError(response)) {
+          //user validated - log them in
+          this.login();
+        }
+        else {
+          this.setState({ loggingIn: false });
+        }
       }
-      else {
-        this.setState({ loggingIn: false });
-      }
-    }
+    }.bind(this));
   }
 
   getUsers() {
     //Get a user list
-    jsonp(MARXAN_ENDPOINT + "listUsers", { timeout: TIMEOUT }, this.parseGetUsersResponse.bind(this));
-  }
-
-  parseGetUsersResponse(err, response) {
-    //check if there are no timeout errors or empty responses
-    if (!this.responseIsTimeoutOrEmpty(err, response)) {
-      //the user already exists
-      if (response.users.indexOf(this.state.user) > -1) {
-        //user validated - log them in
-        this.login();
+    jsonp(MARXAN_ENDPOINT + "listUsers", { timeout: TIMEOUT }).promise.then(function(response) {
+      //check if there are no timeout errors or empty responses
+      if (!this.responseIsTimeoutOrEmpty(response)) {
+        //the user already exists
+        if (response.users.indexOf(this.state.user) > -1) {
+          //user validated - log them in
+          this.login();
+        }
+        else {
+          //ui feedback
+          this.setState({ loggingIn: false, snackbarOpen: true, snackbarMessage: "Invalid login" });
+        }
       }
-      else {
-        //ui feedback
-        this.setState({ loggingIn: false, snackbarOpen: true, snackbarMessage: "Invalid login" });
-      }
-    }
+    }.bind(this));
   }
 
   //the user is validated so login
@@ -221,37 +217,31 @@ class App extends React.Component {
 
   resendPassword() {
     this.setState({ resending: true });
-    jsonp(MARXAN_ENDPOINT + "resendPassword?user=" + this.state.user, { timeout: TIMEOUT }, this.parseResendPasswordResponse.bind(this));
-  }
-
-  //callback function after resending the users password
-  parseResendPasswordResponse(err, response) {
-    this.setState({ resending: false });
-    //check if there are no timeout errors or empty responses
-    if (!this.responseIsTimeoutOrEmpty(err, response)) {
-      //check there are no errors from the server
-      if (!this.isServerError(response)) {
-        this.setState({ snackbarOpen: true, snackbarMessage: "Password resent" });
+    jsonp(MARXAN_ENDPOINT + "resendPassword?user=" + this.state.user, { timeout: TIMEOUT }).promise.then(function(response) {
+      this.setState({ resending: false });
+      //check if there are no timeout errors or empty responses
+      if (!this.responseIsTimeoutOrEmpty(response)) {
+        //check there are no errors from the server
+        if (!this.isServerError(response)) {
+          this.setState({ snackbarOpen: true, snackbarMessage: "Password resent" });
+        }
       }
-    }
+    }.bind(this));
   }
 
   //gets all the information for the user that is logging in
   getUserInfo() {
-    jsonp(MARXAN_ENDPOINT + "getUser?user=" + this.state.user, { timeout: TIMEOUT }, this.parseGetUserInfoResponse.bind(this));
-  }
-
-  //callback function to get the information for the user that is logging in
-  parseGetUserInfoResponse(err, response) {
-    //check if there are no timeout errors or empty responses
-    if (!this.responseIsTimeoutOrEmpty(err, response)) {
-      //check there are no errors from the server
-      if (!this.isServerError(response)) {
-        this.setState({ scenario: response.userData.LASTSCENARIO, userData: response.userData });
-        //get the users tilesets from mapbox
-        this.getTilesets();
+    jsonp(MARXAN_ENDPOINT + "getUser?user=" + this.state.user, { timeout: TIMEOUT }).promise.then(function(response) {
+      //check if there are no timeout errors or empty responses
+      if (!this.responseIsTimeoutOrEmpty(response)) {
+        //check there are no errors from the server
+        if (!this.isServerError(response)) {
+          this.setState({ scenario: response.userData.LASTSCENARIO, userData: response.userData });
+          //get the users tilesets from mapbox
+          this.getTilesets();
+        }
       }
-    }
+    }.bind(this));
   }
 
   appendToFormData(formData, obj) {
@@ -300,7 +290,7 @@ class App extends React.Component {
   //callback function after updating the user.dat file with the passed parameters
   parseUpdateUserParametersResponse(response) {
     //check if there are no timeout errors or empty responses
-    if (!this.responseIsTimeoutOrEmpty(undefined, response)) {
+    if (!this.responseIsTimeoutOrEmpty( response)) {
       //check there are no errors from the server
       if (!this.isServerError(response)) {
         //if succesfull write the state back to the userData key
@@ -361,7 +351,7 @@ class App extends React.Component {
     //ui feedback
     this.setState({ updatingRunParameters: false });
     //check if there are no timeout errors or empty responses
-    if (!this.responseIsTimeoutOrEmpty(undefined, response)) {
+    if (!this.responseIsTimeoutOrEmpty( response)) {
       //check there are no errors from the server
       if (!this.isServerError(response)) {
         //get the number of runs from the run parameters array
@@ -376,30 +366,28 @@ class App extends React.Component {
   getTilesets() {
     //get the tilesets for the user
     let client = new MapboxClient(this.state.userData.MAPBOXACCESSTOKEN);
-    client.listTilesets(this.parseTilesets.bind(this));
+    client.listTilesets(function(err, tilesets) {
+      //check if there are no timeout errors or empty responses
+      if (!this.responseIsTimeoutOrEmpty(tilesets)) {
+        //sort alphabetically by name
+        tilesets.sort(function(a, b) {
+          if (a.name < b.name)
+            return -1;
+          if (a.name > b.name)
+            return 1;
+          return 0;
+        });
+        //set the state
+        this.setState({ tilesets: tilesets });
+        //now the tilesets are loaded from mapbox we can get the users last scenario and load it - this is only relevant if the user is not currently logged in - if they are logged in they are simply refreshing the list of tilesets
+        if (!this.state.loggedIn) this.loadScenario(this.state.userData.LASTSCENARIO);
+      }
+      else {
+        this.setState({ tilesets: [] });
+      }
+    }.bind(this));
   }
-
-  //callback function with the tileset info for the user
-  parseTilesets(err, tilesets) {
-    //check if there are no timeout errors or empty responses
-    if (!this.responseIsTimeoutOrEmpty(err, tilesets)) {
-      //sort alphabetically by name
-      tilesets.sort(function(a, b) {
-        if (a.name < b.name)
-          return -1;
-        if (a.name > b.name)
-          return 1;
-        return 0;
-      });
-      //set the state
-      this.setState({ tilesets: tilesets });
-      //now the tilesets are loaded from mapbox we can get the users last scenario and load it - this is only relevant if the user is not currently logged in - if they are logged in they are simply refreshing the list of tilesets
-      if (!this.state.loggedIn) this.loadScenario(this.state.userData.LASTSCENARIO);
-    }
-    else {
-      this.setState({ tilesets: [] });
-    }
-  }
+  
   //called if the tileset select box is changed
   changeTileset(tilesetid) {
     this.getMetadata(tilesetid).then(this.metadataRetrieved.bind(this));
@@ -428,33 +416,30 @@ class App extends React.Component {
     this.setState({ loadingScenario: true });
     //reset the results from any previous scenarios
     this.resetResults();
-    jsonp(MARXAN_ENDPOINT + "getScenario?user=" + this.state.user + "&scenario=" + scenario, { timeout: TIMEOUT }, this.parseLoadScenarioResponse.bind(this));
-  }
-
-  //callback function to get the files, metadata and runparameters for a specific scenario to render in the UI
-  parseLoadScenarioResponse(err, response) {
-    this.setState({ loadingScenario: false, loggingIn: false });
-    //check if there are no timeout errors or empty responses
-    if (!this.responseIsTimeoutOrEmpty(err, response)) {
-      //check there are no errors from the server
-      if (!this.isServerError(response)) {
-        //get the number of runs from the run parameters array
-        let numReps = response.runParameters.filter(function(item) { return item.key === "NUMREPS" })[0].value;
-        //set the state for the app based on the data that is returned from the server
-        this.setState({ loggedIn: true, scenario: response.scenario, runParams: response.runParameters, numReps: numReps, files: Object.assign(response.files), metadata: response.metadata, renderer: response.renderer, scenarioFeatures: response.features, planning_units: response.planning_units });
-        //set the puidsToExclude from the pu.dat file
-        var puidsToExclude = (response.planning_units.length > 1) && (response.planning_units[1].length > 1) ? response.planning_units[1][1] : [];
-        this.setState({ puidsToExclude: puidsToExclude });
-        //initialise all the interest features with the interest features for this scenario
-        this.initialiseInterestFeatures(response.metadata.OLDVERSION, response.features, response.allFeatures);
-        //if there is a PLANNING_UNIT_NAME passed then programmatically change the select box to this map 
-        if (response.metadata.PLANNING_UNIT_NAME) {
-          this.changeTileset(MAPBOX_USER + "." + response.metadata.PLANNING_UNIT_NAME);
+    jsonp(MARXAN_ENDPOINT + "getScenario?user=" + this.state.user + "&scenario=" + scenario, { timeout: TIMEOUT }).promise.then(function(response) {
+      this.setState({ loadingScenario: false, loggingIn: false });
+      //check if there are no timeout errors or empty responses
+      if (!this.responseIsTimeoutOrEmpty(response)) {
+        //check there are no errors from the server
+        if (!this.isServerError(response)) {
+          //get the number of runs from the run parameters array
+          let numReps = response.runParameters.filter(function(item) { return item.key === "NUMREPS" })[0].value;
+          //set the state for the app based on the data that is returned from the server
+          this.setState({ loggedIn: true, scenario: response.scenario, runParams: response.runParameters, numReps: numReps, files: Object.assign(response.files), metadata: response.metadata, renderer: response.renderer, scenarioFeatures: response.features, planning_units: response.planning_units });
+          //set the puidsToExclude from the pu.dat file
+          var puidsToExclude = (response.planning_units.length > 1) && (response.planning_units[1].length > 1) ? response.planning_units[1][1] : [];
+          this.setState({ puidsToExclude: puidsToExclude });
+          //initialise all the interest features with the interest features for this scenario
+          this.initialiseInterestFeatures(response.metadata.OLDVERSION, response.features, response.allFeatures);
+          //if there is a PLANNING_UNIT_NAME passed then programmatically change the select box to this map 
+          if (response.metadata.PLANNING_UNIT_NAME) {
+            this.changeTileset(MAPBOX_USER + "." + response.metadata.PLANNING_UNIT_NAME);
+          }
+          //poll the server to see if results are available for this scenario - if there are these will be loaded
+          this.pollResults(true);
         }
-        //poll the server to see if results are available for this scenario - if there are these will be loaded
-        this.pollResults(true);
       }
-    }
+    }.bind(this));
   }
 
   //initialises the interest features based on the current scenario
@@ -536,12 +521,21 @@ class App extends React.Component {
   //REST call to create a new scenario for a specific user
   createNewScenario(scenario) {
     this.setState({ loadingScenarios: true });
-    if (scenario.description) {
-      jsonp(MARXAN_ENDPOINT + "createScenario?user=" + this.state.user + "&scenario=" + scenario.name + "&description=" + scenario.description, { timeout: TIMEOUT }, this.parseCreateNewScenarioResponse.bind(this));
-    }
-    else {
-      jsonp(MARXAN_ENDPOINT + "createScenario?user=" + this.state.user + "&scenario=" + scenario.name, { timeout: TIMEOUT }, this.parseCreateNewScenarioResponse.bind(this));
-    }
+    jsonp(MARXAN_ENDPOINT + "createScenario?user=" + this.state.user + "&scenario=" + scenario.name + "&description=" + scenario.description, { timeout: TIMEOUT }).promise.then(function(response) {
+      //check if there are no timeout errors or empty responses
+      if (!this.responseIsTimeoutOrEmpty(response)) {
+        //check there are no errors from the server
+        if (!this.isServerError(response)) {
+          //refresh the scenarios list
+          this.listScenarios();
+          this.setState({ snackbarOpen: true, snackbarMessage: response.info });
+        }
+        else {
+          //ui feedback
+          this.setState({ loadingScenarios: false });
+        }
+      }
+    }.bind(this));
   }
 
   //REST call to create a new scenario from the wizard
@@ -585,74 +579,51 @@ class App extends React.Component {
     }
   }
 
-  //callback function after creating a new scenario
-  parseCreateNewScenarioResponse(err, response) {
-    //check if there are no timeout errors or empty responses
-    if (!this.responseIsTimeoutOrEmpty(err, response)) {
-      //check there are no errors from the server
-      if (!this.isServerError(response)) {
-        //refresh the scenarios list
-        this.listScenarios();
-        this.setState({ snackbarOpen: true, snackbarMessage: response.info });
-      }
-      else {
-        //ui feedback
-        this.setState({ loadingScenarios: false });
-      }
-    }
-  }
-
   //REST call to delete a specific scenario
   deleteScenario(name) {
     this.setState({ loadingScenarios: true });
-    jsonp(MARXAN_ENDPOINT + "deleteScenario?user=" + this.state.user + "&scenario=" + name, { timeout: TIMEOUT }, this.parseDeleteScenarioResponse.bind(this));
-  }
-
-  //callback function after deleting a specific scenario on the server
-  parseDeleteScenarioResponse(err, response) {
-    //check if there are no timeout errors or empty responses
-    if (!this.responseIsTimeoutOrEmpty(err, response)) {
-      //check there are no errors from the server
-      if (!this.isServerError(response)) {
-        //refresh the scenarios list
-        this.listScenarios();
-        //ui feedback
-        this.setState({ snackbarOpen: true, snackbarMessage: response.info });
-        //see if the user deleted the current scenario
-        if (response.scenario === this.state.scenario) {
+    jsonp(MARXAN_ENDPOINT + "deleteScenario?user=" + this.state.user + "&scenario=" + name, { timeout: TIMEOUT }).promise.then(function(response) {
+      //check if there are no timeout errors or empty responses
+      if (!this.responseIsTimeoutOrEmpty(response)) {
+        //check there are no errors from the server
+        if (!this.isServerError(response)) {
+          //refresh the scenarios list
+          this.listScenarios();
           //ui feedback
-          this.setState({ snackbarOpen: true, snackbarMessage: "Current scenario deleted - loading next available" });
-          this.state.scenarios.map((scenario) => { if (scenario.name !== this.state.scenario) this.loadScenario(scenario.name); return undefined; });
+          this.setState({ snackbarOpen: true, snackbarMessage: response.info });
+          //see if the user deleted the current scenario
+          if (response.scenario === this.state.scenario) {
+            //ui feedback
+            this.setState({ snackbarOpen: true, snackbarMessage: "Current scenario deleted - loading next available" });
+            this.state.scenarios.map((scenario) => { if (scenario.name !== this.state.scenario) this.loadScenario(scenario.name); return undefined; });
+          }
+        }
+        else {
+          //ui feedback
+          this.setState({ loadingScenarios: false });
         }
       }
-      else {
-        //ui feedback
-        this.setState({ loadingScenarios: false });
-      }
-    }
+    }.bind(this));
   }
 
   cloneScenario(name) {
     this.setState({ loadingScenarios: true });
-    jsonp(MARXAN_ENDPOINT + "cloneScenario?user=" + this.state.user + "&scenario=" + name, { timeout: TIMEOUT }, this.parsecloneScenarioResponse.bind(this));
-  }
-
-  //callback function after cloning a specific scenario on the server
-  parsecloneScenarioResponse(err, response) {
-    //check if there are no timeout errors or empty responses
-    if (!this.responseIsTimeoutOrEmpty(err, response)) {
-      //check there are no errors from the server
-      if (!this.isServerError(response)) {
-        //refresh the scenarios list
-        this.listScenarios();
-        //ui feedback
-        this.setState({ snackbarOpen: true, snackbarMessage: response.info });
+    jsonp(MARXAN_ENDPOINT + "cloneScenario?user=" + this.state.user + "&scenario=" + name, { timeout: TIMEOUT }).promise.then(function(response) {
+      //check if there are no timeout errors or empty responses
+      if (!this.responseIsTimeoutOrEmpty(response)) {
+        //check there are no errors from the server
+        if (!this.isServerError(response)) {
+          //refresh the scenarios list
+          this.listScenarios();
+          //ui feedback
+          this.setState({ snackbarOpen: true, snackbarMessage: response.info });
+        }
+        else {
+          //ui feedback
+          this.setState({ loadingScenarios: false });
+        }
       }
-      else {
-        //ui feedback
-        this.setState({ loadingScenarios: false });
-      }
-    }
+    }.bind(this));
   }
 
   startEditingScenarioName() {
@@ -666,74 +637,80 @@ class App extends React.Component {
   renameScenario(newName) {
     this.setState({ editingScenarioName: false });
     if (newName !== '' && newName !== this.state.scenario) {
-      jsonp(MARXAN_ENDPOINT + "renameScenario?user=" + this.state.user + "&scenario=" + this.state.scenario + "&newName=" + newName, { timeout: TIMEOUT }, this.parseRenameScenarioResponse.bind(this));
-    }
-  }
-
-  parseRenameScenarioResponse(err, response) {
-    //check if there are no timeout errors or empty responses
-    if (!this.responseIsTimeoutOrEmpty(err, response)) {
-      //check there are no errors from the server
-      if (!this.isServerError(response)) {
-        this.setState({ scenario: response.scenario, snackbarOpen: true, snackbarMessage: response.info });
-      }
+      jsonp(MARXAN_ENDPOINT + "renameScenario?user=" + this.state.user + "&scenario=" + this.state.scenario + "&newName=" + newName, { timeout: TIMEOUT }).promise.then(function(response) {
+        //check if there are no timeout errors or empty responses
+        if (!this.responseIsTimeoutOrEmpty(response)) {
+          //check there are no errors from the server
+          if (!this.isServerError(response)) {
+            this.setState({ scenario: response.scenario, snackbarOpen: true, snackbarMessage: response.info });
+          }
+        }
+      }.bind(this));
     }
   }
 
   renameDescription(newDesc) {
     this.setState({ editingDescription: false });
     if (newDesc !== '' && newDesc !== this.state.metadata.DESCRIPTION) {
-      jsonp(MARXAN_ENDPOINT + "renameDescription?user=" + this.state.user + "&scenario=" + this.state.scenario + "&newDesc=" + newDesc, { timeout: TIMEOUT }, this.parseRenameDescriptionResponse.bind(this));
-    }
-
-  }
-  parseRenameDescriptionResponse(err, response) {
-    //check if there are no timeout errors or empty responses
-    if (!this.responseIsTimeoutOrEmpty(err, response)) {
-      //check there are no errors from the server
-      if (!this.isServerError(response)) {
-        this.setState({ metadata: Object.assign(this.state.metadata, { DESCRIPTION: response.description }), snackbarOpen: true, snackbarMessage: response.info });
-      }
+      jsonp(MARXAN_ENDPOINT + "renameDescription?user=" + this.state.user + "&scenario=" + this.state.scenario + "&newDesc=" + newDesc, { timeout: TIMEOUT }).promise.then(function(response) {
+        //check if there are no timeout errors or empty responses
+        if (!this.responseIsTimeoutOrEmpty(response)) {
+          //check there are no errors from the server
+          if (!this.isServerError(response)) {
+            this.setState({ metadata: Object.assign(this.state.metadata, { DESCRIPTION: response.description }), snackbarOpen: true, snackbarMessage: response.info });
+          }
+        }
+      }.bind(this));
     }
   }
 
   listScenarios() {
     this.setState({ loadingScenarios: true });
-    jsonp(MARXAN_ENDPOINT + "listScenarios?user=" + this.state.user, { timeout: TIMEOUT }, this.parseListScenariosResponse.bind(this));
-  }
-
-  parseListScenariosResponse(err, response) {
-    this.setState({ loadingScenarios: false });
-    //check if there are no timeout errors or empty responses
-    if (!this.responseIsTimeoutOrEmpty(err, response)) {
-      //check there are no errors from the server
-      if (!this.isServerError(response)) {
-        this.setState({ scenarios: response.scenarios });
+    jsonp(MARXAN_ENDPOINT + "listScenarios?user=" + this.state.user, { timeout: TIMEOUT }).promise.then(function(response) {
+      this.setState({ loadingScenarios: false });
+      //check if there are no timeout errors or empty responses
+      if (!this.responseIsTimeoutOrEmpty(response)) {
+        //check there are no errors from the server
+        if (!this.isServerError(response)) {
+          this.setState({ scenarios: response.scenarios });
+        }
+        else {
+          this.setState({ scenarios: undefined });
+        }
       }
-      else {
-        this.setState({ scenarios: undefined });
-      }
-    }
+    }.bind(this));
   }
 
   //updates a parameter in the input.dat file directly, e.g. for updating the PLANNING_UNIT_NAME after the user sets their source spatial data
   updateParameter(parameter, value) {
-    jsonp(MARXAN_ENDPOINT + "updateParameter?user=" + this.state.user + "&scenario=" + this.state.scenario + "&parameter=" + parameter + "&value=" + value, { timeout: TIMEOUT }, this.parseUpdateParameterResponse.bind(this));
-  }
-  parseUpdateParameterResponse(err, response) {
-    //check if there are no timeout errors or empty responses
-    if (!this.responseIsTimeoutOrEmpty(err, response)) {
-      //check there are no errors from the server
-      if (!this.isServerError(response)) {
-        //do something
+    jsonp(MARXAN_ENDPOINT + "updateParameter?user=" + this.state.user + "&scenario=" + this.state.scenario + "&parameter=" + parameter + "&value=" + value, { timeout: TIMEOUT }).promise.then(function(response) {
+      //check if there are no timeout errors or empty responses
+      if (!this.responseIsTimeoutOrEmpty(response)) {
+        //check there are no errors from the server
+        if (!this.isServerError(response)) {
+          //do something
+        }
       }
-    }
+    }.bind(this));
   }
 
   //run a marxan job on the server
   runMarxan(e) {
-    //update the spec.dat file with any that have changed target or spf - this runs and then calls update pu.dat and then calls createPuvspr.dat
-    this.updateSpecFile();
+    //update the spec.dat file with any that have changed target or spf
+    this.updateSpecFile().then(function(value) {
+
+      //when the species file has been updated, update the pu file 
+      this.updatePuFile();
+
+      //when the planning unit file has been updated, update the PuVSpr file
+      var promisePuVSpr = this.updatePuvsprFile();
+
+      //when the PuVSpr file has been updated, run the marxan job
+      promisePuVSpr.then(function(value) {
+        this.startMarxanJob();
+      }.bind(this));
+
+    }.bind(this));
   }
 
   //updates the species file with any target values that have changed
@@ -758,51 +735,66 @@ class App extends React.Component {
         'content-type': 'multipart/form-data'
       }
     };
-    post(MARXAN_ENDPOINT + "createSpecFile", formData, config).then((response) => this.parseupdateSpecFile(response.data));
+    return post(MARXAN_ENDPOINT + "createSpecFile", formData, config).then((response) => this.parseupdateSpecFile(response.data));
   }
 
   parseupdateSpecFile(response) {
     //check if there are no timeout errors or empty responses
-    if (!this.responseIsTimeoutOrEmpty(undefined, response)) {
+    if (!this.responseIsTimeoutOrEmpty( response)) {
       //check there are no errors from the server
       if (!this.isServerError(response)) {
         this.setState({ snackbarOpen: true, snackbarMessage: response.info });
-        //update the pu.dat file with any that have changed
-        this.updatePuFile();
       }
     }
   }
 
+  //updates the planning unit file with any changes - not implemented yet
   updatePuFile() {
-    this.updatePuvsprFile();
+
   }
 
   updatePuvsprFile() {
-    //preprocess the Conservation features to create the puvspr.dat file on the server - this is done on demand when the scenario is run because the user may add/remove Conservation features willy nilly
+    let promise;
+    //preprocess the features to create the puvspr.dat file on the server - this is done on demand when the scenario is run because the user may add/remove Conservation features willy nilly
+    //if the scenario is from an old version of marxan, the PuVSpr file should already be present so we can just run it - also the scenario will not have the spatial data in PostGIS to do the intersection anyway
     if (this.state.metadata.OLDVERSION === 'False') {
-      this.createPuvsprFile();
+      promise = this.preprocessAllFeatures();
     }
     else {
-      this.startMarxanJob();
+      promise = Promise.resolve("Done");
     }
+    return promise;
   }
 
-  //creates the puvspr.dat file on the server for the current scenario
-  createPuvsprFile() {
-    this.setState({ creatingPuvsprFile: true });
-    jsonp(MARXAN_ENDPOINT + "createPuVSprFile?user=" + this.state.user + "&scenario=" + this.state.scenario + "&planning_grid_name=" + this.state.metadata.PLANNING_UNIT_NAME, { timeout: TIMEOUT }, this.parsecreatePuvsprFile.bind(this));
-  }
-
-  //the preprocessing has finished to create the puvspr.dat file
-  parsecreatePuvsprFile(err, response) {
-    //check if there are no timeout errors or empty responses
-    if (!this.responseIsTimeoutOrEmpty(err, response)) {
-      //check there are no errors from the server
-      if (!this.isServerError(response)) {
-        this.setState({ snackbarOpen: true, snackbarMessage: response.info });
-        this.startMarxanJob();
+  //iterates through all of the features and preprocesses them
+  preprocessAllFeatures() {
+    //return a promise array from each of the preprocessing jobs
+    let promises = this.state.scenarioFeatures.map(feature => {
+      if (!feature.preprocessed) {
+        return this.preprocessFeature(feature);
       }
-    }
+    }, this);
+    //returns a single Promise that resolves when all of the promises in the promises array have resolved 
+    return Promise.all(promises);
+  }
+
+  preprocessFeature(feature) {
+    this.setState({ preprocessingFeature: true });
+    return jsonp(MARXAN_ENDPOINT + "preprocessFeature?user=" + this.state.user + "&scenario=" + this.state.scenario + "&planning_grid_name=" + this.state.metadata.PLANNING_UNIT_NAME + "&feature_class_name=" + feature.feature_class_name, { timeout: TIMEOUT }).promise.then(function(response) {
+      //check if there are no timeout errors or empty responses
+      if (!this.responseIsTimeoutOrEmpty(response)) {
+        //check there are no errors from the server
+        if (!this.isServerError(response)) {
+          this.setState({ snackbarOpen: true, snackbarMessage: response.info, preprocessingFeature: false });
+          //update the feature that has been preprocessed
+          this.updateFeature(response.feature_class_name, "preprocessed", true);
+        }
+        else {
+          //ui feedback
+          this.setState({ loadingScenarios: false });
+        }
+      }
+    }.bind(this));
   }
 
   //calls the marxan executeable and runs it
@@ -817,29 +809,27 @@ class App extends React.Component {
   //poll the server to see if the run has completed
   pollResults(checkForExistingRun) {
     //make the request to get the marxan data
-    jsonp(MARXAN_ENDPOINT + "pollResults?user=" + this.state.user + "&scenario=" + this.state.scenario + "&numreps=" + this.state.numReps + "&checkForExistingRun=" + checkForExistingRun, { timeout: TIMEOUT }, this.parsePollResultsResponse.bind(this));
-  }
-
-  parsePollResultsResponse(err, response) {
-    //check if there are no timeout errors from the server or empty responses from the server
-    if (!this.responseIsTimeoutOrEmpty(err, response)) {
-      //check there are no errors from the server from my code
-      if (!this.isServerError(response)) {
-        //the response includes the summed solution so it has finished
-        if (response.ssoln) {
-          this.runCompleted(response);
-          //cancel the timer which polls the server to see when the run is complete
-          clearInterval(this.timer);
-          this.timer = null;
+    jsonp(MARXAN_ENDPOINT + "pollResults?user=" + this.state.user + "&scenario=" + this.state.scenario + "&numreps=" + this.state.numReps + "&checkForExistingRun=" + checkForExistingRun, { timeout: TIMEOUT }).promise.then(function(response) {
+      //check if there are no timeout errors from the server or empty responses from the server
+      if (!this.responseIsTimeoutOrEmpty(response)) {
+        //check there are no errors from the server from my code
+        if (!this.isServerError(response)) {
+          //the response includes the summed solution so it has finished
+          if (response.ssoln) {
+            this.runCompleted(response);
+            //cancel the timer which polls the server to see when the run is complete
+            clearInterval(this.timer);
+            this.timer = null;
+          }
+          else {
+            this.setState({ runsCompleted: response.runsCompleted });
+          }
         }
         else {
-          this.setState({ runsCompleted: response.runsCompleted });
+          this.setState({ running: false });
         }
       }
-      else {
-        this.setState({ running: false });
-      }
-    }
+    }.bind(this));
   }
 
   //run completed
@@ -877,17 +867,15 @@ class App extends React.Component {
     }
     else {
       //request the data for the specific solution
-      jsonp(MARXAN_ENDPOINT + "loadSolution?user=" + this.state.user + "&scenario=" + this.state.scenario + "&solution=" + solution, { timeout: TIMEOUT }, this.parseLoadSolutionResponse.bind(this));
-    }
-  }
-
-  parseLoadSolutionResponse(err, response) {
-    //check if there are no timeout errors or empty responses
-    if (!this.responseIsTimeoutOrEmpty(err, response)) {
-      //check there are no errors from the server
-      if (!this.isServerError(response)) {
-        this.renderSolution(response.solution, false);
-      }
+      jsonp(MARXAN_ENDPOINT + "loadSolution?user=" + this.state.user + "&scenario=" + this.state.scenario + "&solution=" + solution, { timeout: TIMEOUT }).promise.then(function(response) {
+        //check if there are no timeout errors or empty responses
+        if (!this.responseIsTimeoutOrEmpty(response)) {
+          //check there are no errors from the server
+          if (!this.isServerError(response)) {
+            this.renderSolution(response.solution, false);
+          }
+        }
+      }.bind(this));
     }
   }
 
@@ -1141,7 +1129,7 @@ class App extends React.Component {
         'fill-color': "rgba(255,0,0,0)",
         'fill-opacity': 0
       }
-    },'place-city-sm');
+    }, 'place-city-sm');
   }
 
   //fired when the features tab is selected
@@ -1212,7 +1200,7 @@ class App extends React.Component {
   //callback function after updating the pu.dat file with the passed parameters
   parseupdatePuDatFileResponse(response) {
     //check if there are no timeout errors or empty responses
-    if (!this.responseIsTimeoutOrEmpty(undefined, response)) {
+    if (!this.responseIsTimeoutOrEmpty( response)) {
       //check there are no errors from the server
       if (!this.isServerError(response)) {
         //if succesfull write the state back to the userData key
@@ -1265,23 +1253,21 @@ class App extends React.Component {
   //gets the planning units from the marxan server
   getPlanningUnits() {
     //get a list of existing planning units 
-    jsonp(REST_ENDPOINT + "getplanningunits?", { timeout: 10000 }, this.parsegetplanningunitsResponse.bind(this));
+    jsonp(REST_ENDPOINT + "getplanningunits?", { timeout: 10000 }).promise.then(function(response) {
+      //check if there are no timeout errors or empty responses
+      if (!this.responseIsTimeoutOrEmpty(response)) {
+        //check there are no errors from the server
+        if (!this.isServerError(response)) {
+          //valid response
+          this.setState({ planningUnitGrids: response.records });
+        }
+        else {
+          this.setState({ loggingIn: false });
+        }
+      }
+    }.bind(this));
   }
 
-  //asynchronous response for getting the planning units
-  parsegetplanningunitsResponse(err, response) {
-    //check if there are no timeout errors or empty responses
-    if (!this.responseIsTimeoutOrEmpty(err, response)) {
-      //check there are no errors from the server
-      if (!this.isServerError(response)) {
-        //valid response
-        this.setState({ planningUnitGrids: response.records });
-      }
-      else {
-        this.setState({ loggingIn: false });
-      }
-    }
-  }
   openNewPlanningUnitDialog() {
     this.setState({ NewPlanningUnitDialogOpen: true });
   }
@@ -1290,28 +1276,27 @@ class App extends React.Component {
   }
   createNewPlanningUnitGrid() {
     this.setState({ creatingNewPlanningUnit: true });
-    jsonp(REST_ENDPOINT + "get_hexagons?iso3=" + this.state.iso3 + "&domain=" + this.state.domain + "&areakm2=" + this.state.areakm2, { timeout: 0 }, this.parsecreateNewPlanningUnitGridResponse.bind(this));
-  }
-  parsecreateNewPlanningUnitGridResponse(err, response) {
-    //check if there are no timeout errors or empty responses
-    if (!this.responseIsTimeoutOrEmpty(err, response)) {
-      //check there are no errors from the server
-      if (!this.isServerError(response)) {
-        //feedback
-        this.setState({ snackbarOpen: true, snackbarMessage: "Planning grid: '" + response.records[0].get_hexagons.split(",")[1].replace(/"/gm, '').replace(")", "") + "' created" }); //response is (pu_cok_terrestrial_hexagons_10,"Cook Islands Terrestrial 10Km2 hexagon grid")
-        //upload this data to mapbox for visualisation
-        this.uploadToMapBox(response.records[0].get_hexagons.split(",")[0].replace(/"/gm, '').replace("(", ""), "hexagons");
-        //update the planning unit items
-        this.getPlanningUnits();
+    jsonp(REST_ENDPOINT + "get_hexagons?iso3=" + this.state.iso3 + "&domain=" + this.state.domain + "&areakm2=" + this.state.areakm2, { timeout: 0 }).promise.then(function(response) {
+      //check if there are no timeout errors or empty responses
+      if (!this.responseIsTimeoutOrEmpty(response)) {
+        //check there are no errors from the server
+        if (!this.isServerError(response)) {
+          //feedback
+          this.setState({ snackbarOpen: true, snackbarMessage: "Planning grid: '" + response.records[0].get_hexagons.split(",")[1].replace(/"/gm, '').replace(")", "") + "' created" }); //response is (pu_cok_terrestrial_hexagons_10,"Cook Islands Terrestrial 10Km2 hexagon grid")
+          //upload this data to mapbox for visualisation
+          this.uploadToMapBox(response.records[0].get_hexagons.split(",")[0].replace(/"/gm, '').replace("(", ""), "hexagons");
+          //update the planning unit items
+          this.getPlanningUnits();
+        }
+        else {
+          //do something
+        }
       }
-      else {
-        //do something
-      }
-    }
-    //reset the state
-    this.setState({ creatingNewPlanningUnit: false });
-    //close the NewPlanningUnitDialog
-    this.closeNewPlanningUnitDialog();
+      //reset the state
+      this.setState({ creatingNewPlanningUnit: false });
+      //close the NewPlanningUnitDialog
+      this.closeNewPlanningUnitDialog();
+    }.bind(this));
   }
 
   changeIso3(value) {
@@ -1324,38 +1309,36 @@ class App extends React.Component {
     this.setState({ areakm2: value });
   }
   getCountries() {
-    jsonp(REST_ENDPOINT + "getcountries2", { timeout: 10000 }, this.parsegetCountriesResponse.bind(this));
-  }
-  parsegetCountriesResponse(err, response) {
-    //check if there are no timeout errors or empty responses
-    if (!this.responseIsTimeoutOrEmpty(err, response)) {
-      //check there are no errors from the server
-      if (!this.isServerError(response)) {
-        //valid response
-        this.setState({ countries: response.records });
+    jsonp(REST_ENDPOINT + "getcountries2", { timeout: 10000 }).promise.then(function(response) {
+      //check if there are no timeout errors or empty responses
+      if (!this.responseIsTimeoutOrEmpty(response)) {
+        //check there are no errors from the server
+        if (!this.isServerError(response)) {
+          //valid response
+          this.setState({ countries: response.records });
+        }
+        else {
+          this.setState({ loggingIn: false });
+        }
       }
-      else {
-        this.setState({ loggingIn: false });
-      }
-    }
+    }.bind(this));
   }
 
   //uploads the names feature class to mapbox on the server
   uploadToMapBox(feature_class_name, mapbox_layer_name) {
-    jsonp(MARXAN_ENDPOINT + "uploadTilesetToMapBox?feature_class_name=" + feature_class_name + "&mapbox_layer_name=" + mapbox_layer_name, { timeout: 300000 }, this.parseuploadToMapBoxResponse.bind(this)); //5 minute timeout
-  }
-  parseuploadToMapBoxResponse(err, response) {
-    //check if there are no timeout errors or empty responses
-    if (!this.responseIsTimeoutOrEmpty(err, response)) {
-      //check there are no errors from the server
-      if (!this.isServerError(response)) {
-        this.setState({ snackbarOpen: true, snackbarMessage: "Uploading to MapBox with the id: " + response.uploadid });
-        this.timer = setInterval(() => this.pollMapboxForUploadComplete(response.uploadid), 5000);
+    jsonp(MARXAN_ENDPOINT + "uploadTilesetToMapBox?feature_class_name=" + feature_class_name + "&mapbox_layer_name=" + mapbox_layer_name, { timeout: 300000 }).promise.then(function(response) {
+      //check if there are no timeout errors or empty responses
+      if (!this.responseIsTimeoutOrEmpty(response)) {
+        //check there are no errors from the server
+        if (!this.isServerError(response)) {
+          this.setState({ snackbarOpen: true, snackbarMessage: "Uploading to MapBox with the id: " + response.uploadid });
+          this.timer = setInterval(() => this.pollMapboxForUploadComplete(response.uploadid), 5000);
+        }
+        else {
+          //server error
+        }
       }
-      else {
-        //server error
-      }
-    }
+    }.bind(this));
   }
 
   pollMapboxForUploadComplete(uploadid) {
@@ -1378,19 +1361,19 @@ class App extends React.Component {
     }
     else {
       //load the interest features as all of the interest features from the marxan web database
-      jsonp(REST_ENDPOINT + "get_interest_features?format=json", { timeout: 10000 }, this.parsegetInterestFeatures.bind(this));
+      jsonp(REST_ENDPOINT + "get_interest_features?format=json", { timeout: 10000 }).promise.then(function(response) {
+        //check if there are no timeout errors or empty responses
+        if (!this.responseIsTimeoutOrEmpty(response)) {
+          //check there are no errors from the server
+          if (!this.isServerError(response)) {
+            this.setState({ interestFeatures: response.records });
+          }
+          else {}
+        }
+      }.bind(this));
     }
   }
-  parsegetInterestFeatures(err, response) {
-    //check if there are no timeout errors or empty responses
-    if (!this.responseIsTimeoutOrEmpty(err, response)) {
-      //check there are no errors from the server
-      if (!this.isServerError(response)) {
-        this.setState({ interestFeatures: response.records });
-      }
-      else {}
-    }
-  }
+
   openNewInterestFeatureDialog() {
     this.setState({ NewInterestFeatureDialogOpen: true });
   }
@@ -1423,55 +1406,54 @@ class App extends React.Component {
   }
   createNewInterestFeature() {
     //the zipped shapefile has been uploaded to the MARXAN folder and the metadata are in the featureDatasetName, featureDatasetDescription and featureDatasetFilename state variables - 
-    jsonp(MARXAN_ENDPOINT + "importShapefile?filename=" + this.state.featureDatasetFilename + "&name=" + this.state.featureDatasetName + "&description=" + this.state.featureDatasetDescription + "&dissolve=true&type=interest_feature", { timeout: TIMEOUT }, this.parsecreateNewInterestFeature.bind(this));
-  }
-  parsecreateNewInterestFeature(err, response) {
-    //check if there are no timeout errors or empty responses
-    if (!this.responseIsTimeoutOrEmpty(err, response)) {
-      //check there are no errors from the server
-      if (!this.isServerError(response)) {
-        this.setState({ snackbarOpen: true, snackbarMessage: response.info });
-        this.getInterestFeatures();
+    jsonp(MARXAN_ENDPOINT + "importShapefile?filename=" + this.state.featureDatasetFilename + "&name=" + this.state.featureDatasetName + "&description=" + this.state.featureDatasetDescription + "&dissolve=true&type=interest_feature", { timeout: TIMEOUT }).promise.then(function(response) {
+      //check if there are no timeout errors or empty responses
+      if (!this.responseIsTimeoutOrEmpty(response)) {
+        //check there are no errors from the server
+        if (!this.isServerError(response)) {
+          this.setState({ snackbarOpen: true, snackbarMessage: response.info });
+          this.getInterestFeatures();
+        }
+        else {
+          //server error
+        }
       }
-      else {
-        //server error
-      }
-    }
+    }.bind(this));
   }
+
   //used by the import wizard to import a users zipped shapefile as the planning units
   importZippedShapefileAsPu(zipname, alias, description) {
     //the zipped shapefile has been uploaded to the MARXAN folder - it will be imported to PostGIS and a record will be entered in the metadata_planning_units table
-    jsonp(MARXAN_ENDPOINT + "importShapefile?filename=" + zipname + "&name=" + alias + "&description=" + description + "&dissolve=false&type=planning_unit", { timeout: TIMEOUT }, this.parseimportZippedShapefileAsPu.bind(this));
-  }
-  parseimportZippedShapefileAsPu(err, response) {
-    //check if there are no timeout errors or empty responses
-    if (!this.responseIsTimeoutOrEmpty(err, response)) {
-      //check there are no errors from the server
-      if (!this.isServerError(response)) {
-        this.setState({ snackbarOpen: true, snackbarMessage: response.info });
-        var zipName = response.file.slice(0, -4);
-        this.uploadToMapBox(zipName, zipName);
+    jsonp(MARXAN_ENDPOINT + "importShapefile?filename=" + zipname + "&name=" + alias + "&description=" + description + "&dissolve=false&type=planning_unit", { timeout: TIMEOUT }).promise.then(function(response) {
+      //check if there are no timeout errors or empty responses
+      if (!this.responseIsTimeoutOrEmpty(response)) {
+        //check there are no errors from the server
+        if (!this.isServerError(response)) {
+          this.setState({ snackbarOpen: true, snackbarMessage: response.info });
+          var zipName = response.file.slice(0, -4);
+          this.uploadToMapBox(zipName, zipName);
+        }
+        else {
+          //server error
+        }
       }
-      else {
-        //server error
-      }
-    }
+    }.bind(this));
   }
+
   deleteInterestFeature(feature) {
-    jsonp(MARXAN_ENDPOINT + "deleteInterestFeature?interest_feature_name=" + feature.feature_class_name, { timeout: TIMEOUT }, this.parsedeleteInterestFeature.bind(this));
-  }
-  parsedeleteInterestFeature(err, response) {
-    //check if there are no timeout errors or empty responses
-    if (!this.responseIsTimeoutOrEmpty(err, response)) {
-      //check there are no errors from the server
-      if (!this.isServerError(response)) {
-        this.setState({ snackbarOpen: true, snackbarMessage: "Conservation feature deleted" });
-        this.getInterestFeatures();
+    jsonp(MARXAN_ENDPOINT + "deleteInterestFeature?interest_feature_name=" + feature.feature_class_name, { timeout: TIMEOUT }).promise.then(function(response) {
+      //check if there are no timeout errors or empty responses
+      if (!this.responseIsTimeoutOrEmpty(response)) {
+        //check there are no errors from the server
+        if (!this.isServerError(response)) {
+          this.setState({ snackbarOpen: true, snackbarMessage: "Conservation feature deleted" });
+          this.getInterestFeatures();
+        }
+        else {
+          this.setState({ snackbarOpen: true, snackbarMessage: "Conservation feature not deleted" });
+        }
       }
-      else {
-        this.setState({ snackbarOpen: true, snackbarMessage: "Conservation feature not deleted" });
-      }
-    }
+    }.bind(this));
   }
 
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1558,11 +1540,19 @@ class App extends React.Component {
   uploadPlanningUnitFromShapefile() {
 
   }
-  hideResults(){
-    this.setState({resultsPaneOpen:false});
+  hideResults() {
+    this.setState({ resultsPaneOpen: false });
   }
-  showResults(){
-    this.setState({resultsPaneOpen:true});
+  showResults() {
+    this.setState({ resultsPaneOpen: true });
+  }
+
+  //generic function to update a features property
+  updateFeature(feature_class_name, propertyName, value) {
+    let features = this.state.scenarioFeatures;
+    let feature = features.filter(item => { return item.feature_class_name === feature_class_name })[0];
+    feature[propertyName] = value;
+    this.setState({ scenarioFeatures: features });
   }
 
   render() {
@@ -1610,6 +1600,7 @@ class App extends React.Component {
             stopPuEditSession={this.stopPuEditSession.bind(this)}
             showSettingsDialog={this.showSettingsDialog.bind(this)}
             openImportWizard={this.openImportWizard.bind(this)}
+            preprocessFeature={this.preprocessFeature.bind(this)}
           />
           <div className="runningSpinner"><FontAwesome spin name='sync' size='2x' style={{'display': (this.state.running ? 'block' : 'none')}}/></div>
           <Popup

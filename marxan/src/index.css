@@ -396,3 +396,9 @@ input:-webkit-autofill {
 .totalShortFall{
   background-color:none;
 }
+.checkCircle{
+  display:inline-flex;
+  vertical-align: middle;
+  margin-left:5px;
+  color:'green';
+}

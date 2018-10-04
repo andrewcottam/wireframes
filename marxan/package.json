@@ -5,7 +5,7 @@
   "dependencies": {
     "axios": "^0.18.0",
     "classybrew": "0.0.3",
-    "jsonp": "^0.2.1",
+    "jsonp-promise": "^0.1.2",
     "mapbox": "^1.0.0-beta10",
     "material-ui": "^0.20.0",
     "rc-progress": "^2.2.5",

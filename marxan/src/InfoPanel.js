@@ -156,6 +156,7 @@ class InfoPanel extends React.Component {
                 <InterestFeaturesReportPanel
                   scenarioFeatures={this.props.scenarioFeatures}
                   updateTargetValue={this.props.updateTargetValue}
+                  preprocessFeature={this.props.preprocessFeature}
                 />
                 </div>
               </Tab>
