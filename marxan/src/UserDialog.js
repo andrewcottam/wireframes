@@ -60,8 +60,13 @@ class UserDialog extends React.Component {
                     </div>
                 } 
                 actions={[
-                    <RaisedButton label="Save" primary={true} onClick={this.updateUser.bind(this)} className="scenariosBtn" disabled={!this.state.updated} style={{minWidth:'15px', minHeight:'15px', height:'22px', fontSize:'10px', verticalAlign:'middle'}}/>,
-                    <RaisedButton label="OK" primary={true} onClick={this.closeUserDialog.bind(this)} className="scenariosBtn" style={{minWidth:'15px', minHeight:'15px', height:'22px', fontSize:'10px', verticalAlign:'middle'}}/>,
+                    <RaisedButton 
+                        label="OK" 
+                        primary={true} 
+                        onClick={this.updateUser.bind(this)} 
+                        className="scenariosBtn" 
+                        style={{height:'25px'}}
+                    />,
                 ]} 
                 open={this.props.open} 
                 onRequestClose={this.closeUserDialog.bind(this)} 

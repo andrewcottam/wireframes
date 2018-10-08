@@ -2,13 +2,17 @@ import React from 'react';
 import 'react-table/react-table.css';
 import Paper from 'material-ui/Paper';
 import { Tabs, Tab } from 'material-ui/Tabs';
+import IconButton from 'material-ui/IconButton';
 import RaisedButton from 'material-ui/RaisedButton';
 import UserMenu from './UserMenu.js';
 import SelectField from 'material-ui/SelectField';
-import InterestFeaturesReportPanel from './InterestFeaturesReportPanel';
+import SelectInterestFeatures from './newCaseStudySteps/SelectInterestFeatures';
 import MenuItem from 'material-ui/MenuItem';
-import FontAwesome from 'react-fontawesome';
 import ScenariosDialog from './ScenariosDialog.js';
+import Menu from 'material-ui/svg-icons/navigation/menu';
+import Texture from 'material-ui/svg-icons/image/texture';
+import Settings from 'material-ui/svg-icons/action/settings';
+import {white} from 'material-ui/styles/colors';
 
 class InfoPanel extends React.Component {
   constructor(props) {
@@ -78,13 +82,15 @@ class InfoPanel extends React.Component {
       this.props.startEditingDescription();
     }
   }
-
+  scenario_tab_active() {
+    this.props.scenario_tab_active();
+  }
   features_tab_active() {
     this.props.features_tab_active();
   }
   pu_tab_active() {
     this.props.pu_tab_active();
-  } 
+  }
   startStopPuEditSession() {
     (this.state.puEditing) ? this.stopPuEditSession(): this.startPuEditSession();
   }
@@ -106,11 +112,13 @@ class InfoPanel extends React.Component {
     return (
       <React.Fragment>
         <div className={'infoPanel'} style={{display: this.props.loggedIn ? 'block' : 'none'}}>
-          <Paper zDepth={2} className='InfoPanelPaper'>
-            <Paper zDepth={2} style={{backgroundColor: 'rgb(0, 188, 212)',paddingTop:'15px'}}>
-              <span><FontAwesome name='bars' style={{color: 'white', marginLeft:'10px',cursor:'pointer'}} title="Click to manage scenarios" onClick={this.openScenariosDialog.bind(this)}/></span>
+          <Paper zDepth={2} className="InfoPanelPaper">
+            <Paper zDepth={2} className="titleBar">
+              <IconButton title="Click to open scenarios" onClick={this.openScenariosDialog.bind(this)} className="iconButton scenarioButton">
+                <Menu color={white}/>
+              </IconButton>
               <span onClick={this.startEditingScenarioName.bind(this)} className={'scenarioNameEditBox'} title="Click to rename the scenario">{this.props.scenario}</span>
-              <input id="scenarioName" style={{position:'absolute', 'display': (this.props.editingScenarioName) ? 'block' : 'none',left:'43px',top:'20px'}} className={'scenarioNameEditBox'} onKeyPress={this.onKeyPress.bind(this)} onBlur={this.onBlur.bind(this)}/>
+              <input id="scenarioName" style={{position:'absolute', 'display': (this.props.editingScenarioName) ? 'block' : 'none',left:'63px',top:'33px',border:'1px lightgray solid'}} className={'scenarioNameEditBox'} onKeyPress={this.onKeyPress.bind(this)} onBlur={this.onBlur.bind(this)}/>
               <UserMenu 
                     user={ this.props.user} 
                     userData={this.props.userData}
@@ -142,7 +150,7 @@ class InfoPanel extends React.Component {
               />
             </Paper>
             <Tabs contentContainerStyle={{'margin':'20px'}} className={'tabs'}>
-              <Tab label="Scenario">
+              <Tab label="Scenario" onActive={this.scenario_tab_active.bind(this)}>
                 <div>
                   <div className={'tabTitle'}>Description</div>
                   <input id="descriptionEdit" style={{'display': (this.props.editingDescription) ? 'block' : 'none'}} className={'descriptionEditBox'} onKeyPress={this.onKeyPress.bind(this)} onBlur={this.onBlur.bind(this)}/>
@@ -152,13 +160,12 @@ class InfoPanel extends React.Component {
                 </div>
               </Tab>
               <Tab label="Features" onActive={this.features_tab_active.bind(this)}>
-                <div>
-                <InterestFeaturesReportPanel
+                <SelectInterestFeatures
                   scenarioFeatures={this.props.scenarioFeatures}
                   updateTargetValue={this.props.updateTargetValue}
                   preprocessFeature={this.props.preprocessFeature}
+                  openAllInterestFeaturesDialog={this.props.openAllInterestFeaturesDialog}
                 />
-                </div>
               </Tab>
               <Tab label="Planning units" onActive={this.pu_tab_active.bind(this)}>
                 <div>
@@ -167,19 +174,28 @@ class InfoPanel extends React.Component {
                   <div className={'tabTitle'} style={{'marginTop': '25px'}}>Protected areas</div>
                   <SelectField floatingLabelText={'Include'} floatingLabelFixed={true} value={'None'} children={<MenuItem value={'None'} key={'None'} primaryText={'None'}/>} />
                   <div className={'tabTitle'} style={{'marginTop': '25px'}}>Manual exceptions</div>
-                  <RaisedButton icon={<FontAwesome name='eraser' title='Remove  planning units from analysis' style={{color:puEditIconColor}}/>} onClick={this.startStopPuEditSession.bind(this)}/>
+                  <Texture  
+                    title='Remove  planning units from analysis'
+                    onClick={this.startStopPuEditSession.bind(this)}
+                    style={{color:puEditIconColor}}
+                  />
                 </div>
               </Tab>
             </Tabs>     
             <Paper className={'lowerToolbar'}>
-              <div style={{position:'absolute',marginLeft:'10px'}}>
-                  <RaisedButton title="Run Settings" onClick={this.showSettingsDialog.bind(this)} icon={<FontAwesome name='cog' title='Run Settings' style={{paddingBottom:'2px'}}/>} 
-                  style={{minWidth:'15px', minHeight:'15px',height:'22px',width:'22px',fontSize:'10px', verticalAlign:'middle'}}/>
-                </div>
-                <div style={{position:'absolute',right:'23px'}}>
-                  <RaisedButton title="Click to run this scenario" label={this.props.running ? "Running" : "Run"} secondary={true} onClick={this.props.runMarxan} disabled={!this.props.runnable || this.props.running} 
-                  style={{minWidth:'15px', minHeight:'15px',height:'22px',fontSize:'10px', marginLeft: '13px', marginRight: '13px', verticalAlign:'middle'}} 
-                  labelStyle={{paddingRight:'10px',paddingLeft:'10px'}}/>
+                <IconButton title="Run Settings" onClick={this.showSettingsDialog.bind(this)} className='toolbarIcon iconButton' style={{marginLeft:'12px'}}>
+                  <Settings />
+                </IconButton>
+                <div style={{position:'absolute',right:'40px'}}>
+                <RaisedButton 
+                  label="Run" 
+                  title="Click to run this scenario" 
+                  secondary={true} 
+                  className="scenariosBtn" 
+                  style={{height:'25px'}}
+                  onClick={this.props.runMarxan} 
+                  disabled={!this.props.runnable || this.props.preprocessingFeature || this.props.running || (this.props.scenarioFeatures.length === 0)} 
+                />  
               </div>
             </Paper>
             <div className='footer'>

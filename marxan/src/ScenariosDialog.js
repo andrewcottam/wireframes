@@ -49,11 +49,12 @@ class ScenariosDialog extends React.Component {
         this.state = { selectedScenario: undefined };
     }
     _delete() {
-        this.props.deleteScenario(this.state.selectedScenario);
+        this.props.deleteScenario(this.state.selectedScenario); 
         this.setState({ selectedScenario: false });
     }
     load() {
         this.props.loadScenario(this.state.selectedScenario);
+        this.props.closeScenariosDialog();
     }
     _new() {
         this.props.openNewCaseStudyDialog();
@@ -74,7 +75,8 @@ class ScenariosDialog extends React.Component {
                 value={scenario.name} 
                 primaryText={primary} 
                 secondaryText={secondary} 
-                innerDivStyle={{padding:'3px'}}
+                innerDivStyle={{padding:'7px'}}
+                style={{borderRadius:'3px'}}
             />);
         });
         if (!listitems) listitems = <div></div>; //to stop console warnings
@@ -92,12 +94,38 @@ class ScenariosDialog extends React.Component {
                     } 
                     title="Scenarios" 
                     actions={[
-                        <RaisedButton icon={<FontAwesome name='file-medical' title='New scenario'/>} keyboardFocused={true} onClick={this._new.bind(this)} disabled={this.props.loadingScenarios || this.props.loadingScenario} style={{minWidth:'15px', minHeight:'15px',height:'22px',width:'22px',fontSize:'10px', verticalAlign:'middle', margin:'5px'}}/>,
-                        <RaisedButton icon={<FontAwesome name='cloud-upload-alt' title='Upload Marxan project from local machine'/>} onClick={this.props.openImportWizard} style={{minWidth:'15px', minHeight:'15px',height:'22px',width:'22px',fontSize:'10px', verticalAlign:'middle', margin:'5px'}}/>,
-                        <RaisedButton icon={<FontAwesome name='copy' title='Duplicate scenario'/>} style={{minWidth:'15px', minHeight:'15px',height:'22px',width:'22px',fontSize:'10px', verticalAlign:'middle', margin:'5px'}} onClick={this.cloneScenario.bind(this)} disabled={!this.state.selectedScenario || this.props.loadingScenarios || this.props.loadingScenario} />,
-                        <RaisedButton icon={<FontAwesome name='trash-alt' title='Delete scenario' style={{color:'red'}}/>} style={{minWidth:'15px', minHeight:'15px',height:'22px',width:'22px',fontSize:'10px', verticalAlign:'middle', margin:'5px'}} onClick={this._delete.bind(this)} disabled={!this.state.selectedScenario || this.props.loadingScenarios || this.props.loadingScenario} />,
-                        <RaisedButton icon={<FontAwesome name='folder-open' title='Open scenario'/>} style={{minWidth:'15px', minHeight:'15px',height:'22px',width:'22px',fontSize:'10px', verticalAlign:'middle', margin:'5px'}} onClick={this.load.bind(this)} disabled={!this.state.selectedScenario || this.props.loadingScenarios || this.props.loadingScenario} />,
-                        <RaisedButton label="OK" primary={true} onClick={this.props.closeScenariosDialog} disabled={this.props.loadingScenarios || this.props.loadingScenario} className="scenariosBtn" style={{minWidth:'15px', minHeight:'15px', height:'22px', fontSize:'10px', verticalAlign:'middle', margin:'5px'}}/>,
+                        <RaisedButton 
+                            icon={<FontAwesome name='file-medical' title='New scenario'/>} 
+                            onClick={this._new.bind(this)} 
+                        />,
+                        <RaisedButton 
+                            className="scenariosBtn" 
+                            icon={<FontAwesome name='cloud-upload-alt' title='Upload Marxan project from local machine' className={'fontAwesome'}/>} 
+                            style={{height:'25px'}}
+                            onClick={this.props.openImportWizard} 
+                        />,
+                        <RaisedButton 
+                            className="scenariosBtn" 
+                            icon={<FontAwesome name='copy' title='Duplicate scenario' className={'fontAwesome'}/>} 
+                            style={{height:'25px'}}
+                            onClick={this.cloneScenario.bind(this)} 
+                            disabled={!this.state.selectedScenario || this.props.loadingScenarios || this.props.loadingScenario} 
+                        />,
+                        <RaisedButton 
+                            className="scenariosBtn" 
+                            icon={<FontAwesome name='trash-alt' title='Delete scenario' style={{color:'red'}} className={'fontAwesome'}/>} 
+                            style={{height:'25px'}}
+                            onClick={this._delete.bind(this)} 
+                            disabled={!this.state.selectedScenario || this.props.loadingScenarios || this.props.loadingScenario} 
+                        />,
+                        <RaisedButton 
+                            label="Open" 
+                            primary={true} 
+                            className="scenariosBtn" 
+                            style={{height:'25px'}}
+                            onClick={this.load.bind(this)} 
+                            disabled={!this.state.selectedScenario || this.props.loadingScenarios || this.props.loadingScenario} 
+                        />,
                     ]} 
                     open={this.props.open} 
                     onRequestClose={this.props.closeScenariosDialog} 

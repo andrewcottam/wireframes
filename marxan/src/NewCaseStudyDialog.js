@@ -53,7 +53,7 @@ class NewCaseStudyDialog extends React.Component {
         this.setState({ pu: value });
     }
     render() {
-        const { stepIndex } = this.state;
+        const { stepIndex } = this.state; 
         const contentStyle = { margin: '0 16px' };
         const actions = [
             <div style={{width: '100%', maxWidth: 700, margin: 'auto',textAlign:'center'}}>
@@ -63,8 +63,20 @@ class NewCaseStudyDialog extends React.Component {
                 </Stepper> */}
                 <div style={contentStyle}>
                     <div style={{marginTop: 12}}>
-                        <FlatButton label="Back" disabled={stepIndex === 0} onClick={this.handlePrev} />
-                        <RaisedButton label={stepIndex === (this.state.steps.length-1) ? 'Finish' : 'Next'} onClick={stepIndex === (this.state.steps.length-1) ? this.createNewScenarioFromWizard.bind(this) : this.handleNext} primary={true} />
+                        <RaisedButton 
+                            className="scenariosBtn" 
+                            label="Back" 
+                            disabled={stepIndex === 0} 
+                            onClick={this.handlePrev} 
+                            style={{height:'25px'}}
+                        />
+                        <RaisedButton 
+                            className="scenariosBtn" 
+                            label={stepIndex === (this.state.steps.length-1) ? 'Finish' : 'Next'} 
+                            onClick={stepIndex === (this.state.steps.length-1) ? this.createNewScenarioFromWizard.bind(this) : this.handleNext} 
+                            primary={true} 
+                            style={{height:'25px'}}
+                        />
                     </div>
                 </div>
             </div>

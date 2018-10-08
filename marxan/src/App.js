@@ -7,10 +7,9 @@ import * as jsonp from 'jsonp-promise';
 import InfoPanel from './InfoPanel.js';
 import Popup from './Popup.js';
 import Login from './login.js';
-import ProgressDialog from './ProgressDialog.js';
+import RunProgressDialog from './RunProgressDialog.js';
 import Snackbar from 'material-ui/Snackbar';
 import MapboxClient from 'mapbox';
-import FontAwesome from 'react-fontawesome';
 import classyBrew from 'classybrew';
 /*eslint-disable no-unused-vars*/
 import axios, { post } from 'axios';
@@ -27,6 +26,8 @@ import ResultsPane from './ResultsPane';
 import ClassificationDialog from './ClassificationDialog';
 import ImportWizard from './ImportWizard';
 import FlatButton from 'material-ui/FlatButton';
+import {white} from 'material-ui/styles/colors';
+import ArrowBack from 'material-ui/svg-icons/navigation/arrow-back';
 
 //CONSTANTS
 //THE MARXAN_ENDPOINT MUST ALSO BE CHANGED IN THE FILEUPLOAD.JS FILE 
@@ -135,6 +136,13 @@ class App extends React.Component {
     this.setState({ snackbarOpen: false });
   }
 
+  //checks the reponse for errors
+  checkForErrors(response) {
+    let networkError = this.responseIsTimeoutOrEmpty(response);
+    let serverError = this.isServerError(response);
+    return networkError || serverError;
+  }
+
   //checks the response from a REST call for timeout errors or empty responses
   responseIsTimeoutOrEmpty(response) {
     if (!response) {
@@ -172,34 +180,12 @@ class App extends React.Component {
     this.setState({ loggingIn: true });
     //get a list of existing users 
     jsonp(MARXAN_ENDPOINT + "validateUser?user=" + this.state.user + "&password=" + this.state.password, { timeout: 10000 }).promise.then(function(response) {
-      //check if there are no timeout errors or empty responses
-      if (!this.responseIsTimeoutOrEmpty(response)) {
-        //check there are no errors from the server
-        if (!this.isServerError(response)) {
-          //user validated - log them in
-          this.login();
-        }
-        else {
-          this.setState({ loggingIn: false });
-        }
+      if (!this.checkForErrors(response)) {
+        //user validated - log them in
+        this.login();
       }
-    }.bind(this));
-  }
-
-  getUsers() {
-    //Get a user list
-    jsonp(MARXAN_ENDPOINT + "listUsers", { timeout: TIMEOUT }).promise.then(function(response) {
-      //check if there are no timeout errors or empty responses
-      if (!this.responseIsTimeoutOrEmpty(response)) {
-        //the user already exists
-        if (response.users.indexOf(this.state.user) > -1) {
-          //user validated - log them in
-          this.login();
-        }
-        else {
-          //ui feedback
-          this.setState({ loggingIn: false, snackbarOpen: true, snackbarMessage: "Invalid login" });
-        }
+      else {
+        this.setState({ loggingIn: false });
       }
     }.bind(this));
   }
@@ -219,12 +205,8 @@ class App extends React.Component {
     this.setState({ resending: true });
     jsonp(MARXAN_ENDPOINT + "resendPassword?user=" + this.state.user, { timeout: TIMEOUT }).promise.then(function(response) {
       this.setState({ resending: false });
-      //check if there are no timeout errors or empty responses
-      if (!this.responseIsTimeoutOrEmpty(response)) {
-        //check there are no errors from the server
-        if (!this.isServerError(response)) {
-          this.setState({ snackbarOpen: true, snackbarMessage: "Password resent" });
-        }
+      if (!this.checkForErrors(response)) {
+        this.setState({ snackbarOpen: true, snackbarMessage: "Password resent" });
       }
     }.bind(this));
   }
@@ -232,14 +214,10 @@ class App extends React.Component {
   //gets all the information for the user that is logging in
   getUserInfo() {
     jsonp(MARXAN_ENDPOINT + "getUser?user=" + this.state.user, { timeout: TIMEOUT }).promise.then(function(response) {
-      //check if there are no timeout errors or empty responses
-      if (!this.responseIsTimeoutOrEmpty(response)) {
-        //check there are no errors from the server
-        if (!this.isServerError(response)) {
-          this.setState({ scenario: response.userData.LASTSCENARIO, userData: response.userData });
-          //get the users tilesets from mapbox
-          this.getTilesets();
-        }
+      if (!this.checkForErrors(response)) {
+        this.setState({ scenario: response.userData.LASTSCENARIO, userData: response.userData });
+        //get the users tilesets from mapbox
+        this.getTilesets();
       }
     }.bind(this));
   }
@@ -282,22 +260,16 @@ class App extends React.Component {
       }
     };
     //post to the server
-    post(MARXAN_ENDPOINT + "updateUser", formData, config).then((response) => this.parseUpdateUserParametersResponse(response.data));
+    post(MARXAN_ENDPOINT + "updateUser", formData, config).then((response) => {
+      if (!this.checkForErrors(response.data)) {
+        //if succesfull write the state back to the userData key
+        this.setState({ snackbarOpen: true, snackbarMessage: response.data.info, userData: this.newUserData, savingOptions: false, optionsDialogOpen: false });
+      }
+    });
     //update the state
     this.newUserData = Object.assign(this.state.userData, parameters);
   }
 
-  //callback function after updating the user.dat file with the passed parameters
-  parseUpdateUserParametersResponse(response) {
-    //check if there are no timeout errors or empty responses
-    if (!this.responseIsTimeoutOrEmpty( response)) {
-      //check there are no errors from the server
-      if (!this.isServerError(response)) {
-        //if succesfull write the state back to the userData key
-        this.setState({ snackbarOpen: true, snackbarMessage: response.info, userData: this.newUserData, savingOptions: false, optionsDialogOpen: false });
-      }
-    }
-  }
   //opens the options parameters dialog whos open state is controlled
   openOptionsDialog() {
     this.setState({ optionsDialogOpen: true });
@@ -341,25 +313,18 @@ class App extends React.Component {
       }
     };
     //post to the server
-    post(MARXAN_ENDPOINT + "updateRunParams", formData, config).then((response) => this.parseUpdateRunParametersResponse(response.data));
-    //save the local state to be able to update the state on callback
-    this.runParams = Object.assign(this.state.runParams, formData);
-  }
-
-  //callback function after updating the run parameters for this scenario
-  parseUpdateRunParametersResponse(response) {
-    //ui feedback
-    this.setState({ updatingRunParameters: false });
-    //check if there are no timeout errors or empty responses
-    if (!this.responseIsTimeoutOrEmpty( response)) {
-      //check there are no errors from the server
-      if (!this.isServerError(response)) {
+    post(MARXAN_ENDPOINT + "updateRunParams", formData, config).then((response) => {
+      //ui feedback
+      this.setState({ updatingRunParameters: false });
+      if (!this.checkForErrors(response.data)) {
         //get the number of runs from the run parameters array
         let numReps = this.runParams.filter(function(item) { return item.key === "NUMREPS" })[0].value;
         //if succesfull write the state back 
-        this.setState({ snackbarOpen: true, snackbarMessage: response.info, runParams: this.runParams, filesDialogOpen: false, numReps: numReps });
+        this.setState({ snackbarOpen: true, snackbarMessage: response.data.info, runParams: this.runParams, filesDialogOpen: false, numReps: numReps });
       }
-    }
+    });
+    //save the local state to be able to update the state on callback
+    this.runParams = Object.assign(this.state.runParams, formData);
   }
 
   //gets all of the tilesets from mapbox using the access token for the currently logged on user - this access token must have the TILESETS:LIST scope
@@ -387,10 +352,39 @@ class App extends React.Component {
       }
     }.bind(this));
   }
-  
-  //called if the tileset select box is changed
+
+  //loads a scenario
+  loadScenario(scenario) {
+    this.setState({ loadingScenario: true });
+    //reset the results from any previous scenarios
+    this.resetResults();
+    jsonp(MARXAN_ENDPOINT + "getScenario?user=" + this.state.user + "&scenario=" + scenario, { timeout: TIMEOUT }).promise.then(function(response) {
+      this.setState({ loadingScenario: false, loggingIn: false });
+      if (!this.checkForErrors(response)) {
+        //get the number of runs from the run parameters array
+        let numReps = response.runParameters.filter(function(item) { return item.key === "NUMREPS" })[0].value;
+        //set the state for the app based on the data that is returned from the server
+        this.setState({ loggedIn: true, scenario: response.scenario, runParams: response.runParameters, numReps: numReps, files: Object.assign(response.files), metadata: response.metadata, renderer: response.renderer, scenarioFeatures: response.features, planning_units: response.planning_units });
+        //set the puidsToExclude from the pu.dat file
+        var puidsToExclude = (response.planning_units.length > 1) && (response.planning_units[1].length > 1) ? response.planning_units[1][1] : [];
+        this.setState({ puidsToExclude: puidsToExclude });
+        //initialise all the interest features with the interest features for this scenario
+        this.initialiseInterestFeatures(response.metadata.OLDVERSION, response.features, response.allFeatures);
+        //if there is a PLANNING_UNIT_NAME passed then programmatically change the select box to this map 
+        if (response.metadata.PLANNING_UNIT_NAME) {
+          this.changeTileset(MAPBOX_USER + "." + response.metadata.PLANNING_UNIT_NAME);
+        }
+        //poll the server to see if results are available for this scenario - if there are these will be loaded
+        this.pollResults(true);
+      }
+    }.bind(this));
+  }
+
+  //called when the mapbox planning unit layer has changed
   changeTileset(tilesetid) {
-    this.getMetadata(tilesetid).then(this.metadataRetrieved.bind(this));
+    this.getMetadata(tilesetid).then(function(response) {
+      this.spatialLayerChanged(response, true);
+    }.bind(this));
     this.setState({ tilesetid: tilesetid });
   }
 
@@ -404,42 +398,6 @@ class App extends React.Component {
       .catch(function(error) {
         return error;
       });
-  }
-
-  //callback function for the response from the call to get the tileset metadata 
-  metadataRetrieved(response) {
-    this.spatialLayerChanged(response, true);
-  }
-
-  //loads a scenario
-  loadScenario(scenario) {
-    this.setState({ loadingScenario: true });
-    //reset the results from any previous scenarios
-    this.resetResults();
-    jsonp(MARXAN_ENDPOINT + "getScenario?user=" + this.state.user + "&scenario=" + scenario, { timeout: TIMEOUT }).promise.then(function(response) {
-      this.setState({ loadingScenario: false, loggingIn: false });
-      //check if there are no timeout errors or empty responses
-      if (!this.responseIsTimeoutOrEmpty(response)) {
-        //check there are no errors from the server
-        if (!this.isServerError(response)) {
-          //get the number of runs from the run parameters array
-          let numReps = response.runParameters.filter(function(item) { return item.key === "NUMREPS" })[0].value;
-          //set the state for the app based on the data that is returned from the server
-          this.setState({ loggedIn: true, scenario: response.scenario, runParams: response.runParameters, numReps: numReps, files: Object.assign(response.files), metadata: response.metadata, renderer: response.renderer, scenarioFeatures: response.features, planning_units: response.planning_units });
-          //set the puidsToExclude from the pu.dat file
-          var puidsToExclude = (response.planning_units.length > 1) && (response.planning_units[1].length > 1) ? response.planning_units[1][1] : [];
-          this.setState({ puidsToExclude: puidsToExclude });
-          //initialise all the interest features with the interest features for this scenario
-          this.initialiseInterestFeatures(response.metadata.OLDVERSION, response.features, response.allFeatures);
-          //if there is a PLANNING_UNIT_NAME passed then programmatically change the select box to this map 
-          if (response.metadata.PLANNING_UNIT_NAME) {
-            this.changeTileset(MAPBOX_USER + "." + response.metadata.PLANNING_UNIT_NAME);
-          }
-          //poll the server to see if results are available for this scenario - if there are these will be loaded
-          this.pollResults(true);
-        }
-      }
-    }.bind(this));
   }
 
   //initialises the interest features based on the current scenario
@@ -462,11 +420,13 @@ class App extends React.Component {
       var scenarioFeature = (ids.indexOf(item.id) > -1) ? scenarioFeatures[ids.indexOf(item.id)] : null;
       if (scenarioFeature) {
         item['selected'] = true;
+        item['preprocessed'] = scenarioFeature['preprocessed'];
         item['spf'] = scenarioFeature['spf'];
         item['targetValue'] = scenarioFeature['targetValue'];
       }
       else {
         item['selected'] = false;
+        item['preprocessed'] = false;
         item['spf'] = 40;
         item['targetValue'] = 17;
       }
@@ -503,37 +463,29 @@ class App extends React.Component {
         'content-type': 'multipart/form-data'
       }
     };
-    post(MARXAN_ENDPOINT + "createUser", formData, config).then((response) => this.parseCreateNewUserResponse(response.data));
-  }
-
-  //callback function after creating a new user
-  parseCreateNewUserResponse(response) {
-    this.setState({ creatingNewUser: false });
-    //check there are no errors from the server
-    if (!this.isServerError(response)) {
-      this.setState({ snackbarOpen: true, snackbarMessage: response.info + ". Close and login" });
-    }
-    else {
-      this.setState({ snackbarOpen: true, snackbarMessage: response.error });
-    }
+    post(MARXAN_ENDPOINT + "createUser", formData, config).then((response) => {
+      this.setState({ creatingNewUser: false });
+      if (!this.checkForErrors(response.data)) {
+        this.setState({ snackbarOpen: true, snackbarMessage: response.data.info + ". Close and login" });
+      }
+      else {
+        this.setState({ snackbarOpen: true, snackbarMessage: response.data.error });
+      }
+    });
   }
 
   //REST call to create a new scenario for a specific user
   createNewScenario(scenario) {
     this.setState({ loadingScenarios: true });
     jsonp(MARXAN_ENDPOINT + "createScenario?user=" + this.state.user + "&scenario=" + scenario.name + "&description=" + scenario.description, { timeout: TIMEOUT }).promise.then(function(response) {
-      //check if there are no timeout errors or empty responses
-      if (!this.responseIsTimeoutOrEmpty(response)) {
-        //check there are no errors from the server
-        if (!this.isServerError(response)) {
-          //refresh the scenarios list
-          this.listScenarios();
-          this.setState({ snackbarOpen: true, snackbarMessage: response.info });
-        }
-        else {
-          //ui feedback
-          this.setState({ loadingScenarios: false });
-        }
+      if (!this.checkForErrors(response)) {
+        //refresh the scenarios list
+        this.listScenarios();
+        this.setState({ snackbarOpen: true, snackbarMessage: response.info });
+      }
+      else {
+        //ui feedback
+        this.setState({ loadingScenarios: false });
       }
     }.bind(this));
   }
@@ -563,45 +515,37 @@ class App extends React.Component {
         'content-type': 'multipart/form-data'
       }
     };
-    post(MARXAN_ENDPOINT + "createScenarioFromWizard", formData, config).then((response) => this.parsecreateNewScenarioFromWizardResponse(response.data));
-  }
-
-  //callback from POST
-  parsecreateNewScenarioFromWizardResponse(response) {
-    this.setState({ loadingScenarios: false });
-    //check there are no errors from the server
-    if (!this.isServerError(response)) {
-      this.setState({ snackbarOpen: true, snackbarMessage: response.info });
-      this.loadScenario(response.name);
-    }
-    else {
-      this.setState({ snackbarOpen: true, snackbarMessage: response.error });
-    }
+    post(MARXAN_ENDPOINT + "createScenarioFromWizard", formData, config).then((response) => {
+      this.setState({ loadingScenarios: false });
+      if (!this.checkForErrors(response.data)) {
+        this.setState({ snackbarOpen: true, snackbarMessage: response.data.info });
+        this.loadScenario(response.name);
+      }
+      else {
+        this.setState({ snackbarOpen: true, snackbarMessage: response.data.error });
+      }
+    });
   }
 
   //REST call to delete a specific scenario
   deleteScenario(name) {
     this.setState({ loadingScenarios: true });
     jsonp(MARXAN_ENDPOINT + "deleteScenario?user=" + this.state.user + "&scenario=" + name, { timeout: TIMEOUT }).promise.then(function(response) {
-      //check if there are no timeout errors or empty responses
-      if (!this.responseIsTimeoutOrEmpty(response)) {
-        //check there are no errors from the server
-        if (!this.isServerError(response)) {
-          //refresh the scenarios list
-          this.listScenarios();
+      if (!this.checkForErrors(response)) {
+        //refresh the scenarios list
+        this.listScenarios();
+        //ui feedback
+        this.setState({ snackbarOpen: true, snackbarMessage: response.info });
+        //see if the user deleted the current scenario
+        if (response.scenario === this.state.scenario) {
           //ui feedback
-          this.setState({ snackbarOpen: true, snackbarMessage: response.info });
-          //see if the user deleted the current scenario
-          if (response.scenario === this.state.scenario) {
-            //ui feedback
-            this.setState({ snackbarOpen: true, snackbarMessage: "Current scenario deleted - loading next available" });
-            this.state.scenarios.map((scenario) => { if (scenario.name !== this.state.scenario) this.loadScenario(scenario.name); return undefined; });
-          }
+          this.setState({ snackbarOpen: true, snackbarMessage: "Current scenario deleted - loading next available" });
+          this.state.scenarios.map((scenario) => { if (scenario.name !== this.state.scenario) this.loadScenario(scenario.name); return undefined; });
         }
-        else {
-          //ui feedback
-          this.setState({ loadingScenarios: false });
-        }
+      }
+      else {
+        //ui feedback
+        this.setState({ loadingScenarios: false });
       }
     }.bind(this));
   }
@@ -609,19 +553,15 @@ class App extends React.Component {
   cloneScenario(name) {
     this.setState({ loadingScenarios: true });
     jsonp(MARXAN_ENDPOINT + "cloneScenario?user=" + this.state.user + "&scenario=" + name, { timeout: TIMEOUT }).promise.then(function(response) {
-      //check if there are no timeout errors or empty responses
-      if (!this.responseIsTimeoutOrEmpty(response)) {
-        //check there are no errors from the server
-        if (!this.isServerError(response)) {
-          //refresh the scenarios list
-          this.listScenarios();
-          //ui feedback
-          this.setState({ snackbarOpen: true, snackbarMessage: response.info });
-        }
-        else {
-          //ui feedback
-          this.setState({ loadingScenarios: false });
-        }
+      if (!this.checkForErrors(response)) {
+        //refresh the scenarios list
+        this.listScenarios();
+        //ui feedback
+        this.setState({ snackbarOpen: true, snackbarMessage: response.info });
+      }
+      else {
+        //ui feedback
+        this.setState({ loadingScenarios: false });
       }
     }.bind(this));
   }
@@ -638,12 +578,8 @@ class App extends React.Component {
     this.setState({ editingScenarioName: false });
     if (newName !== '' && newName !== this.state.scenario) {
       jsonp(MARXAN_ENDPOINT + "renameScenario?user=" + this.state.user + "&scenario=" + this.state.scenario + "&newName=" + newName, { timeout: TIMEOUT }).promise.then(function(response) {
-        //check if there are no timeout errors or empty responses
-        if (!this.responseIsTimeoutOrEmpty(response)) {
-          //check there are no errors from the server
-          if (!this.isServerError(response)) {
-            this.setState({ scenario: response.scenario, snackbarOpen: true, snackbarMessage: response.info });
-          }
+        if (!this.checkForErrors(response)) {
+          this.setState({ scenario: response.scenario, snackbarOpen: true, snackbarMessage: response.info });
         }
       }.bind(this));
     }
@@ -653,12 +589,8 @@ class App extends React.Component {
     this.setState({ editingDescription: false });
     if (newDesc !== '' && newDesc !== this.state.metadata.DESCRIPTION) {
       jsonp(MARXAN_ENDPOINT + "renameDescription?user=" + this.state.user + "&scenario=" + this.state.scenario + "&newDesc=" + newDesc, { timeout: TIMEOUT }).promise.then(function(response) {
-        //check if there are no timeout errors or empty responses
-        if (!this.responseIsTimeoutOrEmpty(response)) {
-          //check there are no errors from the server
-          if (!this.isServerError(response)) {
-            this.setState({ metadata: Object.assign(this.state.metadata, { DESCRIPTION: response.description }), snackbarOpen: true, snackbarMessage: response.info });
-          }
+        if (!this.checkForErrors(response)) {
+          this.setState({ metadata: Object.assign(this.state.metadata, { DESCRIPTION: response.description }), snackbarOpen: true, snackbarMessage: response.info });
         }
       }.bind(this));
     }
@@ -668,46 +600,48 @@ class App extends React.Component {
     this.setState({ loadingScenarios: true });
     jsonp(MARXAN_ENDPOINT + "listScenarios?user=" + this.state.user, { timeout: TIMEOUT }).promise.then(function(response) {
       this.setState({ loadingScenarios: false });
-      //check if there are no timeout errors or empty responses
-      if (!this.responseIsTimeoutOrEmpty(response)) {
-        //check there are no errors from the server
-        if (!this.isServerError(response)) {
-          this.setState({ scenarios: response.scenarios });
-        }
-        else {
-          this.setState({ scenarios: undefined });
-        }
+      if (!this.checkForErrors(response)) {
+        this.setState({ scenarios: response.scenarios });
+      }
+      else {
+        this.setState({ scenarios: undefined });
       }
     }.bind(this));
   }
 
-  //updates a parameter in the input.dat file directly, e.g. for updating the PLANNING_UNIT_NAME after the user sets their source spatial data
+  //updates a parameter in the input.dat file directly
   updateParameter(parameter, value) {
     jsonp(MARXAN_ENDPOINT + "updateParameter?user=" + this.state.user + "&scenario=" + this.state.scenario + "&parameter=" + parameter + "&value=" + value, { timeout: TIMEOUT }).promise.then(function(response) {
-      //check if there are no timeout errors or empty responses
-      if (!this.responseIsTimeoutOrEmpty(response)) {
-        //check there are no errors from the server
-        if (!this.isServerError(response)) {
-          //do something
-        }
+      if (!this.checkForErrors(response)) {
+        //do something
       }
     }.bind(this));
   }
+
+  /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  ////////CODE TO PREPROCESS AND RUN MARXAN
+  /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
   //run a marxan job on the server
   runMarxan(e) {
-    //update the spec.dat file with any that have changed target or spf
+    //ui feedback
+    this.setState({ preprocessingFeature: true });
+
+    //the spec.dat file with any that have changed target or spf
     this.updateSpecFile().then(function(value) {
 
-      //when the species file has been updated, update the pu file 
+      //when the species file has been updated, update the planning unit file 
       this.updatePuFile();
 
-      //when the planning unit file has been updated, update the PuVSpr file
-      var promisePuVSpr = this.updatePuvsprFile();
+      //when the planning unit file has been updated, update the PuVSpr file - this does all the preprocessing
+      this.updatePuvsprFile().then(function(value) {
 
-      //when the PuVSpr file has been updated, run the marxan job
-      promisePuVSpr.then(function(value) {
+        //start the marxan job
         this.startMarxanJob();
+
+        //set processing to have ended
+        this.setState({ preprocessingFeature: false });
+
       }.bind(this));
 
     }.bind(this));
@@ -735,17 +669,10 @@ class App extends React.Component {
         'content-type': 'multipart/form-data'
       }
     };
-    return post(MARXAN_ENDPOINT + "createSpecFile", formData, config).then((response) => this.parseupdateSpecFile(response.data));
-  }
-
-  parseupdateSpecFile(response) {
-    //check if there are no timeout errors or empty responses
-    if (!this.responseIsTimeoutOrEmpty( response)) {
-      //check there are no errors from the server
-      if (!this.isServerError(response)) {
-        this.setState({ snackbarOpen: true, snackbarMessage: response.info });
-      }
-    }
+    return post(MARXAN_ENDPOINT + "updateSpecFile", formData, config).then((response) => {
+      //check if there are no timeout errors or empty responses
+      this.checkForErrors(response.data);
+    });
   }
 
   //updates the planning unit file with any changes - not implemented yet
@@ -771,28 +698,25 @@ class App extends React.Component {
     //return a promise array from each of the preprocessing jobs
     let promises = this.state.scenarioFeatures.map(feature => {
       if (!feature.preprocessed) {
-        return this.preprocessFeature(feature);
+        return this.preprocessFeature(feature, false);
       }
     }, this);
     //returns a single Promise that resolves when all of the promises in the promises array have resolved 
     return Promise.all(promises);
   }
 
-  preprocessFeature(feature) {
-    this.setState({ preprocessingFeature: true });
+  //preprocesses a feature - i.e. intersects it with the planning units grid and writes the intersection results into the puvspr.dat file ready for a marxan run
+  preprocessFeature(feature, hideDialogOnFinish = true) {
+    //show the preprocessing dialog and the feature alias
+    this.setState({ preprocessingFeature: true, preprocessingFeatureAlias: feature.alias });
     return jsonp(MARXAN_ENDPOINT + "preprocessFeature?user=" + this.state.user + "&scenario=" + this.state.scenario + "&planning_grid_name=" + this.state.metadata.PLANNING_UNIT_NAME + "&feature_class_name=" + feature.feature_class_name, { timeout: TIMEOUT }).promise.then(function(response) {
-      //check if there are no timeout errors or empty responses
-      if (!this.responseIsTimeoutOrEmpty(response)) {
-        //check there are no errors from the server
-        if (!this.isServerError(response)) {
-          this.setState({ snackbarOpen: true, snackbarMessage: response.info, preprocessingFeature: false });
-          //update the feature that has been preprocessed
-          this.updateFeature(response.feature_class_name, "preprocessed", true);
-        }
-        else {
-          //ui feedback
-          this.setState({ loadingScenarios: false });
-        }
+      if (!this.checkForErrors(response)) {
+        //if we want to hide the dialog after processing has finished then do so
+        if (hideDialogOnFinish) this.setState({ preprocessingFeature: false });
+        //reset the preprocessingFeatureAlias to empty string
+        this.setState({ preprocessingFeatureAlias: "" });
+        //update the feature that has been preprocessed
+        this.updateFeature(response.feature_class_name, "preprocessed", true);
       }
     }.bind(this));
   }
@@ -810,24 +734,20 @@ class App extends React.Component {
   pollResults(checkForExistingRun) {
     //make the request to get the marxan data
     jsonp(MARXAN_ENDPOINT + "pollResults?user=" + this.state.user + "&scenario=" + this.state.scenario + "&numreps=" + this.state.numReps + "&checkForExistingRun=" + checkForExistingRun, { timeout: TIMEOUT }).promise.then(function(response) {
-      //check if there are no timeout errors from the server or empty responses from the server
-      if (!this.responseIsTimeoutOrEmpty(response)) {
-        //check there are no errors from the server from my code
-        if (!this.isServerError(response)) {
-          //the response includes the summed solution so it has finished
-          if (response.ssoln) {
-            this.runCompleted(response);
-            //cancel the timer which polls the server to see when the run is complete
-            clearInterval(this.timer);
-            this.timer = null;
-          }
-          else {
-            this.setState({ runsCompleted: response.runsCompleted });
-          }
+      if (!this.checkForErrors(response)) {
+        //the response includes the summed solution so it has finished
+        if (response.ssoln) {
+          this.runCompleted(response);
+          //cancel the timer which polls the server to see when the run is complete
+          clearInterval(this.timer);
+          this.timer = null;
         }
         else {
-          this.setState({ running: false });
+          this.setState({ runsCompleted: response.runsCompleted });
         }
+      }
+      else {
+        this.setState({ running: false });
       }
     }.bind(this));
   }
@@ -852,6 +772,10 @@ class App extends React.Component {
     this.setState({ running: false, runsCompleted: 0, log: response.log.replace(/(\r\n|\n|\r)/g, "<br />"), outputsTabString: '', solutions: solutions, snackbarOpen: true, snackbarMessage: response.info });
   }
 
+  /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  ////////END OF CODE TO PREPROCESS AND RUN MARXAN
+  /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
   //pads a number with zeros to a specific size, e.g. pad(9,5) => 00009
   pad(num, size) {
     var s = num + "";
@@ -868,12 +792,8 @@ class App extends React.Component {
     else {
       //request the data for the specific solution
       jsonp(MARXAN_ENDPOINT + "loadSolution?user=" + this.state.user + "&scenario=" + this.state.scenario + "&solution=" + solution, { timeout: TIMEOUT }).promise.then(function(response) {
-        //check if there are no timeout errors or empty responses
-        if (!this.responseIsTimeoutOrEmpty(response)) {
-          //check there are no errors from the server
-          if (!this.isServerError(response)) {
-            this.renderSolution(response.solution, false);
-          }
+        if (!this.checkForErrors(response)) {
+          this.renderSolution(response.solution, false);
         }
       }.bind(this));
     }
@@ -1079,8 +999,6 @@ class App extends React.Component {
   ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
   spatialLayerChanged(tileset, zoomToBounds) {
-    //save the name of the layer in the input.dat file in the PLANNING_UNIT_NAME parameter
-    this.updateParameter("PLANNING_UNIT_NAME", tileset.name);
     //remove the existing results layer and planning unit layer
     this.removeSpatialLayers();
     //add a new results layer and planning unit layer
@@ -1130,6 +1048,12 @@ class App extends React.Component {
         'fill-opacity': 0
       }
     }, 'place-city-sm');
+  }
+  
+  //fired when the scenarios tab is selected
+  scenario_tab_active(){
+      //hide the planning units layer
+      this.hideLayer("planning_units_layer");
   }
 
   //fired when the features tab is selected
@@ -1194,19 +1118,12 @@ class App extends React.Component {
       }
     };
     //post to the server
-    post(MARXAN_ENDPOINT + "updatePlanningUnitStatuses", formData, config).then((response) => this.parseupdatePuDatFileResponse(response.data));
-  }
-
-  //callback function after updating the pu.dat file with the passed parameters
-  parseupdatePuDatFileResponse(response) {
-    //check if there are no timeout errors or empty responses
-    if (!this.responseIsTimeoutOrEmpty( response)) {
-      //check there are no errors from the server
-      if (!this.isServerError(response)) {
+    post(MARXAN_ENDPOINT + "updatePlanningUnitStatuses", formData, config).then((response) => {
+      if (!this.checkForErrors(response.data)) {
         //if succesfull write the state back to the userData key
-        this.setState({ snackbarOpen: true, snackbarMessage: response.info });
+        this.setState({ snackbarOpen: true, snackbarMessage: response.data.info });
       }
-    }
+    });
   }
 
   editPu(e) {
@@ -1254,16 +1171,12 @@ class App extends React.Component {
   getPlanningUnits() {
     //get a list of existing planning units 
     jsonp(REST_ENDPOINT + "getplanningunits?", { timeout: 10000 }).promise.then(function(response) {
-      //check if there are no timeout errors or empty responses
-      if (!this.responseIsTimeoutOrEmpty(response)) {
-        //check there are no errors from the server
-        if (!this.isServerError(response)) {
-          //valid response
-          this.setState({ planningUnitGrids: response.records });
-        }
-        else {
-          this.setState({ loggingIn: false });
-        }
+      if (!this.checkForErrors(response)) {
+        //valid response
+        this.setState({ planningUnitGrids: response.records });
+      }
+      else {
+        this.setState({ loggingIn: false });
       }
     }.bind(this));
   }
@@ -1277,20 +1190,16 @@ class App extends React.Component {
   createNewPlanningUnitGrid() {
     this.setState({ creatingNewPlanningUnit: true });
     jsonp(REST_ENDPOINT + "get_hexagons?iso3=" + this.state.iso3 + "&domain=" + this.state.domain + "&areakm2=" + this.state.areakm2, { timeout: 0 }).promise.then(function(response) {
-      //check if there are no timeout errors or empty responses
-      if (!this.responseIsTimeoutOrEmpty(response)) {
-        //check there are no errors from the server
-        if (!this.isServerError(response)) {
-          //feedback
-          this.setState({ snackbarOpen: true, snackbarMessage: "Planning grid: '" + response.records[0].get_hexagons.split(",")[1].replace(/"/gm, '').replace(")", "") + "' created" }); //response is (pu_cok_terrestrial_hexagons_10,"Cook Islands Terrestrial 10Km2 hexagon grid")
-          //upload this data to mapbox for visualisation
-          this.uploadToMapBox(response.records[0].get_hexagons.split(",")[0].replace(/"/gm, '').replace("(", ""), "hexagons");
-          //update the planning unit items
-          this.getPlanningUnits();
-        }
-        else {
-          //do something
-        }
+      if (!this.checkForErrors(response)) {
+        //feedback
+        this.setState({ snackbarOpen: true, snackbarMessage: "Planning grid: '" + response.records[0].get_hexagons.split(",")[1].replace(/"/gm, '').replace(")", "") + "' created" }); //response is (pu_cok_terrestrial_hexagons_10,"Cook Islands Terrestrial 10Km2 hexagon grid")
+        //upload this data to mapbox for visualisation
+        this.uploadToMapBox(response.records[0].get_hexagons.split(",")[0].replace(/"/gm, '').replace("(", ""), "hexagons");
+        //update the planning unit items
+        this.getPlanningUnits();
+      }
+      else {
+        //do something
       }
       //reset the state
       this.setState({ creatingNewPlanningUnit: false });
@@ -1310,16 +1219,12 @@ class App extends React.Component {
   }
   getCountries() {
     jsonp(REST_ENDPOINT + "getcountries2", { timeout: 10000 }).promise.then(function(response) {
-      //check if there are no timeout errors or empty responses
-      if (!this.responseIsTimeoutOrEmpty(response)) {
-        //check there are no errors from the server
-        if (!this.isServerError(response)) {
-          //valid response
-          this.setState({ countries: response.records });
-        }
-        else {
-          this.setState({ loggingIn: false });
-        }
+      if (!this.checkForErrors(response)) {
+        //valid response
+        this.setState({ countries: response.records });
+      }
+      else {
+        this.setState({ loggingIn: false });
       }
     }.bind(this));
   }
@@ -1327,16 +1232,12 @@ class App extends React.Component {
   //uploads the names feature class to mapbox on the server
   uploadToMapBox(feature_class_name, mapbox_layer_name) {
     jsonp(MARXAN_ENDPOINT + "uploadTilesetToMapBox?feature_class_name=" + feature_class_name + "&mapbox_layer_name=" + mapbox_layer_name, { timeout: 300000 }).promise.then(function(response) {
-      //check if there are no timeout errors or empty responses
-      if (!this.responseIsTimeoutOrEmpty(response)) {
-        //check there are no errors from the server
-        if (!this.isServerError(response)) {
-          this.setState({ snackbarOpen: true, snackbarMessage: "Uploading to MapBox with the id: " + response.uploadid });
-          this.timer = setInterval(() => this.pollMapboxForUploadComplete(response.uploadid), 5000);
-        }
-        else {
-          //server error
-        }
+      if (!this.checkForErrors(response)) {
+        this.setState({ snackbarOpen: true, snackbarMessage: "Uploading to MapBox with the id: " + response.uploadid });
+        this.timer = setInterval(() => this.pollMapboxForUploadComplete(response.uploadid), 5000);
+      }
+      else {
+        //server error
       }
     }.bind(this));
   }
@@ -1362,14 +1263,10 @@ class App extends React.Component {
     else {
       //load the interest features as all of the interest features from the marxan web database
       jsonp(REST_ENDPOINT + "get_interest_features?format=json", { timeout: 10000 }).promise.then(function(response) {
-        //check if there are no timeout errors or empty responses
-        if (!this.responseIsTimeoutOrEmpty(response)) {
-          //check there are no errors from the server
-          if (!this.isServerError(response)) {
-            this.setState({ interestFeatures: response.records });
-          }
-          else {}
+        if (!this.checkForErrors(response)) {
+          this.setState({ interestFeatures: response.records });
         }
+        else {}
       }.bind(this));
     }
   }
@@ -1384,7 +1281,9 @@ class App extends React.Component {
     this.setState({ AllInterestFeaturesDialogOpen: true });
   }
   closeAllInterestFeaturesDialog() {
-    this.setState({ AllInterestFeaturesDialogOpen: false });
+    this.updateSpecFile().then(function(response){
+        this.setState({ AllInterestFeaturesDialogOpen: false });
+    }.bind(this));
   }
   openAllCostsDialog() {
     this.setState({ AllCostsDialogOpen: true });
@@ -1407,16 +1306,12 @@ class App extends React.Component {
   createNewInterestFeature() {
     //the zipped shapefile has been uploaded to the MARXAN folder and the metadata are in the featureDatasetName, featureDatasetDescription and featureDatasetFilename state variables - 
     jsonp(MARXAN_ENDPOINT + "importShapefile?filename=" + this.state.featureDatasetFilename + "&name=" + this.state.featureDatasetName + "&description=" + this.state.featureDatasetDescription + "&dissolve=true&type=interest_feature", { timeout: TIMEOUT }).promise.then(function(response) {
-      //check if there are no timeout errors or empty responses
-      if (!this.responseIsTimeoutOrEmpty(response)) {
-        //check there are no errors from the server
-        if (!this.isServerError(response)) {
-          this.setState({ snackbarOpen: true, snackbarMessage: response.info });
-          this.getInterestFeatures();
-        }
-        else {
-          //server error
-        }
+      if (!this.checkForErrors(response)) {
+        this.setState({ snackbarOpen: true, snackbarMessage: response.info });
+        this.getInterestFeatures();
+      }
+      else {
+        //server error
       }
     }.bind(this));
   }
@@ -1425,33 +1320,25 @@ class App extends React.Component {
   importZippedShapefileAsPu(zipname, alias, description) {
     //the zipped shapefile has been uploaded to the MARXAN folder - it will be imported to PostGIS and a record will be entered in the metadata_planning_units table
     jsonp(MARXAN_ENDPOINT + "importShapefile?filename=" + zipname + "&name=" + alias + "&description=" + description + "&dissolve=false&type=planning_unit", { timeout: TIMEOUT }).promise.then(function(response) {
-      //check if there are no timeout errors or empty responses
-      if (!this.responseIsTimeoutOrEmpty(response)) {
-        //check there are no errors from the server
-        if (!this.isServerError(response)) {
-          this.setState({ snackbarOpen: true, snackbarMessage: response.info });
-          var zipName = response.file.slice(0, -4);
-          this.uploadToMapBox(zipName, zipName);
-        }
-        else {
-          //server error
-        }
+      if (!this.checkForErrors(response)) {
+        this.setState({ snackbarOpen: true, snackbarMessage: response.info });
+        var zipName = response.file.slice(0, -4);
+        this.uploadToMapBox(zipName, zipName);
+      }
+      else {
+        //server error
       }
     }.bind(this));
   }
 
   deleteInterestFeature(feature) {
     jsonp(MARXAN_ENDPOINT + "deleteInterestFeature?interest_feature_name=" + feature.feature_class_name, { timeout: TIMEOUT }).promise.then(function(response) {
-      //check if there are no timeout errors or empty responses
-      if (!this.responseIsTimeoutOrEmpty(response)) {
-        //check there are no errors from the server
-        if (!this.isServerError(response)) {
-          this.setState({ snackbarOpen: true, snackbarMessage: "Conservation feature deleted" });
-          this.getInterestFeatures();
-        }
-        else {
-          this.setState({ snackbarOpen: true, snackbarMessage: "Conservation feature not deleted" });
-        }
+      if (!this.checkForErrors(response)) {
+        this.setState({ snackbarOpen: true, snackbarMessage: "Conservation feature deleted" });
+        this.getInterestFeatures();
+      }
+      else {
+        this.setState({ snackbarOpen: true, snackbarMessage: "Conservation feature not deleted" });
       }
     }.bind(this));
   }
@@ -1479,6 +1366,7 @@ class App extends React.Component {
   //unselects a single Conservation feature
   unselectItem(interestFeature) {
     this.updateInterestFeature(this.state.interestFeatures, interestFeature.id, "selected", false, true); //select the Conservation feature
+    this.updateInterestFeature(this.state.interestFeatures, interestFeature.id, "preprocessed", false, true); //select the Conservation feature
   }
 
   //selects all the Conservation features
@@ -1502,6 +1390,8 @@ class App extends React.Component {
     features.map((item) => {
       //unselect the item
       item['selected'] = false;
+      //set the preprocessing as not done
+      item['preprocessed'] = false
       return null;
     });
     this.setState({ interestFeatures: features, scenarioFeatures: [] });
@@ -1594,6 +1484,7 @@ class App extends React.Component {
             openNewCaseStudyDialog={this.openNewCaseStudyDialog.bind(this)}
             scenarioFeatures={this.state.scenarioFeatures}
             updateTargetValue={this.updateTargetValue.bind(this)}
+            scenario_tab_active={this.scenario_tab_active.bind(this)}
             features_tab_active={this.features_tab_active.bind(this)}
             pu_tab_active={this.pu_tab_active.bind(this)}
             startPuEditSession={this.startPuEditSession.bind(this)}
@@ -1601,8 +1492,12 @@ class App extends React.Component {
             showSettingsDialog={this.showSettingsDialog.bind(this)}
             openImportWizard={this.openImportWizard.bind(this)}
             preprocessFeature={this.preprocessFeature.bind(this)}
+            preprocessingFeature={this.state.preprocessingFeature}
+            openAllInterestFeaturesDialog={this.openAllInterestFeaturesDialog.bind(this)}
           />
-          <div className="runningSpinner"><FontAwesome spin name='sync' size='2x' style={{'display': (this.state.running ? 'block' : 'none')}}/></div>
+          <div className="runningSpinner">
+            <ArrowBack style={{'display': (this.state.running ? 'block' : 'none')}}/>
+          </div>
           <Popup
             active_pu={this.state.active_pu} 
             xy={this.state.popup_point}
@@ -1624,10 +1519,12 @@ class App extends React.Component {
             message={this.state.snackbarMessage}
             onRequestClose={this.closeSnackbar.bind(this)}
           />
-          <ProgressDialog 
-            open={this.state.running}
-            numReps={this.state.numReps}
+          <RunProgressDialog 
+            preprocessingFeatureAlias={this.state.preprocessingFeatureAlias}
+            preprocessingFeature={this.state.preprocessingFeature}
+            running={this.state.running}
             runsCompleted={this.state.runsCompleted}
+            numReps={this.state.numReps}
           />
           <NewCaseStudyDialog
             open={this.state.newCaseStudyDialogOpen}
@@ -1738,9 +1635,9 @@ class App extends React.Component {
             <FlatButton
               onClick={this.showResults.bind(this)}
               primary={true}
-              style={{minWidth:'0px',  marginLeft: '4px', marginTop:'7px'}}
+              style={{minWidth:'24px',marginTop:'6px'}}
               title={"Show results"}
-              icon={<FontAwesome name='arrow-left' style={{top:'8px','color':'white'}}/>}
+              icon={<ArrowBack color={white}/>}
             />
           </div>
         </React.Fragment>

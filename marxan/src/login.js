@@ -2,11 +2,11 @@ import React from 'react';
 import Dialog from 'material-ui/Dialog';
 import RaisedButton from 'material-ui/RaisedButton';
 import TextField from 'material-ui/TextField';
-import FontAwesome from 'react-fontawesome';
 import NewUserDialog from './NewUserDialog.js';
 import ResendPassword from './ResendPassword.js';
+import Sync from 'material-ui/svg-icons/notification/sync';
 
-class Login extends React.Component {
+class Login extends React.Component { 
     constructor(props) {
         super(props);
         this.state = { newUserDialogOpen: false, resendPasswordDialogOpen: false };
@@ -38,14 +38,29 @@ class Login extends React.Component {
             <React.Fragment>
                 <Dialog 
                     actions={[
-                        <RaisedButton onClick={this.registerNewUser.bind(this)} label= "Register" className="scenariosBtn" primary={true} disabled={this.props.loggingIn ? true : false} style={{minWidth:'15px', minHeight:'15px',height:'22px',fontSize:'10px', verticalAlign:'middle', margin:'5px'}} />,
-                        <RaisedButton onClick={this.props.validateUser} label= {this.props.loggingIn ? "Logging in" : "Login"} disabled = {(!this.props.user || !this.props.password || this.props.loggingIn) ? true : false} primary={true} className="scenariosBtn" type="submit" style={{minWidth:'15px', minHeight:'15px',height:'22px',fontSize:'10px', verticalAlign:'middle', margin:'5px'}} />
+                        <RaisedButton 
+                            onClick={this.registerNewUser.bind(this)} 
+                            label= "Register" 
+                            className="scenariosBtn" 
+                            primary={true} 
+                            disabled={this.props.loggingIn ? true : false} 
+                            style={{height:'25px'}} 
+                        />,
+                        <RaisedButton 
+                            onClick={this.props.validateUser} 
+                            label= {this.props.loggingIn ? "Logging in" : "Login"} 
+                            disabled = {(!this.props.user || !this.props.password || this.props.loggingIn) ? true : false} 
+                            primary={true} 
+                            className="scenariosBtn" 
+                            type="submit" 
+                            style={{height:'25px'}} 
+                        />
                     ]} 
                     title="Login" 
                     modal={true} 
                     children={
                         <div style={{height:'124px'}}>
-                            <FontAwesome spin name='sync' style={{'display': (this.props.loggingIn ? 'inline-block' : 'none')}} className='loginSpinner'/>
+                            <Sync className='spin loginSpinner' style={{display: this.props.loggingIn ? 'block' : 'none'}}/>
                             <TextField floatingLabelText="Username" floatingLabelFixed={true} onChange = {(event, value)=>this.props.changeUserName(value)}  value={this.props.user} className='loginUserField' disabled = {this.props.loggingIn ? true : false} onKeyPress={this.handleKeyPress.bind(this)}/>
                             <span><TextField floatingLabelText="Password" floatingLabelFixed={true} type="password" onChange = {(event, value)=>this.props.changePassword(value)}  value={this.props.password} className='loginUserField' disabled = {this.props.loggingIn ? true : false} onKeyPress={this.handleKeyPress.bind(this)}/></span>
                             <span onClick={this.openResendPasswordDialog.bind(this)} className="forgotLink" title="Click to resend password">Forgot</span>

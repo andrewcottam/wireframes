@@ -178,8 +178,6 @@ table input {
 
 .scenarioNameEditBox {
   z-index: 1000000;
-  margin-top: 14px;
-  margin-left: 10px;
   font-family: Roboto, sans-serif;
   background-color: rgb(0, 188, 212);
   border: 0px;
@@ -187,6 +185,7 @@ table input {
   font-size: 20px;
   font-weight: 400;
   position: static;
+  margin-left: 10px;
 }
 
 .descriptionEditBox {
@@ -198,7 +197,7 @@ table input {
   width: 350px;
   height: 22px;
   margin-top: 1px;
-  margin-bottom:1px;
+  margin-bottom: 11px;
 }
 
 .scenarioSpinner {
@@ -221,7 +220,7 @@ table input {
 
 .loginSpinner {
   position: absolute;
-  top: 18px;
+  top: 15px;
   margin-left: 66px;
 }
 
@@ -252,7 +251,15 @@ table input {
 }
 
 .scenariosBtn {
-  margin: 5px;
+  min-width: 25px !important;
+  min-height: 25px !important;
+  height: 25px !important;
+}
+
+.fontAwesome {
+  vertical-align: baseline !important;
+  font-size: 15px !important;
+  height: 25px;
 }
 
 .chooseRenderer {
@@ -361,7 +368,7 @@ input:-webkit-autofill {
 }
 
 .linearGauge {
-  margin-top:7px;
+  margin-top: 7px;
   display: inline-flex;
   border: 1px solid lightgray;
 }
@@ -377,8 +384,8 @@ input:-webkit-autofill {
 
 .divider {
   background-color: rgb(255, 64, 129);
-  position:absolute;
-  width:2px;
+  position: absolute;
+  width: 2px;
   /*margin-top:4px;*/
 }
 
@@ -390,15 +397,98 @@ input:-webkit-autofill {
   background-color: lightgray;
 }
 
-.targetShortfall{
+.targetShortfall {
   background-color: lightgray;
 }
-.totalShortFall{
-  background-color:none;
+
+.totalShortFall {
+  background-color: none;
 }
-.checkCircle{
-  display:inline-flex;
+
+.checkCircle {
+  display: inline-flex;
   vertical-align: middle;
-  margin-left:5px;
-  color:'green';
+  margin-left: 5px;
+  color: 'green';
+}
+
+.smallMenuItem {
+  line-height: 26px !important;
+  min-height: 16px !important;
+  font-size: 16px !important;
+}
+
+@-moz-keyframes spin {
+  from {
+    -moz-transform: rotate(0deg);
+  }
+  to {
+    -moz-transform: rotate(-360deg);
+  }
+}
+
+@-webkit-keyframes spin {
+  from {
+    -webkit-transform: rotate(0deg);
+  }
+  to {
+    -webkit-transform: rotate(-360deg);
+  }
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(-360deg);
+  }
+}
+
+.spin {
+  -webkit-animation-name: spin;
+  -webkit-animation-duration: 1500ms;
+  -webkit-animation-iteration-count: infinite;
+  -webkit-animation-timing-function: linear;
+  -moz-animation-name: spin;
+  -moz-animation-duration: 1500ms;
+  -moz-animation-iteration-count: infinite;
+  -moz-animation-timing-function: linear;
+  -ms-animation-name: spin;
+  -ms-animation-duration: 1500ms;
+  -ms-animation-iteration-count: infinite;
+  -ms-animation-timing-function: linear;
+  -o-transition: rotate(3600deg);
+}
+
+.menuIcon {
+  margin-left: 20px;
+  cursor: pointer;
+}
+
+.toolbarIcon {
+  position: absolute !important;
+}
+
+.iconButton {
+  padding: 0px !important;
+  width: 24px !important;
+  height: 24px !important;
+}
+
+.raisedButton {
+  padding: 0px !important;
+  min-width: 60px;
+  width: 24px !important;
+  height: 24px !important;
+}
+
+.titleBar {
+  background-color: rgb(0, 188, 212) !important;
+  vertical-align: middle;
+  padding-left: 20px;
+  padding-top: 14px;
+}
+.scenarioButton{
+  vertical-align: sub;
 }

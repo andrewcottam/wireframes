@@ -47,7 +47,13 @@ class ClassificationDialog extends React.Component {
           </div>
         } 
         actions={[
-          <RaisedButton label="OK" primary={true} onClick={this.props.closeClassificationDialog} className="scenariosBtn" style={{minWidth:'15px', minHeight:'15px', height:'22px', fontSize:'10px', verticalAlign:'middle', marginRight:'25px'}}/>  
+          <RaisedButton 
+            label="OK" 
+            primary={true} 
+            className="scenariosBtn" 
+            style={{height:'25px'}}
+            onClick={this.props.closeClassificationDialog} 
+          />  
         ]} 
         open={this.props.open} 
         onRequestClose={this.props.closeClassificationDialog} 

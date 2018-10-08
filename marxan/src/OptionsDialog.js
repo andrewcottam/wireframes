@@ -16,6 +16,7 @@ class OptionsDialog extends React.Component {
     }
     updateOptions(){
         this.props.saveOptions(this.options);
+        this.props.closeOptionsDialog();
     }
     render() {
         return (
@@ -31,8 +32,13 @@ class OptionsDialog extends React.Component {
                     </div>
                 } 
                 actions={[
-                    <RaisedButton label="Save" primary={true} onClick={this.updateOptions.bind(this)} className="scenariosBtn" disabled={!this.state.saveEnabled} style={{minWidth:'15px', minHeight:'15px', height:'22px', fontSize:'10px', verticalAlign:'middle'}}/>,
-                    <RaisedButton label="OK" primary={true} onClick={this.props.closeOptionsDialog} className="scenariosBtn" style={{minWidth:'15px', minHeight:'15px', height:'22px', fontSize:'10px', verticalAlign:'middle'}}/>,
+                    <RaisedButton 
+                        label="OK" 
+                        primary={true} 
+                        onClick={this.updateOptions.bind(this)} 
+                        className="scenariosBtn" 
+                        style={{height:'25px'}}
+                    />,
                 ]} 
                 open={this.props.open} 
                 onRequestClose={this.props.closeOptionsDialog} 
