@@ -134,7 +134,7 @@ class InfoPanel extends React.Component {
                     listScenarios={this.props.listScenarios}
                     scenarios={this.props.scenarios}
                     scenario={this.props.scenario}
-                    createNewScenario={this.props.createNewScenario}
+                    createNewScenario={this.props.createNewScenario} 
                     deleteScenario={this.props.deleteScenario}
                     loadScenario={this.props.loadScenario}
                     cloneScenario={this.props.cloneScenario}
@@ -183,20 +183,25 @@ class InfoPanel extends React.Component {
               </Tab>
             </Tabs>     
             <Paper className={'lowerToolbar'}>
-                <IconButton title="Run Settings" onClick={this.showSettingsDialog.bind(this)} className='toolbarIcon iconButton' style={{marginLeft:'12px'}}>
-                  <Settings />
-                </IconButton>
-                <div style={{position:'absolute',right:'40px'}}>
                 <RaisedButton 
-                  label="Run" 
-                  title="Click to run this scenario" 
-                  secondary={true} 
-                  className="scenariosBtn" 
-                  style={{height:'25px'}}
-                  onClick={this.props.runMarxan} 
-                  disabled={!this.props.runnable || this.props.preprocessingFeature || this.props.running || (this.props.scenarioFeatures.length === 0)} 
-                />  
-              </div>
+                  icon={<Settings style={{height:'20px',width:'20px'}}/>} 
+                  title="Run Settings"
+                  onClick={this.showSettingsDialog.bind(this)} 
+                  style={{ marginLeft:'12px', marginRight:'4px',padding: '0px',minWidth: '30px',width: '24px',height: '24px',position:'absolute'}}
+                  overlayStyle={{lineHeight:'24px',height:'24px'}}
+                  buttonStyle={{marginTop:'-7px',lineHeight:'24px',height:'24px'}} 
+                />
+                <div style={{position:'absolute',right:'40px'}}>
+                  <RaisedButton 
+                    label="Run" 
+                    title="Click to run this scenario" 
+                    secondary={true} 
+                    className="scenariosBtn" 
+                    style={{height:'24px'}}
+                    onClick={this.props.runMarxan} 
+                    disabled={!this.props.runnable || this.props.preprocessingFeature || this.props.running || (this.props.scenarioFeatures.length === 0)} 
+                  />  
+                </div>
             </Paper>
             <div className='footer'>
               <div>v1.0 Feedback: <a href='mailto:andrew.cottam@ec.europa.eu' className='email'>Andrew Cottam</a></div>

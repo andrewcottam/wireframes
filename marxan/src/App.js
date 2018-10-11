@@ -26,7 +26,7 @@ import ResultsPane from './ResultsPane';
 import ClassificationDialog from './ClassificationDialog';
 import ImportWizard from './ImportWizard';
 import FlatButton from 'material-ui/FlatButton';
-import {white} from 'material-ui/styles/colors';
+import { white } from 'material-ui/styles/colors';
 import ArrowBack from 'material-ui/svg-icons/navigation/arrow-back';
 
 //CONSTANTS
@@ -88,15 +88,17 @@ class App extends React.Component {
       savingOptions: false,
       dataBreaks: [],
       planningUnitGrids: [],
-      interestFeatures: [],
-      scenarioFeatures: [],
+      allFeatures: [], //all of the interest features in the metadata_interest_features table
+      scenarioFeatures: [], //the features for the currently loaded scenario
       costs: [],
       selectedCosts: [],
       iso3: '',
       domain: '',
       areakm2: undefined,
       countries: [],
-      puidsToExclude: []
+      puidsToExclude: [],
+      planning_units: [],
+      preprocessing: []
     };
   }
 
@@ -364,7 +366,7 @@ class App extends React.Component {
         //get the number of runs from the run parameters array
         let numReps = response.runParameters.filter(function(item) { return item.key === "NUMREPS" })[0].value;
         //set the state for the app based on the data that is returned from the server
-        this.setState({ loggedIn: true, scenario: response.scenario, runParams: response.runParameters, numReps: numReps, files: Object.assign(response.files), metadata: response.metadata, renderer: response.renderer, scenarioFeatures: response.features, planning_units: response.planning_units });
+        this.setState({ loggedIn: true, scenario: response.scenario, runParams: response.runParameters, numReps: numReps, files: Object.assign(response.files), metadata: response.metadata, renderer: response.renderer, planning_units: response.planning_units, preprocessing: response.preprocessing });
         //set the puidsToExclude from the pu.dat file
         var puidsToExclude = (response.planning_units.length > 1) && (response.planning_units[1].length > 1) ? response.planning_units[1][1] : [];
         this.setState({ puidsToExclude: puidsToExclude });
@@ -400,6 +402,13 @@ class App extends React.Component {
       });
   }
 
+  //matches and returns an item in an object array with the passed id - this assumes the first item in the object is the id identifier
+  getArrayItem(arr, id) {
+    let tmpArr = arr.filter(function(item) { return item[0] === id });
+    let returnValue = (tmpArr.length > 0) ? tmpArr[0] : undefined;
+    return returnValue;
+  }
+
   //initialises the interest features based on the current scenario
   initialiseInterestFeatures(oldVersion, scenarioFeatures, allFeatures) {
     var allInterestFeatures = [];
@@ -415,24 +424,36 @@ class App extends React.Component {
     var ids = scenarioFeatures.map(function(item) {
       return item.id;
     });
-    //iterate through all the interest features to add the required attributes to be used in the app and to populate them based on the current scenario interest features
-    var outputInterestFeatures = allInterestFeatures.map(function(item) {
+    //iterate through allInterestFeatures to add the required attributes to be used in the app and to populate them based on the current scenario features
+    var outFeatures = allInterestFeatures.map(function(item) {
+      //see if the feature is in the current scenario
       var scenarioFeature = (ids.indexOf(item.id) > -1) ? scenarioFeatures[ids.indexOf(item.id)] : null;
+      //get the preprocessing for that feature
+      let preprocessing = this.getArrayItem(this.state.preprocessing, item.id);
+      //if the interest feature is in the current scenario then populate the data from that feature
       if (scenarioFeature) {
         item['selected'] = true;
-        item['preprocessed'] = scenarioFeature['preprocessed'];
+        item['preprocessed'] = preprocessing ? true : false;
+        item['pu_area'] = preprocessing ? preprocessing[1] : -1;
+        item['pu_count'] = preprocessing ? preprocessing[2] : -1;
         item['spf'] = scenarioFeature['spf'];
-        item['targetValue'] = scenarioFeature['targetValue'];
+        item['target_value'] = scenarioFeature['target_value'];
       }
       else {
         item['selected'] = false;
         item['preprocessed'] = false;
+        item['pu_area'] = -1;
+        item['pu_count'] = -1;
         item['spf'] = 40;
-        item['targetValue'] = 17;
+        item['target_value'] = 17;
       }
+      //add the other required attributes to the features - these will be populated in the function calls preprocessFeature (pu_area, pu_count) and pollResults (protected_area, target_area)
+      // the -1 flag indicates that the values are unknown
+      item['target_area'] = -1;
+      item['protected_area'] = -1;
       return item;
-    });
-    this.setState({ interestFeatures: outputInterestFeatures });
+    }, this);
+    this.setState({ allFeatures: outFeatures, scenarioFeatures: outFeatures.filter(function(item) { return item.selected }) });
   }
 
   //resets various variables and state in between users
@@ -503,7 +524,7 @@ class App extends React.Component {
     var spf_values = [];
     this.state.scenarioFeatures.map((item) => {
       interest_features.push(item.id);
-      target_values.push(item.targetValue);
+      target_values.push(item.target_value);
       spf_values.push(40);
     });
     //prepare the data that will populate the spec.dat file
@@ -657,7 +678,7 @@ class App extends React.Component {
     var spf_values = [];
     this.state.scenarioFeatures.map((item) => {
       interest_features.push(item.id);
-      target_values.push(item.targetValue);
+      target_values.push(item.target_value);
       spf_values.push(40);
     });
     //prepare the data that will populate the spec.dat file
@@ -681,19 +702,23 @@ class App extends React.Component {
   }
 
   updatePuvsprFile() {
-    let promise;
     //preprocess the features to create the puvspr.dat file on the server - this is done on demand when the scenario is run because the user may add/remove Conservation features willy nilly
-    //if the scenario is from an old version of marxan, the PuVSpr file should already be present so we can just run it - also the scenario will not have the spatial data in PostGIS to do the intersection anyway
-    if (this.state.metadata.OLDVERSION === 'False') {
-      promise = this.preprocessAllFeatures();
-    }
-    else {
-      promise = Promise.resolve("Done");
-    }
+    let promise = this.preprocessAllFeaturesSync();
     return promise;
   }
 
-  //iterates through all of the features and preprocesses them
+  //preprocess synchronously, i.e. one after another
+  async preprocessAllFeaturesSync() {
+    var features = this.state.scenarioFeatures.filter(function(feature) {
+      return !feature.preprocessed;
+    });
+    //iterate through the features and preprocess the ones that need preprocessing
+    for (var i = 0; i < features.length; ++i) {
+      await this.preprocessFeature(features[i], false);
+    }
+  }
+
+  //iterates through all of the features and preprocesses them asynchronously - i.e. all at once
   preprocessAllFeatures() {
     //return a promise array from each of the preprocessing jobs
     let promises = this.state.scenarioFeatures.map(feature => {
@@ -709,20 +734,29 @@ class App extends React.Component {
   preprocessFeature(feature, hideDialogOnFinish = true) {
     //show the preprocessing dialog and the feature alias
     this.setState({ preprocessingFeature: true, preprocessingFeatureAlias: feature.alias });
-    return jsonp(MARXAN_ENDPOINT + "preprocessFeature?user=" + this.state.user + "&scenario=" + this.state.scenario + "&planning_grid_name=" + this.state.metadata.PLANNING_UNIT_NAME + "&feature_class_name=" + feature.feature_class_name, { timeout: TIMEOUT }).promise.then(function(response) {
+    return jsonp(MARXAN_ENDPOINT + "preprocessFeature?user=" + this.state.user + "&scenario=" + this.state.scenario + "&planning_grid_name=" + this.state.metadata.PLANNING_UNIT_NAME + "&feature_class_name=" + feature.feature_class_name + "&id=" + feature.id, { timeout: TIMEOUT }).promise.then(function(response) {
       if (!this.checkForErrors(response)) {
         //if we want to hide the dialog after processing has finished then do so
         if (hideDialogOnFinish) this.setState({ preprocessingFeature: false });
         //reset the preprocessingFeatureAlias to empty string
         this.setState({ preprocessingFeatureAlias: "" });
         //update the feature that has been preprocessed
-        this.updateFeature(response.feature_class_name, "preprocessed", true);
+        this.updateFeature(feature, "preprocessed", true, true);
+        this.updateFeature(feature, "pu_count", Number(response.pu_count), true);
+        this.updateFeature(feature, "pu_area", Number(response.pu_area), true);
       }
     }.bind(this));
   }
 
   //calls the marxan executeable and runs it
   startMarxanJob() {
+    //reset all of the results for allFeatures - some features may have been removed from the current scenario and need resetting
+    this.state.allFeatures.map(function(feature){
+      if (!feature.selected){
+        feature.protected_area = -1;
+        feature.target_area = -1;
+      }
+    });
     //update the ui to reflect the fact that a job is running
     this.setState({ running: true, log: 'Running...', active_pu: undefined, outputsTabString: 'Running...' });
     //make the request to get the marxan data
@@ -754,10 +788,11 @@ class App extends React.Component {
 
   //run completed
   runCompleted(response) {
+    var responseText;
     //get the response and store it in this component
     this.runMarxanResponse = response;
     //if we have some data to map then set the state to reflect this
-    (this.runMarxanResponse.ssoln) ? this.setState({ dataAvailable: true }): this.setState({ dataAvailable: false });
+    (this.runMarxanResponse.ssoln && this.runMarxanResponse.ssoln.length > 0) ? this.setState({ dataAvailable: true }): this.setState({ dataAvailable: false });
     //render the sum solution map
     this.renderSolution(this.runMarxanResponse.ssoln, true);
     //create the array of solutions to pass to the InfoPanels table
@@ -768,8 +803,30 @@ class App extends React.Component {
     });
     //add in the row for the summed solutions
     solutions.splice(0, 0, { 'Run_Number': 'Sum', 'Score': '', 'Cost': '', 'Planning_Units': '', 'Missing_Values': '' });
+    //update the amount of each target that is protected in the current run from the output_mvbest.txt file
+    this.updateProtectedAmount();
     //ui feedback
-    this.setState({ running: false, runsCompleted: 0, log: response.log.replace(/(\r\n|\n|\r)/g, "<br />"), outputsTabString: '', solutions: solutions, snackbarOpen: true, snackbarMessage: response.info });
+    if (this.state.dataAvailable) {
+      responseText = response.info;
+    }
+    else {
+      responseText = "Run succeeded but no data returned";
+      // this.setState({ brew: {} });
+    }
+    this.setState({ running: false, runsCompleted: 0, log: response.log.replace(/(\r\n|\n|\r)/g, "<br />"), outputsTabString: '', solutions: solutions, snackbarOpen: true, snackbarMessage: responseText });
+  }
+
+  //gets the protected area information in m2 from the marxan run and populates the interest features with the values
+  updateProtectedAmount() {
+    //iterate through the features and set the protected amount
+    this.state.scenarioFeatures.map((feature) => {
+      //get the matching item in the mvbest data
+      let mvbestItemIndex = this.runMarxanResponse.mvbest.findIndex(function(item) { return item[0] === feature.id; });
+      //get the mvbest data
+      let mvbestItem = this.runMarxanResponse.mvbest[mvbestItemIndex];
+      this.updateFeature(feature, "target_area",  mvbestItem[2], true);
+      this.updateFeature(feature, "protected_area",  mvbestItem[3], true);
+    }, this);
   }
 
   /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -898,36 +955,38 @@ class App extends React.Component {
   //renders the solution - data is the REST response and sum is a flag to indicate if the data is the summed solution (true) or an individual solution (false)
   renderSolution(data, sum) {
     if (!data) return;
-    var color, visibleValue, value;
-    //create the renderer using Joshua Tanners excellent library classybrew - available here https://github.com/tannerjt/classybrew
-    this.classifyData(data, Number(this.state.renderer.NUMCLASSES), this.state.renderer.COLORCODE, this.state.renderer.CLASSIFICATION);
-    //build an expression to get the matching puids with different numbers of 'numbers' in the marxan results
-    var expression = ["match", ["get", "puid"]];
-    //if only the top n classes will be rendered then get the visible value at the boundary
-    if (this.state.renderer.TOPCLASSES < this.state.renderer.NUMCLASSES) {
-      let breaks = this.state.brew.getBreaks();
-      visibleValue = breaks[this.state.renderer.NUMCLASSES - this.state.renderer.TOPCLASSES + 1];
-    }
-    else {
-      visibleValue = 0;
-    }
-    // the rest service sends the data grouped by the 'number', e.g. [23,34,36,43,98], 2
-    data.forEach(function(row, index) {
-      if (sum) {
-        value = row[0];
-        //for each row add the puids and the color to the expression, e.g. [35,36,37],"rgba(255, 0, 136,0.1)"
-        color = this.state.brew.getColorInRange(value);
-        //add the color to the expression - transparent if the value is less than the visible value
-        (value >= visibleValue) ? expression.push(row[1], color): expression.push(row[1], "rgba(0, 0, 0, 0)");
+    if (this.state.dataAvailable) {
+      var color, visibleValue, value;
+      //create the renderer using Joshua Tanners excellent library classybrew - available here https://github.com/tannerjt/classybrew
+      this.classifyData(data, Number(this.state.renderer.NUMCLASSES), this.state.renderer.COLORCODE, this.state.renderer.CLASSIFICATION);
+      //build an expression to get the matching puids with different numbers of 'numbers' in the marxan results
+      var expression = ["match", ["get", "puid"]];
+      //if only the top n classes will be rendered then get the visible value at the boundary
+      if (this.state.renderer.TOPCLASSES < this.state.renderer.NUMCLASSES) {
+        let breaks = this.state.brew.getBreaks();
+        visibleValue = breaks[this.state.renderer.NUMCLASSES - this.state.renderer.TOPCLASSES + 1];
       }
       else {
-        expression.push(row[1], "rgba(255, 0, 136,1)");
+        visibleValue = 0;
       }
-    }, this);
-    // Last value is the default, used where there is no data
-    expression.push("rgba(0,0,0,0)");
-    //set the render paint property
-    this.setPaintProperty(expression);
+      // the rest service sends the data grouped by the 'number', e.g. [23,34,36,43,98], 2
+      data.forEach(function(row, index) {
+        if (sum) {
+          value = row[0];
+          //for each row add the puids and the color to the expression, e.g. [35,36,37],"rgba(255, 0, 136,0.1)"
+          color = this.state.brew.getColorInRange(value);
+          //add the color to the expression - transparent if the value is less than the visible value
+          (value >= visibleValue) ? expression.push(row[1], color): expression.push(row[1], "rgba(0, 0, 0, 0)");
+        }
+        else {
+          expression.push(row[1], "rgba(255, 0, 136,1)");
+        }
+      }, this);
+      // Last value is the default, used where there is no data
+      expression.push("rgba(0,0,0,0)");
+      //set the render paint property
+      this.setPaintProperty(expression);
+    }
   }
 
   //renders the planning units according to their status - 0: included, 1: excluded
@@ -1049,11 +1108,11 @@ class App extends React.Component {
       }
     }, 'place-city-sm');
   }
-  
+
   //fired when the scenarios tab is selected
-  scenario_tab_active(){
-      //hide the planning units layer
-      this.hideLayer("planning_units_layer");
+  scenario_tab_active() {
+    //hide the planning units layer
+    this.hideLayer("planning_units_layer");
   }
 
   //fired when the features tab is selected
@@ -1258,13 +1317,13 @@ class App extends React.Component {
   getInterestFeatures() {
     if (this.state.metadata.OLDVERSION === 'True') {
       //load the interest features as all of the features from the current scenario
-      this.setState({ interestFeatures: this.state.scenarioFeatures });
+      this.setState({ allFeatures: this.state.scenarioFeatures });
     }
     else {
       //load the interest features as all of the interest features from the marxan web database
       jsonp(REST_ENDPOINT + "get_interest_features?format=json", { timeout: 10000 }).promise.then(function(response) {
         if (!this.checkForErrors(response)) {
-          this.setState({ interestFeatures: response.records });
+          this.setState({ allFeatures: response.records });
         }
         else {}
       }.bind(this));
@@ -1281,9 +1340,9 @@ class App extends React.Component {
     this.setState({ AllInterestFeaturesDialogOpen: true });
   }
   closeAllInterestFeaturesDialog() {
-    this.updateSpecFile().then(function(response){
-        this.setState({ AllInterestFeaturesDialogOpen: false });
-    }.bind(this));
+    // this.updateSpecFile().then(function(response) {
+      this.setState({ AllInterestFeaturesDialogOpen: false });
+    // }.bind(this));
   }
   openAllCostsDialog() {
     this.setState({ AllCostsDialogOpen: true });
@@ -1347,59 +1406,57 @@ class App extends React.Component {
   ////////////////////////// MANAGING INTEREST FEATURES SECTION
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-  //update Conservation feature value by finding the object and setting the value for the key - set override to true to overwrite an existing key value
-  updateInterestFeature(features, id, key, value, override) {
+  //update feature value by finding the object and setting the value for the key - set override to true to overwrite an existing key value
+  //this syncronises the states: allFeatures and scenarioFeatures as you cant detect state changes in object properties, i.e. componentDidUpdate is not called when you updated selected, preprocessed etc.
+  updateFeature(feature, key, value, override) {
+    console.log("Update feature '" + feature.feature_class_name + "' with " + key + "=" + value);
+    let featuresCopy = this.state.allFeatures;
     //get the position of the feature 
-    var index = features.findIndex(function(element) { return element.id === id; });
-    var updatedFeature = features[index];
-    //update the target value if either the property doesn't exist (i.e. new value) or it does and override is set to true
-    if (!(updatedFeature.hasOwnProperty(key) && !override)) updatedFeature[key] = value;
-    this.setState({ interestFeatures: features, scenarioFeatures: features.filter(function(item) { return item.selected }) });
+    var index = featuresCopy.findIndex(function(element) { return element.id === feature.id; });
+    var updatedFeature = featuresCopy[index];
+    //update the value if either the property doesn't exist (i.e. new value) or it does and override is set to true
+    if (updatedFeature && !(updatedFeature.hasOwnProperty(key) && !override)) updatedFeature[key] = value;
+    //update allFeatures and scenarioFeatures with the new value
+    this.setState({ allFeatures: featuresCopy, scenarioFeatures: featuresCopy.filter(function(item) { return item.selected }) });
   }
 
   //selects a single Conservation feature
-  selectItem(interestFeature) {
-    this.updateInterestFeature(this.state.interestFeatures, interestFeature.id, "selected", true, true); //select the Conservation feature
-    this.updateInterestFeature(this.state.interestFeatures, interestFeature.id, "targetValue", 17, false); //set a default target value if one is not already set
+  selectItem(feature) {
+    this.updateFeature(feature, "selected", true, true); //select the Conservation feature
+    this.updateFeature(feature, "target_value", 17, false); //set a default target value if one is not already set
   }
 
   //unselects a single Conservation feature
-  unselectItem(interestFeature) {
-    this.updateInterestFeature(this.state.interestFeatures, interestFeature.id, "selected", false, true); //select the Conservation feature
-    this.updateInterestFeature(this.state.interestFeatures, interestFeature.id, "preprocessed", false, true); //select the Conservation feature
+  unselectItem(feature) {
+    this.updateFeature(feature, "selected", false, true); //unselect the Conservation feature
+    this.updateFeature(feature, "preprocessed", false, true); //change the preprocessing to false
   }
 
   //selects all the Conservation features
   selectAll() {
-    var features = this.state.interestFeatures;
-    features.map((item) => {
-      if (!item.hasOwnProperty("targetValue")) {
+    var features = this.state.allFeatures;
+    features.map((feature) => {
+      if (!feature.hasOwnProperty("target_value")) {
         //set the target value if it is not already set
-        item['targetValue'] = 17;
+        feature['target_value'] = 17;
       }
-      //select the item
-      item['selected'] = true;
-      return null;
+      //select the feature
+      this.selectItem(feature);
     });
-    this.setState({ interestFeatures: features, scenarioFeatures: features });
   }
 
   //clears all the Conservation features
   clearAll() {
-    var features = this.state.interestFeatures;
-    features.map((item) => {
+    var features = this.state.allFeatures;
+    features.map((feature) => {
       //unselect the item
-      item['selected'] = false;
-      //set the preprocessing as not done
-      item['preprocessed'] = false
-      return null;
+      this.unselectItem(feature);
     });
-    this.setState({ interestFeatures: features, scenarioFeatures: [] });
   }
 
-  //sets the target value of an Conservation feature
-  updateTargetValue(interestFeature, newTargetValue) {
-    this.updateInterestFeature(this.state.interestFeatures, interestFeature.id, "targetValue", newTargetValue, true);
+  //sets the target value of an feature
+  updateTargetValue(feature, newTargetValue) {
+    this.updateFeature(feature, "target_value", newTargetValue, true);
   }
 
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1435,14 +1492,6 @@ class App extends React.Component {
   }
   showResults() {
     this.setState({ resultsPaneOpen: true });
-  }
-
-  //generic function to update a features property
-  updateFeature(feature_class_name, propertyName, value) {
-    let features = this.state.scenarioFeatures;
-    let feature = features.filter(item => { return item.feature_class_name === feature_class_name })[0];
-    feature[propertyName] = value;
-    this.setState({ scenarioFeatures: features });
   }
 
   render() {
@@ -1556,7 +1605,7 @@ class App extends React.Component {
           />
           <AllInterestFeaturesDialog
             open={this.state.AllInterestFeaturesDialogOpen}
-            interestFeatures={this.state.interestFeatures}
+            allFeatures={this.state.allFeatures}
             scenarioFeatures={this.state.scenarioFeatures}
             deleteInterestFeature={this.deleteInterestFeature.bind(this)}
             closeAllInterestFeaturesDialog={this.closeAllInterestFeaturesDialog.bind(this)}
