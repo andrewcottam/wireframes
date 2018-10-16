@@ -87,7 +87,6 @@ class App extends React.Component {
       creatingPuvsprFile: false, //true when the puvspr.dat file is being created on the server
       savingOptions: false,
       dataBreaks: [],
-      planningUnitGrids: [],
       allFeatures: [], //all of the interest features in the metadata_interest_features table
       scenarioFeatures: [], //the features for the currently loaded scenario
       costs: [],
@@ -96,10 +95,12 @@ class App extends React.Component {
       domain: '',
       areakm2: undefined,
       countries: [],
-      puidsToExclude: [],
       planning_units: [],
-      preprocessing: []
+      planning_unit_grids: [],
+      preprocessing: [],
+      selectedIucnCategoryIndex: 0,
     };
+    this.planning_unit_statuses = [1, 2, 3];
   }
 
   componentDidMount() {
@@ -329,6 +330,19 @@ class App extends React.Component {
     this.runParams = Object.assign(this.state.runParams, formData);
   }
 
+  //gets the planning unit grids
+  getPlanningUnitGrids() {
+    return jsonp(MARXAN_ENDPOINT + "getPlanningUnitGrids", { timeout: TIMEOUT }).promise.then(function(response) {
+      if (!this.checkForErrors(response)) {
+        this.setState({ planning_unit_grids: response.planning_unit_grids });
+      }
+      else {
+        //ui feedback
+        this.setState({ loadingScenarios: false });
+      }
+    }.bind(this));
+  }
+
   //gets all of the tilesets from mapbox using the access token for the currently logged on user - this access token must have the TILESETS:LIST scope
   getTilesets() {
     //get the tilesets for the user
@@ -365,11 +379,10 @@ class App extends React.Component {
       if (!this.checkForErrors(response)) {
         //get the number of runs from the run parameters array
         let numReps = response.runParameters.filter(function(item) { return item.key === "NUMREPS" })[0].value;
+        //fill the planning unit response with all of the status values (i.e. 1,2 and 3) so that the paint property can be populated correctly
+        let planning_units_filled = this.fillPlanningUnitResponse(response.planning_units);
         //set the state for the app based on the data that is returned from the server
-        this.setState({ loggedIn: true, scenario: response.scenario, runParams: response.runParameters, numReps: numReps, files: Object.assign(response.files), metadata: response.metadata, renderer: response.renderer, planning_units: response.planning_units, preprocessing: response.preprocessing });
-        //set the puidsToExclude from the pu.dat file
-        var puidsToExclude = (response.planning_units.length > 1) && (response.planning_units[1].length > 1) ? response.planning_units[1][1] : [];
-        this.setState({ puidsToExclude: puidsToExclude });
+        this.setState({ loggedIn: true, scenario: response.scenario, runParams: response.runParameters, numReps: numReps, files: Object.assign(response.files), metadata: response.metadata, renderer: response.renderer, preprocessing: response.preprocessing, planning_units: planning_units_filled });
         //initialise all the interest features with the interest features for this scenario
         this.initialiseInterestFeatures(response.metadata.OLDVERSION, response.features, response.allFeatures);
         //if there is a PLANNING_UNIT_NAME passed then programmatically change the select box to this map 
@@ -648,7 +661,10 @@ class App extends React.Component {
     //ui feedback
     this.setState({ preprocessingFeature: true });
 
-    //the spec.dat file with any that have changed target or spf
+    //reset all of the protected and target areas for all features
+    this.resetProtectedAreas();
+
+    //update the spec.dat file with any that have been added or removed or changed target or spf
     this.updateSpecFile().then(function(value) {
 
       //when the species file has been updated, update the planning unit file 
@@ -666,6 +682,14 @@ class App extends React.Component {
       }.bind(this));
 
     }.bind(this));
+  }
+
+  resetProtectedAreas() {
+    //reset all of the results for allFeatures to set their protected_area and target_area to -1
+    this.state.allFeatures.map(function(feature) {
+      feature.protected_area = -1;
+      feature.target_area = -1;
+    });
   }
 
   //updates the species file with any target values that have changed
@@ -750,13 +774,6 @@ class App extends React.Component {
 
   //calls the marxan executeable and runs it
   startMarxanJob() {
-    //reset all of the results for allFeatures - some features may have been removed from the current scenario and need resetting
-    this.state.allFeatures.map(function(feature){
-      if (!feature.selected){
-        feature.protected_area = -1;
-        feature.target_area = -1;
-      }
-    });
     //update the ui to reflect the fact that a job is running
     this.setState({ running: true, log: 'Running...', active_pu: undefined, outputsTabString: 'Running...' });
     //make the request to get the marxan data
@@ -824,8 +841,8 @@ class App extends React.Component {
       let mvbestItemIndex = this.runMarxanResponse.mvbest.findIndex(function(item) { return item[0] === feature.id; });
       //get the mvbest data
       let mvbestItem = this.runMarxanResponse.mvbest[mvbestItemIndex];
-      this.updateFeature(feature, "target_area",  mvbestItem[2], true);
-      this.updateFeature(feature, "protected_area",  mvbestItem[3], true);
+      this.updateFeature(feature, "target_area", mvbestItem[2], true);
+      this.updateFeature(feature, "protected_area", mvbestItem[3], true);
     }, this);
   }
 
@@ -969,7 +986,7 @@ class App extends React.Component {
       else {
         visibleValue = 0;
       }
-      // the rest service sends the data grouped by the 'number', e.g. [23,34,36,43,98], 2
+      // the rest service sends the data grouped by the 'number', e.g. [1,[23,34,36,43,98]],[2,[16,19]]
       data.forEach(function(row, index) {
         if (sum) {
           value = row[0];
@@ -989,34 +1006,33 @@ class App extends React.Component {
     }
   }
 
-  //renders the planning units according to their status - 0: included, 1: excluded
-  renderPU() {
-    var color;
+  //renders the planning units edit layer according to the type of layer and pu status 
+  renderPuEditLayer() {
     //build an expression to get the matching puids with different statuses in the planning units data
-    var expression = ["match", ["get", "puid"]];
-    // the rest service sends the data grouped by the status, e.g. [23,34,36,43,98], 0
+    let expression = ["match", ["get", "puid"]];
+    // the rest service sends the data grouped by the status, e.g. [1,[23,34,36,43,98]],[2,[16,19]]
     this.state.planning_units.forEach(function(row, index) {
+      var color;
       //get the status
       switch (row[0]) {
-        case 0: //included
-          color = "rgba(150, 150, 150, 1)";
-          break;
         case 1: //The PU will be included in the initial reserve system but may or may not be in the final solution.
+          color = "rgba(63, 191, 63, 1)";
           break;
         case 2: //The PU is fixed in the reserve system (“locked in”). It starts in the initial reserve system and cannot be removed.
+          color = "rgba(63, 63, 191, 1)";
           break;
         case 3: //The PU is fixed outside the reserve system (“locked out”). It is not included in the initial reserve system and cannot be added.
-          color = "rgba(255, 150, 150, 1)";
+          color = "rgba(191, 63, 63, 1)";
           break;
       }
       //add the color to the expression 
       expression.push(row[1], color);
     });
-    // Last value is the default, used where there is no data
-    expression.push("rgba(0,0,0,0)");
     //set the render paint property
-    this.map.setPaintProperty("planning_units_layer", "fill-color", "rgba(0, 0, 0, 0)");
-    this.map.setPaintProperty("planning_units_layer", "fill-outline-color", expression);
+    // Last value is the default, used where there is no data - i.e. for all the planning units with a status of 0
+    expression.push("rgba(150, 150, 150, 0)");
+    this.map.setPaintProperty("planning_units_layer_edit", "line-color", expression);
+    this.map.setPaintProperty("planning_units_layer_edit", "line-width", 3);
   }
 
   mouseMove(e) {
@@ -1083,19 +1099,8 @@ class App extends React.Component {
   //adds the results layer and planning unit layer to the map
   addSpatialLayers(tileset) {
     //add the results layer
-    this.addSpatialLayer(tileset, "results_layer");
-    //add the planning unit layer
-    this.addSpatialLayer(tileset, "planning_units_layer");
-    //add the highlight layer to show which planning units are selected
-    this.addSpatialLayer(tileset, "highlighted_planning_units_layer");
-    //set the default paint properties of the highlighted layer
-    this.map.setPaintProperty("highlighted_planning_units_layer", "fill-color", "rgba(255,0,0,0.1)");
-    this.map.setPaintProperty("highlighted_planning_units_layer", "fill-outline-color", "rgba(255,0,0,1)");
-  }
-
-  addSpatialLayer(tileset, id) {
     this.map.addLayer({
-      'id': id,
+      'id': "results_layer",
       'type': "fill",
       'source': {
         'type': "vector",
@@ -1103,10 +1108,41 @@ class App extends React.Component {
       },
       'source-layer': tileset.name,
       'paint': {
-        'fill-color': "rgba(255,0,0,0)",
-        'fill-opacity': 0
+        'fill-color': "rgba(0, 0, 0, 0)",
+        'fill-outline-color': "rgba(0, 0, 0, 0)"
       }
     }, 'place-city-sm');
+    //add the planning unit layer
+    this.map.addLayer({
+      'id': "planning_units_layer",
+      'type': "fill",
+      'source': {
+        'type': "vector",
+        'url': "mapbox://" + tileset.id
+      },
+      "layout": {
+        "visibility": "none"
+      },
+      'source-layer': tileset.name,
+      'paint': {
+        'fill-color': "rgba(0, 0, 0, 0)",
+        'fill-outline-color': "rgba(150, 150, 150, 1)"
+      }
+    }, 'place-city-sm');
+
+    //add the planning units manual edit layer
+    this.map.addLayer({
+      'id': "planning_units_layer_edit",
+      'type': "line",
+      'source': {
+        'type': "vector",
+        'url': "mapbox://" + tileset.id
+      },
+      "layout": {
+        "visibility": "none"
+      },
+      'source-layer': tileset.name
+    });
   }
 
   //fired when the scenarios tab is selected
@@ -1127,38 +1163,44 @@ class App extends React.Component {
 
   //fired when the planning unit tab is selected
   pu_tab_active() {
-    //render the planning units layer using the data from the planning_units state
-    this.renderPU();
-    this.showLayer("planning_units_layer");
+    //get the planning units if they have not already been loaded
+    this.getPlanningUnits().then(function() {
+      //show the planning units layer 
+      this.showLayer("planning_units_layer");
+    }.bind(this));
   }
 
   showLayer(id) {
-    this.map.setPaintProperty(id, "fill-opacity", 1);
+    this.map.setLayoutProperty(id, 'visibility', 'visible');
   }
   hideLayer(id) {
-    this.map.setPaintProperty(id, "fill-opacity", 0);
+    this.map.setLayoutProperty(id, 'visibility', 'none');
   }
 
   startPuEditSession() {
     //set the cursor to a crosshair
     this.map.getCanvas().style.cursor = "crosshair";
-    //add the mouse click event to the planning unit layer
-    this.map.on("click", "planning_units_layer", this.editPu);
-    //set the filter for the selected planning units
-    this.map.setFilter("highlighted_planning_units_layer", ["in", "puid"].concat(this.state.puidsToExclude));
-    //show the layer
-    this.showLayer("highlighted_planning_units_layer");
+    //add the left mouse click event to the planning unit layer
+    this.map.on("click", "planning_units_layer", this.moveStatusUp);
+    //add the mouse right click event to the planning unit layer 
+    this.map.on("contextmenu", "planning_units_layer", this.resetStatus);
+    //render the planning_units_layer_edit layer
+    this.renderPuEditLayer("planning_units_layer_edit");
+    //show the edit layers
+    this.showLayer("planning_units_layer_edit");
   }
 
   stopPuEditSession() {
     //reset the cursor
     this.map.getCanvas().style.cursor = "pointer";
-    //remove the mouse click event
-    this.map.off("click", "planning_units_layer", this.editPu);
+    //remove the mouse left click event
+    this.map.off("click", "planning_units_layer", this.moveStatusUp);
+    //remove the mouse right click event
+    this.map.off("contextmenu", "planning_units_layer", this.resetStatus);
     //update the pu.dat file
     this.updatePuDatFile();
     //hide the layer
-    this.hideLayer("highlighted_planning_units_layer");
+    this.hideLayer("planning_units_layer_edit");
   }
 
   //sends a list of puids that should be excluded from the run to upddate the pu.dat file
@@ -1169,8 +1211,14 @@ class App extends React.Component {
     formData.append("user", this.state.user);
     //add the current scenario
     formData.append("scenario", this.state.scenario);
-    //add the puidsToExclude
-    formData.append("puidsToExclude", this.state.puidsToExclude);
+    //get the paint property of the planning_units_layer_edit - this includes the arrays of the planning units and their statuses
+    let paintProperty = this.map.getPaintProperty("planning_units_layer_edit", "line-color");
+    //add the status 1
+    formData.append("status1", paintProperty[this.getFilterArrayPositionForStatus(1)]);
+    //add the status 2
+    formData.append("status2", paintProperty[this.getFilterArrayPositionForStatus(2)]);
+    //add the status 3
+    formData.append("status3", paintProperty[this.getFilterArrayPositionForStatus(3)]);
     const config = {
       headers: {
         'content-type': 'multipart/form-data'
@@ -1185,24 +1233,89 @@ class App extends React.Component {
     });
   }
 
-  editPu(e) {
+  //fired when the user left clicks on a planning unit to move its status up
+  moveStatusUp(e) {
+    this.App.changeStatus(e, "up");
+  }
+
+  //fired when the user left clicks on a planning unit to reset its status 
+  resetStatus(e) {
+    this.App.changeStatus(e, "reset");
+  }
+
+  changeStatus(e, direction) {
     //the this object refers to the map object
-    var features = this.queryRenderedFeatures(e.point, { layers: ["planning_units_layer"] });
-    var filter = features.reduce(function(memo, feature) {
-      //see if the puid is already in the list  - if it is then the used is unselecting a planning unit
-      var index = memo.slice(2).indexOf(feature.properties.puid);
-      if (index === -1) {
-        //add the item to the selected planning units
-        memo.push(feature.properties.puid);
+    //get the feature that the user has clicked 
+    var features = this.map.queryRenderedFeatures(e.point, { layers: ["planning_units_layer"] });
+    //get the featureid
+    if (features.length > 0) {
+      //get the puid
+      let puid = features[0].properties.puid;
+      //iterate through the planning unit statuses to see which status the clicked planning unit belongs to, i.e. 1,2 or 3
+      let status_level = 0; //default level as the getPlanningUnits REST call only returns the planning units with non-default values
+      this.planning_unit_statuses.map((item) => {
+        let planning_units = this.getPlanningUnitsByStatus(item);
+        if (planning_units.indexOf(puid) > -1) {
+          status_level = item;
+        }
+      }, this)[0];
+      //move the planning unit to the next status level
+      let next_status_level = this.getNextStatusLevel(status_level, direction);
+      //there are no planning units returned with the default status of 0 as there are zillions of them
+      let oldArrayPos = (status_level > 0) ? this.getFilterArrayPositionForStatus(status_level) : undefined;
+      //get the new array position - i.e. where the puid is going to be moved to
+      let newArrayPos = this.getFilterArrayPositionForStatus(next_status_level);
+      //copy the paint property
+      let paintProperty = this.map.getPaintProperty("planning_units_layer_edit", "line-color");
+      //if the puid does not have a default status
+      if (oldArrayPos) {
+        //remove the puid from the old array if it exists
+        paintProperty[oldArrayPos].splice(paintProperty[oldArrayPos].indexOf(puid), 1);
+        //fill any empty arrays in the paint property otherwise mapbox throws an error - these have to be unique so use the minus status level
+        if (paintProperty[oldArrayPos].length === 0) paintProperty[oldArrayPos].push(-(status_level));
       }
-      else {
-        //remove the item from the selected planning units
-        memo.splice(index + 2, 1);
-      }
-      return memo;
-    }, ['in', 'puid'].concat(this.App.state.puidsToExclude));
-    this.App.setState({ puidsToExclude: filter.slice(2) });
-    this.setFilter("highlighted_planning_units_layer", filter);
+      //add it to the new array
+      if (newArrayPos > 0) paintProperty[newArrayPos].push(puid);
+      //set the paint property on the layer to the new one
+      this.map.setPaintProperty("planning_units_layer_edit", "line-color", paintProperty);
+    }
+  }
+
+  //returns the position in the paint property filter array which holds the array of planning units
+  getFilterArrayPositionForStatus(status) {
+    return (status * 2);
+  }
+  //returns the planning units with a particular status, e.g. 1,2,3 
+  getPlanningUnitsByStatus(status) {
+    let paintProperty = this.map.getPaintProperty("planning_units_layer_edit", "line-color");
+    //get the position of the puid array
+    let arrayPosition = this.getFilterArrayPositionForStatus(status);
+    //check that there is an array for the planning unit status
+    if (paintProperty.length >= arrayPosition) {
+      return this.map.getPaintProperty("planning_units_layer_edit", "line-color")[arrayPosition];
+    }
+    else {
+      return [];
+    }
+  }
+  //returns the next status level for a planning unit depending on the direction
+  getNextStatusLevel(status, direction) {
+    let nextStatus;
+    switch (status) {
+      case 0:
+        nextStatus = (direction === "up") ? 3 : 0;
+        break;
+      case 1:
+        nextStatus = (direction === "up") ? 0 : 0;
+        break;
+      case 2:
+        nextStatus = (direction === "up") ? 1 : 0;
+        break;
+      case 3:
+        nextStatus = (direction === "up") ? 2 : 0;
+        break;
+    }
+    return nextStatus;
   }
 
   ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1226,18 +1339,42 @@ class App extends React.Component {
     this.setState({ newCaseStudyDialogOpen: false });
   }
 
-  //gets the planning units from the marxan server
+  //gets the planning units from the marxan server - NO LONGER USED - THE PLANNING UNITS ARE NOW POPULATED IN THE getScenario METHOD
   getPlanningUnits() {
-    //get a list of existing planning units 
-    jsonp(REST_ENDPOINT + "getplanningunits?", { timeout: 10000 }).promise.then(function(response) {
-      if (!this.checkForErrors(response)) {
-        //valid response
-        this.setState({ planningUnitGrids: response.records });
+    let promise;
+    //if they are already loaded then resolve the promise
+    if (this.state.planning_units.length === 0) {
+      //get a list of existing planning units 
+      promise = jsonp(MARXAN_ENDPOINT + "getPlanningUnits?user=" + this.state.user + "&scenario=" + this.state.scenario, { timeout: 10000 }).promise.then(function(response) {
+        if (!this.checkForErrors(response)) {
+          //fill the planning unit response with all of the status values (i.e. 1,2 and 3) so that the paint property can be populated correctly
+          let planning_units_filled = this.fillPlanningUnitResponse(response.info);
+          //set the state
+          this.setState({ planning_units: planning_units_filled });
+        }
+        else {
+          this.setState({ loggingIn: false });
+        }
+      }.bind(this));
+    }
+    else {
+      promise = Promise.resolve("Done");
+    }
+    return promise;
+  }
+
+  fillPlanningUnitResponse(response) {
+    let existing_statuses = [];
+    response.map((item) => {
+      existing_statuses.push(item[0]);
+    });
+    this.planning_unit_statuses.map((item) => {
+      if (existing_statuses.indexOf(item) === -1) {
+        response.push([item, [-(item)]]);
       }
-      else {
-        this.setState({ loggingIn: false });
-      }
-    }.bind(this));
+    }, this);
+    response = response.sort((a, b) => (a[0] > b[0]) ? 1 : 0);
+    return response;
   }
 
   openNewPlanningUnitDialog() {
@@ -1341,7 +1478,7 @@ class App extends React.Component {
   }
   closeAllInterestFeaturesDialog() {
     // this.updateSpecFile().then(function(response) {
-      this.setState({ AllInterestFeaturesDialogOpen: false });
+    this.setState({ AllInterestFeaturesDialogOpen: false });
     // }.bind(this));
   }
   openAllCostsDialog() {
@@ -1409,7 +1546,7 @@ class App extends React.Component {
   //update feature value by finding the object and setting the value for the key - set override to true to overwrite an existing key value
   //this syncronises the states: allFeatures and scenarioFeatures as you cant detect state changes in object properties, i.e. componentDidUpdate is not called when you updated selected, preprocessed etc.
   updateFeature(feature, key, value, override) {
-    console.log("Update feature '" + feature.feature_class_name + "' with " + key + "=" + value);
+    // console.log("Update feature '" + feature.feature_class_name + "' with " + key + "=" + value);
     let featuresCopy = this.state.allFeatures;
     //get the position of the feature 
     var index = featuresCopy.findIndex(function(element) { return element.id === feature.id; });
@@ -1494,6 +1631,82 @@ class App extends React.Component {
     this.setState({ resultsPaneOpen: true });
   }
 
+  ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  ////////////////////////// PROTECTED AREAS LAYERS STUFF
+  ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+  changeIucnCategory(key, iucnCategory) {
+    this.setState({ selectedIucnCategoryIndex: key });
+    this.filterWdpaByIucnCategory(iucnCategory);
+  }
+
+  filterWdpaByIucnCategory(iucnCategory) {
+    if (!this.map.getLayer("wdpa")) this.addWdpaLayer();
+    let iucnCategories = this.getIndividualIucnCategories(iucnCategory);
+    this.map.setFilter("wdpa", ['in', 'IUCN_CAT'].concat(iucnCategories));
+  }
+
+  getIndividualIucnCategories(iucnCategory) {
+    let retValue = [];
+    switch (iucnCategory) {
+      case 'None':
+        retValue = [''];
+        break;
+      case 'IUCN I-II':
+        retValue = ['Ia', 'Ib', 'II'];
+        break;
+      case 'IUCN I-IV':
+        retValue = ['Ia', 'Ib', 'II', 'III', 'IV'];
+        break;
+      case 'IUCN I-V':
+        retValue = ['Ia', 'Ib', 'II', 'III', 'IV', 'V', 'VI'];
+        break;
+      default:
+    }
+    return retValue;
+  }
+
+  //adds the wdpa vector tiles as a layer to the current map
+  addWdpaLayer(belowLayer) {
+    this.map.addLayer({
+      "id": "wdpa",
+      "type": "fill",
+      "source": {
+        "attribution": "IUCN and UNEP-WCMC (2017), The World Database on Protected Areas (WDPA) August 2017, Cambridge, UK: UNEP-WCMC. Available at: <a href='http://www.protectedplanet.net'>www.protectedplanet.net</a>",
+        "type": "vector",
+        "tilejson": "2.2.0",
+        "maxzoom": 12,
+        "tiles": ["https://storage.googleapis.com/geeimageserver.appspot.com/vectorTiles/wdpa/tilesets/{z}/{x}/{y}.pbf"]
+      },
+      "source-layer": "wdpa",
+      "layout": {
+        "visibility": "visible"
+      },
+      "filter": ["==", "WDPAID", -1],
+      "paint": {
+        "fill-color": {
+          "type": "categorical",
+          "property": "MARINE",
+          "stops": [
+            ["0", "rgba(99,148,69, 0.2)"],
+            ["1", "rgba(63,127,191, 0.2)"],
+            ["2", "rgba(63,127,191, 0.2)"]
+          ]
+        },
+        "fill-outline-color": {
+          "type": "categorical",
+          "property": "MARINE",
+          "stops": [
+            ["0", "rgba(99,148,69, 0.2)"],
+            ["1", "rgba(63,127,191, 0.2)"],
+            ["2", "rgba(63,127,191, 0.2)"]
+          ]
+        }
+      }
+    }, belowLayer);
+  }
+
+
   render() {
     return (
       <MuiThemeProvider>
@@ -1543,6 +1756,8 @@ class App extends React.Component {
             preprocessFeature={this.preprocessFeature.bind(this)}
             preprocessingFeature={this.state.preprocessingFeature}
             openAllInterestFeaturesDialog={this.openAllInterestFeaturesDialog.bind(this)}
+            changeIucnCategory={this.changeIucnCategory.bind(this)}
+            selectedIucnCategoryIndex={this.state.selectedIucnCategoryIndex}
           />
           <div className="runningSpinner">
             <ArrowBack style={{'display': (this.state.running ? 'block' : 'none')}}/>
@@ -1578,8 +1793,9 @@ class App extends React.Component {
           <NewCaseStudyDialog
             open={this.state.newCaseStudyDialogOpen}
             closeNewCaseStudyDialog={this.closeNewCaseStudyDialog.bind(this)}
-            getPlanningUnits={this.getPlanningUnits.bind(this)}
-            planningUnitGrids={this.state.planningUnitGrids}
+            getPlanningUnitGrids={this.getPlanningUnitGrids.bind(this)}
+            planning_unit_grids={this.state.planning_unit_grids}
+            planning_units={this.state.planning_units}
             openNewPlanningUnitDialog={this.openNewPlanningUnitDialog.bind(this)}
             createNewScenario={this.createNewScenarioFromWizard.bind(this)}
             openAllInterestFeaturesDialog={this.openAllInterestFeaturesDialog.bind(this)}

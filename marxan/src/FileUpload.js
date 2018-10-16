@@ -2,9 +2,6 @@ import React from 'react';
 /*eslint-disable no-unused-vars*/
 import axios, { post } from 'axios';
 /*eslint-enable no-unused-vars*/
-import IconButton from 'material-ui/IconButton';
-import AttachFile from 'material-ui/svg-icons/editor/attach-file';
-
 import FontAwesome from 'react-fontawesome';
 
 //From AshikNesin https://gist.github.com/AshikNesin/e44b1950f6a24cfcd85330ffc1713513
@@ -63,7 +60,7 @@ class FileUpload extends React.Component {
                             <td className='uploadFileTD'> 
                                 <div className='uploadFileField'>
                                     <div className='uploadFileFieldIcon'>
-                                        <label htmlFor={this.id}><IconButton icon={AttachFile} name='file' title='Click to upload a file' style={{'cursor':'pointer'}}/></label>
+                                        <label htmlFor={this.id}><FontAwesome name='file' title='Click to upload a file' style={{'cursor':'pointer'}}/></label>
                                         <input type="file" onChange={this.onChange} accept=".dat" style={{'display':'none', 'width':'10px'}} id={this.id} />
                                     </div>
                                     <div className='mandatoryIcon'>

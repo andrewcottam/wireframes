@@ -83,7 +83,7 @@ class NewCaseStudyDialog extends React.Component {
         ];
         let c = <div>
                     {stepIndex === 0 ? <Metadata name={this.state.name} description={this.state.description} setName={this.setName.bind(this)} setDescription={this.setDescription.bind(this)}/> : null}
-                    {stepIndex === 1 ? <PlanningUnits getPlanningUnits={this.props.getPlanningUnits} planningUnitGrids={this.props.planningUnitGrids} changeItem={this.changePU.bind(this)} pu={this.state.pu} openNewPlanningUnitDialog={this.props.openNewPlanningUnitDialog} /> : null}
+                    {stepIndex === 1 ? <PlanningUnits getPlanningUnitGrids={this.props.getPlanningUnitGrids} planning_unit_grids={this.props.planning_unit_grids} changeItem={this.changePU.bind(this)} pu={this.state.pu} openNewPlanningUnitDialog={this.props.openNewPlanningUnitDialog} /> : null}
                     {stepIndex === 2 ? <SelectInterestFeatures 
                         openAllInterestFeaturesDialog={this.props.openAllInterestFeaturesDialog} 
                         scenarioFeatures={this.props.scenarioFeatures}

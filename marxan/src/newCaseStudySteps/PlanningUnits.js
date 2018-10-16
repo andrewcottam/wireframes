@@ -4,8 +4,14 @@ import mapboxgl from 'mapbox-gl';
 import SelectFieldMapboxLayer from '../SelectFieldMapboxLayer';
 
 class PlanningUnits extends React.Component {
+    constructor(props) {
+        super(props);
+        this.state = { planning_unit_grids_received: false }
+    }
     componentDidMount() {
-        this.props.getPlanningUnits();
+        this.props.getPlanningUnitGrids().then(function(item) {
+            this.setState({ planning_unit_grids_received: true });
+        }.bind(this));
         this.map = new mapboxgl.Map({
             container: this.mapContainer,
             style: 'mapbox://styles/blishten/cjg6jk8vg3tir2spd2eatu5fd', //north star + marine PAs in pacific
@@ -22,7 +28,7 @@ class PlanningUnits extends React.Component {
                 <div className={'newPUDialogPane'}>
                     <div ref={el => this.mapContainer = el} className="absolute top right left bottom" style={{width:'500px',height:'300px', marginTop: '71px',marginLeft: '25px'}}/>
                     <div style={{'paddingTop': '27px'}}>
-                        <SelectFieldMapboxLayer selectedValue={this.props.pu} map={this.map} mapboxUser={'blishten'} items={this.props.planningUnitGrids} changeItem={this.props.changeItem}/>
+                        <SelectFieldMapboxLayer selectedValue={this.props.pu} map={this.map} mapboxUser={'blishten'} items={this.props.planning_unit_grids} changeItem={this.props.changeItem} disabled={!this.state.planning_unit_grids_received}/>
                         <RaisedButton 
                             label="New" 
                             onClick={this.openNewPlanningUnitDialog.bind(this)}

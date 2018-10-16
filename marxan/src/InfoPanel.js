@@ -12,12 +12,12 @@ import ScenariosDialog from './ScenariosDialog.js';
 import Menu from 'material-ui/svg-icons/navigation/menu';
 import Texture from 'material-ui/svg-icons/image/texture';
 import Settings from 'material-ui/svg-icons/action/settings';
-import {white} from 'material-ui/styles/colors';
+import { white } from 'material-ui/styles/colors';
 
 class InfoPanel extends React.Component {
   constructor(props) {
     super(props);
-    this.state = { scenariosDialogOpen: false, puEditing: false };
+    this.state = { scenariosDialogOpen: false, puEditing: false, iucnCategories:['None','IUCN I-II','IUCN I-IV','IUCN I-V'] };
   }
   componentDidUpdate(prevProps, prevState, snapshot) {
     //if the input box for renaming the scenario has been made visible and it has no value, then initialise it with the scenario name and focus it
@@ -91,7 +91,7 @@ class InfoPanel extends React.Component {
   pu_tab_active() {
     this.props.pu_tab_active();
   }
-  startStopPuEditSession() {
+  startStopPuEditSession(evt) {
     (this.state.puEditing) ? this.stopPuEditSession(): this.startPuEditSession();
   }
   startPuEditSession() {
@@ -100,15 +100,18 @@ class InfoPanel extends React.Component {
   }
 
   stopPuEditSession() {
-    this.setState({ puEditing: false });
+    this.setState({ puEditing: false});
     this.props.stopPuEditSession();
   }
   showSettingsDialog() {
     this.props.showSettingsDialog();
   }
-
+  
+  changeIucnCategory(event,key,payload){
+    this.props.changeIucnCategory(key, this.state.iucnCategories[key]);
+  }
+  
   render() {
-    var puEditIconColor = this.state.puEditing ? "rgb(255, 64, 129)" : "rgba(0, 0, 0, 0.87)";
     return (
       <React.Fragment>
         <div className={'infoPanel'} style={{display: this.props.loggedIn ? 'block' : 'none'}}>
@@ -172,13 +175,27 @@ class InfoPanel extends React.Component {
                   <div className={'tabTitle'}>Planning area</div>
                   <div>{this.props.metadata.pu_alias}</div>
                   <div className={'tabTitle'} style={{'marginTop': '25px'}}>Protected areas</div>
-                  <SelectField floatingLabelText={'Include'} floatingLabelFixed={true} value={'None'} children={<MenuItem value={'None'} key={'None'} primaryText={'None'}/>} />
-                  <div className={'tabTitle'} style={{'marginTop': '25px'}}>Manual exceptions</div>
-                  <Texture  
-                    title='Remove  planning units from analysis'
-                    onClick={this.startStopPuEditSession.bind(this)}
-                    style={{color:puEditIconColor}}
+                  <SelectField 
+                    floatingLabelText={'Include'} 
+                    floatingLabelFixed={true} 
+                    value={this.state.iucnCategories[this.props.selectedIucnCategoryIndex]} 
+                    onChange={this.changeIucnCategory.bind(this)}
+                    children= {this.state.iucnCategories.map((item)=> {
+                      return  <MenuItem 
+                        value={item} 
+                        key={item} 
+                        primaryText={item}
+                        />;
+                    })}
                   />
+                  <div style={{'display':'inlineFlex'}}>
+                    <div className={'tabTitle'}>Click to include</div>
+                    <Texture  
+                      title='Add/remove  planning units from analysis'
+                      onClick={this.startStopPuEditSession.bind(this)}
+                      style={{color:'rgb(255, 64, 129)', cursor:'pointer'}}
+                    />
+                  </div>
                 </div>
               </Tab>
             </Tabs>     
