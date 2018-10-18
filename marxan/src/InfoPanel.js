@@ -17,7 +17,9 @@ import { white } from 'material-ui/styles/colors';
 class InfoPanel extends React.Component {
   constructor(props) {
     super(props);
-    this.state = { scenariosDialogOpen: false, puEditing: false, iucnCategories:['None','IUCN I-II','IUCN I-IV','IUCN I-V'] };
+    this.state = { scenariosDialogOpen: false, puEditing: false };
+    //local variable 
+    this.iucnCategories = ['None','IUCN I-II','IUCN I-IV','IUCN I-V'];
   }
   componentDidUpdate(prevProps, prevState, snapshot) {
     //if the input box for renaming the scenario has been made visible and it has no value, then initialise it with the scenario name and focus it
@@ -108,7 +110,7 @@ class InfoPanel extends React.Component {
   }
   
   changeIucnCategory(event,key,payload){
-    this.props.changeIucnCategory(key, this.state.iucnCategories[key]);
+    this.props.changeIucnCategory(this.iucnCategories[key]);
   }
   
   render() {
@@ -137,7 +139,6 @@ class InfoPanel extends React.Component {
                     listScenarios={this.props.listScenarios}
                     scenarios={this.props.scenarios}
                     scenario={this.props.scenario}
-                    createNewScenario={this.props.createNewScenario} 
                     deleteScenario={this.props.deleteScenario}
                     loadScenario={this.props.loadScenario}
                     cloneScenario={this.props.cloneScenario}
@@ -158,7 +159,7 @@ class InfoPanel extends React.Component {
                   <div className={'tabTitle'}>Description</div>
                   <input id="descriptionEdit" style={{'display': (this.props.editingDescription) ? 'block' : 'none'}} className={'descriptionEditBox'} onKeyPress={this.onKeyPress.bind(this)} onBlur={this.onBlur.bind(this)}/>
                   <div className={'description'} onClick={this.startEditingDescription.bind(this)} style={{'display': (!this.props.editingDescription) ? 'block' : 'none'}}>{this.props.metadata.DESCRIPTION}</div>
-                  <div className={'tabTitle'} style={{marginTop:'10px'}}>Created</div>
+                  <div className={'tabTitle'}>Created</div>
                   <div className={'createDate'}>{this.props.metadata.CREATEDATE}</div>
                 </div>
               </Tab>
@@ -173,27 +174,33 @@ class InfoPanel extends React.Component {
               <Tab label="Planning units" onActive={this.pu_tab_active.bind(this)}>
                 <div>
                   <div className={'tabTitle'}>Planning area</div>
-                  <div>{this.props.metadata.pu_alias}</div>
-                  <div className={'tabTitle'} style={{'marginTop': '25px'}}>Protected areas</div>
+                  <div className={'description'}>{this.props.metadata.pu_alias}</div>
+                  <div className={'tabTitle'}>Protected areas</div>
                   <SelectField 
                     floatingLabelText={'Include'} 
                     floatingLabelFixed={true} 
-                    value={this.state.iucnCategories[this.props.selectedIucnCategoryIndex]} 
+                    underlineShow={false}
+                    disabled={this.props.preprocessingProtectedAreas}
+                    menuItemStyle={{fontSize:'12px'}}
+                    labelStyle={{fontSize:'12px'}} 
+                    style={{marginTop:'-15px',width:'140px'}}
+                    value={this.props.metadata.IUCN_CATEGORY} 
                     onChange={this.changeIucnCategory.bind(this)}
-                    children= {this.state.iucnCategories.map((item)=> {
+                    children= {this.iucnCategories.map((item)=> {
                       return  <MenuItem 
                         value={item} 
                         key={item} 
                         primaryText={item}
+                        style={{fontSize:'12px'}}
                         />;
                     })}
                   />
-                  <div style={{'display':'inlineFlex'}}>
-                    <div className={'tabTitle'}>Click to include</div>
+                  <div>
+                    <span className={'tabTitle'} style={{verticalAlign:'middle'}}>Click to {this.state.puEditing ? "save" : "change"} planning unit status</span>
                     <Texture  
                       title='Add/remove  planning units from analysis'
                       onClick={this.startStopPuEditSession.bind(this)}
-                      style={{color:'rgb(255, 64, 129)', cursor:'pointer'}}
+                      style={{color: this.state.puEditing ? 'rgb(255, 64, 129)' : 'rgb(150, 150, 150)', cursor:'pointer', display:'inline-flex',verticalAlign:'middle',marginLeft: '10px'}}
                     />
                   </div>
                 </div>
@@ -216,7 +223,7 @@ class InfoPanel extends React.Component {
                     className="scenariosBtn" 
                     style={{height:'24px'}}
                     onClick={this.props.runMarxan} 
-                    disabled={!this.props.runnable || this.props.preprocessingFeature || this.props.running || (this.props.scenarioFeatures.length === 0)} 
+                    disabled={!this.props.runnable || this.props.preprocessingFeature || this.props.running || (this.props.scenarioFeatures.length === 0) || this.state.puEditing} 
                   />  
                 </div>
             </Paper>
@@ -233,7 +240,6 @@ class InfoPanel extends React.Component {
             closeScenariosDialog={this.closeScenariosDialog.bind(this)}
             scenarios={this.props.scenarios}
             scenario={this.props.scenario}
-            createNewScenario={this.props.createNewScenario}
             deleteScenario={this.props.deleteScenario}
             loadScenario={this.loadScenario.bind(this)}
             cloneScenario={this.props.cloneScenario}
