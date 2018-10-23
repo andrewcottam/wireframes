@@ -36,7 +36,7 @@ class OptionsDialog extends React.Component {
                         label="OK" 
                         primary={true} 
                         onClick={this.updateOptions.bind(this)} 
-                        className="scenariosBtn" 
+                        className="projectsBtn" 
                         style={{height:'25px'}}
                     />,
                 ]} 

@@ -41,7 +41,7 @@ class Login extends React.Component {
                         <RaisedButton 
                             onClick={this.registerNewUser.bind(this)} 
                             label= "Register" 
-                            className="scenariosBtn" 
+                            className="projectsBtn" 
                             primary={true} 
                             disabled={this.props.loggingIn ? true : false} 
                             style={{height:'25px'}} 
@@ -51,7 +51,7 @@ class Login extends React.Component {
                             label= {this.props.loggingIn ? "Logging in" : "Login"} 
                             disabled = {(!this.props.user || !this.props.password || this.props.loggingIn) ? true : false} 
                             primary={true} 
-                            className="scenariosBtn" 
+                            className="projectsBtn" 
                             type="submit" 
                             style={{height:'25px'}} 
                         />

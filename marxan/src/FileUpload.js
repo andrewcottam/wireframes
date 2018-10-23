@@ -32,7 +32,7 @@ class FileUpload extends React.Component {
         formData.append('filename', value['name']);
         formData.append('parameter', this.props.parameter);
         formData.append('user', this.props.user);
-        formData.append('scenario', this.props.scenario);
+        formData.append('project', this.props.project);
         const config = {
             headers: {
                 'content-type': 'multipart/form-data'

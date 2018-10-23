@@ -50,7 +50,7 @@ class ClassificationDialog extends React.Component {
           <RaisedButton 
             label="OK" 
             primary={true} 
-            className="scenariosBtn" 
+            className="projectsBtn" 
             style={{height:'25px'}}
             onClick={this.props.closeClassificationDialog} 
           />  

@@ -15,9 +15,9 @@ import classyBrew from 'classybrew';
 import axios, { post } from 'axios';
 /*eslint-enable no-unused-vars*/
 import * as utilities from './utilities.js';
-import NewCaseStudyDialog from './NewCaseStudyDialog.js';
-import NewPlanningUnitDialog from './newCaseStudySteps/NewPlanningUnitDialog';
-import NewInterestFeatureDialog from './newCaseStudySteps/NewInterestFeatureDialog';
+import NewProjectDialog from './NewProjectDialog.js';
+import NewPlanningUnitDialog from './newProjectSteps/NewPlanningUnitDialog';
+import NewInterestFeatureDialog from './newProjectSteps/NewInterestFeatureDialog';
 import AllInterestFeaturesDialog from './AllInterestFeaturesDialog';
 import AllCostsDialog from './AllCostsDialog';
 import SettingsDialog from './SettingsDialog';
@@ -45,10 +45,10 @@ let PLANNING_UNIT_LAYER_OPACITY = 0.2;
 let PLANNING_UNIT_EDIT_LAYER_NAME = "planning_units_layer_edit";
 let PLANNING_UNIT_EDIT_LAYER_LINE_WIDTH = 1.5;
 let RESULTS_LAYER_NAME = "results_layer";
-let RESULTS_LAYER_FILL_OPACITY_ACTIVE = 0.6;
-let RESULTS_LAYER_FILL_OPACITY_INACTIVE = 0.2;
+let RESULTS_LAYER_FILL_OPACITY_ACTIVE = 0.5;
+let RESULTS_LAYER_FILL_OPACITY_INACTIVE = 0.1;
 let WDPA_LAYER_NAME = "wdpa";
-let WDPA_LAYER_OPACITY = 0.8;
+let WDPA_LAYER_OPACITY = 0.9;
 
 Array.prototype.diff = function(a) {
   return this.filter(function(i) {
@@ -63,13 +63,13 @@ class App extends React.Component {
     this.state = {
       user: DISABLE_LOGIN ? 'andrew' : '',
       password: DISABLE_LOGIN ? 'asd' : '',
-      scenario: DISABLE_LOGIN ? 'Tonga marine' : '',
+      project: DISABLE_LOGIN ? 'Tonga marine' : '',
       loggedIn: false,
       userData: {},
       loggingIn: false,
       metadata: {},
       renderer: {},
-      editingScenarioName: false,
+      editingProjectName: false,
       editingDescription: false,
       runParams: [],
       files: {},
@@ -88,7 +88,7 @@ class App extends React.Component {
       filesDialogOpen: false,
       updatingRunParameters: false,
       optionsDialogOpen: false,
-      newCaseStudyDialogOpen: false, //set to true to debug immediately
+      newProjectDialogOpen: false, //set to true to debug immediately
       NewPlanningUnitDialogOpen: false, //set to true to debug immediately
       NewInterestFeatureDialogOpen: false,
       AllInterestFeaturesDialogOpen: false,
@@ -107,7 +107,7 @@ class App extends React.Component {
       savingOptions: false,
       dataBreaks: [],
       allFeatures: [], //all of the interest features in the metadata_interest_features table
-      scenarioFeatures: [], //the features for the currently loaded scenario
+      projectFeatures: [], //the features for the currently loaded project
       costs: [],
       selectedCosts: [],
       iso3: '',
@@ -115,7 +115,8 @@ class App extends React.Component {
       areakm2: undefined,
       countries: [],
       planning_units: [],
-      planning_unit_grids: []
+      planning_unit_grids: [],
+      activeTab: "project"
     };
     this.planning_unit_statuses = [1, 2, 3];
   }
@@ -227,7 +228,7 @@ class App extends React.Component {
 
   //log out and reset some state 
   logout() {
-    this.setState({ loggedIn: false, user: '', password: '', scenario: '' });
+    this.setState({ loggedIn: false, user: '', password: '', project: '' });
   }
 
   resendPassword() {
@@ -244,7 +245,7 @@ class App extends React.Component {
   getUserInfo() {
     jsonp(MARXAN_ENDPOINT + "getUser?user=" + this.state.user, { timeout: TIMEOUT }).promise.then(function(response) {
       if (!this.checkForErrors(response)) {
-        this.setState({ scenario: response.userData.LASTSCENARIO, userData: response.userData });
+        this.setState({ project: response.userData.LASTPROJECT, userData: response.userData });
         //get the users tilesets from mapbox
         this.getTilesets();
       }
@@ -321,7 +322,7 @@ class App extends React.Component {
     this.setState({ filesDialogOpen: false });
   }
 
-  //updates the parameters for the current scenario back to the server
+  //updates the parameters for the current project back to the server
   updateRunParams(array) {
     //ui feedback
     this.setState({ updatingRunParameters: true });
@@ -332,8 +333,8 @@ class App extends React.Component {
     let formData = new FormData();
     //add the current user
     formData.append("user", this.state.user);
-    //add the current scenario
-    formData.append("scenario", this.state.scenario);
+    //add the current project
+    formData.append("project", this.state.project);
     //append all the key/value pairs
     this.appendToFormData(formData, parameters);
     const config = {
@@ -349,7 +350,8 @@ class App extends React.Component {
         //get the number of runs from the run parameters array
         let numReps = this.runParams.filter(function(item) { return item.key === "NUMREPS" })[0].value;
         //if succesfull write the state back 
-        this.setState({ snackbarOpen: true, snackbarMessage: response.data.info, runParams: this.runParams, filesDialogOpen: false, numReps: numReps });
+        this.setState({ runParams: this.runParams, filesDialogOpen: false, numReps: numReps });
+        console.log("Run parameter saved")
       }
     });
     //save the local state to be able to update the state on callback
@@ -364,7 +366,7 @@ class App extends React.Component {
       }
       else {
         //ui feedback
-        this.setState({ loadingScenarios: false });
+        this.setState({ loadingProjects: false });
       }
     }.bind(this));
   }
@@ -386,8 +388,8 @@ class App extends React.Component {
         });
         //set the state
         this.setState({ tilesets: tilesets });
-        //now the tilesets are loaded from mapbox we can get the users last scenario and load it - this is only relevant if the user is not currently logged in - if they are logged in they are simply refreshing the list of tilesets
-        if (!this.state.loggedIn) this.loadScenario(this.state.userData.LASTSCENARIO);
+        //now the tilesets are loaded from mapbox we can get the users last project and load it - this is only relevant if the user is not currently logged in - if they are logged in they are simply refreshing the list of tilesets
+        if (!this.state.loggedIn) this.loadProject(this.state.userData.LASTPROJECT);
       }
       else {
         this.setState({ tilesets: [] });
@@ -395,29 +397,29 @@ class App extends React.Component {
     }.bind(this));
   }
 
-  //loads a scenario
-  loadScenario(scenario) {
-    this.setState({ loadingScenario: true });
-    //reset the results from any previous scenarios
+  //loads a project
+  loadProject(project) {
+    this.setState({ loadingProject: true });
+    //reset the results from any previous projects
     this.resetResults();
-    jsonp(MARXAN_ENDPOINT + "getScenario?user=" + this.state.user + "&scenario=" + scenario, { timeout: TIMEOUT }).promise.then(function(response) {
-      this.setState({ loadingScenario: false, loggingIn: false });
+    jsonp(MARXAN_ENDPOINT + "getProject?user=" + this.state.user + "&project=" + project, { timeout: TIMEOUT }).promise.then(function(response) {
+      this.setState({ loadingProject: false, loggingIn: false });
       if (!this.checkForErrors(response)) {
         //get the number of runs from the run parameters array
         let numReps = response.runParameters.filter(function(item) { return item.key === "NUMREPS" })[0].value;
         //set the state for the app based on the data that is returned from the server
-        this.setState({ loggedIn: true, scenario: response.scenario, runParams: response.runParameters, numReps: numReps, files: Object.assign(response.files), metadata: response.metadata, renderer: response.renderer, planning_units: response.planning_units });
+        this.setState({ loggedIn: true, project: response.project, runParams: response.runParameters, numReps: numReps, files: Object.assign(response.files), metadata: response.metadata, renderer: response.renderer, planning_units: response.planning_units });
         //set a local variable for the feature preprocessing - this is because we dont need to track state with these variables as they are not bound to anything
         this.feature_preprocessing = response.feature_preprocessing;
         //set a local variable for the protected area intersections - this is because we dont need to track state with these variables as they are not bound to anything
         this.protected_area_intersections = response.protected_area_intersections;
         //set a local variable for the selected iucn category
         this.previousIucnCategory = response.metadata.IUCN_CATEGORY;
-        //initialise all the interest features with the interest features for this scenario
+        //initialise all the interest features with the interest features for this project
         this.initialiseInterestFeatures(response.metadata.OLDVERSION, response.features, response.allFeatures);
         //if there is a PLANNING_UNIT_NAME passed then programmatically change the select box to this map 
         if (response.metadata.PLANNING_UNIT_NAME) this.changeTileset(MAPBOX_USER + "." + response.metadata.PLANNING_UNIT_NAME);
-        //poll the server to see if results are available for this scenario - if there are these will be loaded
+        //poll the server to see if results are available for this project - if there are these will be loaded
         this.pollResults(true);
       }
     }.bind(this));
@@ -449,35 +451,35 @@ class App extends React.Component {
     return returnValue;
   }
 
-  //initialises the interest features based on the current scenario
-  initialiseInterestFeatures(oldVersion, scenarioFeatures, allFeatures) {
+  //initialises the interest features based on the current project
+  initialiseInterestFeatures(oldVersion, projectFeatures, allFeatures) {
     var allInterestFeatures = [];
     if (oldVersion === 'True') {
-      //if the database is from an old version of marxan then the interest features can only come from the list of features in the current scenario
-      allInterestFeatures = scenarioFeatures;
+      //if the database is from an old version of marxan then the interest features can only come from the list of features in the current project
+      allInterestFeatures = projectFeatures;
     }
     else {
       //if the database is from marxan web then the interest features will come from the marxan postgis database metadata_interest_features table
       allInterestFeatures = allFeatures;
     }
-    //get a list of the ids for the features that are in this scenario
-    var ids = scenarioFeatures.map(function(item) {
+    //get a list of the ids for the features that are in this project
+    var ids = projectFeatures.map(function(item) {
       return item.id;
     });
-    //iterate through allInterestFeatures to add the required attributes to be used in the app and to populate them based on the current scenario features
+    //iterate through allInterestFeatures to add the required attributes to be used in the app and to populate them based on the current project features
     var outFeatures = allInterestFeatures.map(function(item) {
-      //see if the feature is in the current scenario
-      var scenarioFeature = (ids.indexOf(item.id) > -1) ? scenarioFeatures[ids.indexOf(item.id)] : null;
+      //see if the feature is in the current project
+      var projectFeature = (ids.indexOf(item.id) > -1) ? projectFeatures[ids.indexOf(item.id)] : null;
       //get the preprocessing for that feature
       let preprocessing = this.getArrayItem(this.feature_preprocessing, item.id);
-      //if the interest feature is in the current scenario then populate the data from that feature
-      if (scenarioFeature) {
+      //if the interest feature is in the current project then populate the data from that feature
+      if (projectFeature) {
         item['selected'] = true;
         item['preprocessed'] = preprocessing ? true : false;
         item['pu_area'] = preprocessing ? preprocessing[1] : -1;
         item['pu_count'] = preprocessing ? preprocessing[2] : -1;
-        item['spf'] = scenarioFeature['spf'];
-        item['target_value'] = scenarioFeature['target_value'];
+        item['spf'] = projectFeature['spf'];
+        item['target_value'] = projectFeature['target_value'];
       }
       else {
         item['selected'] = false;
@@ -493,7 +495,7 @@ class App extends React.Component {
       item['protected_area'] = -1;
       return item;
     }, this);
-    this.setState({ allFeatures: outFeatures, scenarioFeatures: outFeatures.filter(function(item) { return item.selected }) });
+    this.setState({ allFeatures: outFeatures, projectFeatures: outFeatures.filter(function(item) { return item.selected }) });
   }
 
   //resets various variables and state in between users
@@ -518,7 +520,7 @@ class App extends React.Component {
     formData.append('name', name);
     formData.append('email', email);
     formData.append('mapboxaccesstoken', mapboxaccesstoken);
-    formData.append('scenario', 'Sample case study');
+    formData.append('project', 'Sample case study');
     const config = {
       headers: {
         'content-type': 'multipart/form-data'
@@ -535,18 +537,18 @@ class App extends React.Component {
     });
   }
 
-  //REST call to create a new scenario from the wizard
-  createNewScenarioFromWizard(scenario) {
-    this.setState({ loadingScenarios: true });
+  //REST call to create a new project from the wizard
+  createNewProjectFromWizard(project) {
+    this.setState({ loadingProjects: true });
     let formData = new FormData();
     formData.append('user', this.state.user);
-    formData.append('scenario', scenario.name);
-    formData.append('description', scenario.description);
-    formData.append('planning_grid_name', scenario.planning_grid_name);
+    formData.append('project', project.name);
+    formData.append('description', project.description);
+    formData.append('planning_grid_name', project.planning_grid_name);
     var interest_features = [];
     var target_values = [];
     var spf_values = [];
-    this.state.scenarioFeatures.map((item) => {
+    this.state.projectFeatures.map((item) => {
       interest_features.push(item.id);
       target_values.push(item.target_value);
       spf_values.push(40);
@@ -560,11 +562,11 @@ class App extends React.Component {
         'content-type': 'multipart/form-data'
       }
     };
-    post(MARXAN_ENDPOINT + "createScenarioFromWizard", formData, config).then((response) => {
-      this.setState({ loadingScenarios: false });
+    post(MARXAN_ENDPOINT + "createProjectFromWizard", formData, config).then((response) => {
+      this.setState({ loadingProjects: false });
       if (!this.checkForErrors(response.data)) {
         this.setState({ snackbarOpen: true, snackbarMessage: response.data.info });
-        this.loadScenario(response.name);
+        this.loadProject(response.name);
       }
       else {
         this.setState({ snackbarOpen: true, snackbarMessage: response.data.error });
@@ -572,63 +574,63 @@ class App extends React.Component {
     });
   }
 
-  //REST call to delete a specific scenario
-  deleteScenario(name) {
-    this.setState({ loadingScenarios: true });
-    jsonp(MARXAN_ENDPOINT + "deleteScenario?user=" + this.state.user + "&scenario=" + name, { timeout: TIMEOUT }).promise.then(function(response) {
+  //REST call to delete a specific project
+  deleteProject(name) {
+    this.setState({ loadingProjects: true });
+    jsonp(MARXAN_ENDPOINT + "deleteProject?user=" + this.state.user + "&project=" + name, { timeout: TIMEOUT }).promise.then(function(response) {
       if (!this.checkForErrors(response)) {
-        //refresh the scenarios list
-        this.listScenarios();
+        //refresh the projects list
+        this.listProjects();
         //ui feedback
         this.setState({ snackbarOpen: true, snackbarMessage: response.info });
-        //see if the user deleted the current scenario
-        if (response.scenario === this.state.scenario) {
+        //see if the user deleted the current project
+        if (response.project === this.state.project) {
           //ui feedback
-          this.setState({ snackbarOpen: true, snackbarMessage: "Current scenario deleted - loading first available" });
-          //load the next available scenario
-          this.state.scenarios.some((scenario) => {
-            if (scenario.name !== this.state.scenario) this.loadScenario(scenario.name);
-            return scenario.name !== this.state.scenario;
+          this.setState({ snackbarOpen: true, snackbarMessage: "Current project deleted - loading first available" });
+          //load the next available project
+          this.state.projects.some((project) => {
+            if (project.name !== this.state.project) this.loadProject(project.name);
+            return project.name !== this.state.project;
           });
         }
       }
       else {
         //ui feedback
-        this.setState({ loadingScenarios: false });
+        this.setState({ loadingProjects: false });
       }
     }.bind(this));
   }
 
-  cloneScenario(name) {
-    this.setState({ loadingScenarios: true });
-    jsonp(MARXAN_ENDPOINT + "cloneScenario?user=" + this.state.user + "&scenario=" + name, { timeout: TIMEOUT }).promise.then(function(response) {
+  cloneProject(name) {
+    this.setState({ loadingProjects: true });
+    jsonp(MARXAN_ENDPOINT + "cloneProject?user=" + this.state.user + "&project=" + name, { timeout: TIMEOUT }).promise.then(function(response) {
       if (!this.checkForErrors(response)) {
-        //refresh the scenarios list
-        this.listScenarios();
+        //refresh the projects list
+        this.listProjects();
         //ui feedback
         this.setState({ snackbarOpen: true, snackbarMessage: response.info });
       }
       else {
         //ui feedback
-        this.setState({ loadingScenarios: false });
+        this.setState({ loadingProjects: false });
       }
     }.bind(this));
   }
 
-  startEditingScenarioName() {
-    this.setState({ editingScenarioName: true });
+  startEditingProjectName() {
+    this.setState({ editingProjectName: true });
   }
 
   startEditingDescription() {
     this.setState({ editingDescription: true });
   }
-  //REST call to rename a specific scenario on the server
-  renameScenario(newName) {
-    this.setState({ editingScenarioName: false });
-    if (newName !== '' && newName !== this.state.scenario) {
-      jsonp(MARXAN_ENDPOINT + "renameScenario?user=" + this.state.user + "&scenario=" + this.state.scenario + "&newName=" + newName, { timeout: TIMEOUT }).promise.then(function(response) {
+  //REST call to rename a specific project on the server
+  renameProject(newName) {
+    this.setState({ editingProjectName: false });
+    if (newName !== '' && newName !== this.state.project) {
+      jsonp(MARXAN_ENDPOINT + "renameProject?user=" + this.state.user + "&project=" + this.state.project + "&newName=" + newName, { timeout: TIMEOUT }).promise.then(function(response) {
         if (!this.checkForErrors(response)) {
-          this.setState({ scenario: response.scenario, snackbarOpen: true, snackbarMessage: response.info });
+          this.setState({ project: response.project, snackbarOpen: true, snackbarMessage: response.info });
         }
       }.bind(this));
     }
@@ -637,7 +639,7 @@ class App extends React.Component {
   renameDescription(newDesc) {
     this.setState({ editingDescription: false });
     if (newDesc !== '' && newDesc !== this.state.metadata.DESCRIPTION) {
-      jsonp(MARXAN_ENDPOINT + "renameDescription?user=" + this.state.user + "&scenario=" + this.state.scenario + "&newDesc=" + newDesc, { timeout: TIMEOUT }).promise.then(function(response) {
+      jsonp(MARXAN_ENDPOINT + "renameDescription?user=" + this.state.user + "&project=" + this.state.project + "&newDesc=" + newDesc, { timeout: TIMEOUT }).promise.then(function(response) {
         if (!this.checkForErrors(response)) {
           this.setState({ metadata: Object.assign(this.state.metadata, { DESCRIPTION: response.description }), snackbarOpen: true, snackbarMessage: response.info });
         }
@@ -645,22 +647,22 @@ class App extends React.Component {
     }
   }
 
-  listScenarios() {
-    this.setState({ loadingScenarios: true });
-    jsonp(MARXAN_ENDPOINT + "listScenarios?user=" + this.state.user, { timeout: TIMEOUT }).promise.then(function(response) {
-      this.setState({ loadingScenarios: false });
+  listProjects() {
+    this.setState({ loadingProjects: true });
+    jsonp(MARXAN_ENDPOINT + "listProjects?user=" + this.state.user, { timeout: TIMEOUT }).promise.then(function(response) {
+      this.setState({ loadingProjects: false });
       if (!this.checkForErrors(response)) {
-        this.setState({ scenarios: response.scenarios });
+        this.setState({ projects: response.projects });
       }
       else {
-        this.setState({ scenarios: undefined });
+        this.setState({ projects: undefined });
       }
     }.bind(this));
   }
 
   //updates a parameter in the input.dat file directly
   updateParameter(parameter, value) {
-    jsonp(MARXAN_ENDPOINT + "updateParameter?user=" + this.state.user + "&scenario=" + this.state.scenario + "&parameter=" + parameter + "&value=" + value, { timeout: TIMEOUT }).promise.then(function(response) {
+    jsonp(MARXAN_ENDPOINT + "updateParameter?user=" + this.state.user + "&project=" + this.state.project + "&parameter=" + parameter + "&value=" + value, { timeout: TIMEOUT }).promise.then(function(response) {
       if (!this.checkForErrors(response)) {
         //do something
       }
@@ -711,11 +713,11 @@ class App extends React.Component {
   updateSpecFile() {
     let formData = new FormData();
     formData.append('user', this.state.user);
-    formData.append('scenario', this.state.scenario);
+    formData.append('project', this.state.project);
     var interest_features = [];
     var target_values = [];
     var spf_values = [];
-    this.state.scenarioFeatures.map((item) => {
+    this.state.projectFeatures.map((item) => {
       interest_features.push(item.id);
       target_values.push(item.target_value);
       spf_values.push(40);
@@ -741,14 +743,14 @@ class App extends React.Component {
   }
 
   updatePuvsprFile() {
-    //preprocess the features to create the puvspr.dat file on the server - this is done on demand when the scenario is run because the user may add/remove Conservation features willy nilly
+    //preprocess the features to create the puvspr.dat file on the server - this is done on demand when the project is run because the user may add/remove Conservation features willy nilly
     let promise = this.preprocessAllFeaturesSync();
     return promise;
   }
 
   //preprocess synchronously, i.e. one after another
   async preprocessAllFeaturesSync() {
-    var features = this.state.scenarioFeatures.filter(function(feature) {
+    var features = this.state.projectFeatures.filter(function(feature) {
       return !feature.preprocessed;
     });
     //iterate through the features and preprocess the ones that need preprocessing
@@ -760,7 +762,7 @@ class App extends React.Component {
   //iterates through all of the features and preprocesses them asynchronously - i.e. all at once
   preprocessAllFeatures() {
     //return a promise array from each of the preprocessing jobs
-    let promises = this.state.scenarioFeatures.map(feature => {
+    let promises = this.state.projectFeatures.map(feature => {
       if (!feature.preprocessed) {
         return this.preprocessFeature(feature, false);
       }
@@ -773,7 +775,7 @@ class App extends React.Component {
   preprocessFeature(feature, hideDialogOnFinish = true) {
     //show the preprocessing dialog and the feature alias
     this.setState({ preprocessingFeature: true, preprocessingFeatureAlias: feature.alias });
-    return jsonp(MARXAN_ENDPOINT + "preprocessFeature?user=" + this.state.user + "&scenario=" + this.state.scenario + "&planning_grid_name=" + this.state.metadata.PLANNING_UNIT_NAME + "&feature_class_name=" + feature.feature_class_name + "&id=" + feature.id, { timeout: TIMEOUT }).promise.then(function(response) {
+    return jsonp(MARXAN_ENDPOINT + "preprocessFeature?user=" + this.state.user + "&project=" + this.state.project + "&planning_grid_name=" + this.state.metadata.PLANNING_UNIT_NAME + "&feature_class_name=" + feature.feature_class_name + "&id=" + feature.id, { timeout: TIMEOUT }).promise.then(function(response) {
       if (!this.checkForErrors(response)) {
         //if we want to hide the dialog after processing has finished then do so
         if (hideDialogOnFinish) this.setState({ preprocessingFeature: false });
@@ -792,14 +794,14 @@ class App extends React.Component {
     //update the ui to reflect the fact that a job is running
     this.setState({ running: true, log: 'Running...', active_pu: undefined, outputsTabString: 'Running...' });
     //make the request to get the marxan data
-    jsonp(MARXAN_ENDPOINT + "runMarxan?user=" + this.state.user + "&scenario=" + this.state.scenario);
+    jsonp(MARXAN_ENDPOINT + "runMarxan?user=" + this.state.user + "&project=" + this.state.project);
     this.timer = setInterval(() => this.pollResults(false), 3000);
   }
 
   //poll the server to see if the run has completed
   pollResults(checkForExistingRun) {
     //make the request to get the marxan data
-    jsonp(MARXAN_ENDPOINT + "pollResults?user=" + this.state.user + "&scenario=" + this.state.scenario + "&numreps=" + this.state.numReps + "&checkForExistingRun=" + checkForExistingRun, { timeout: TIMEOUT }).promise.then(function(response) {
+    jsonp(MARXAN_ENDPOINT + "pollResults?user=" + this.state.user + "&project=" + this.state.project + "&numreps=" + this.state.numReps + "&checkForExistingRun=" + checkForExistingRun, { timeout: TIMEOUT }).promise.then(function(response) {
       if (!this.checkForErrors(response)) {
         //the response includes the summed solution so it has finished
         if (response.ssoln) {
@@ -845,13 +847,15 @@ class App extends React.Component {
       responseText = "Run succeeded but no data returned";
       // this.setState({ brew: {} });
     }
-    this.setState({ running: false, runsCompleted: 0, log: response.log.replace(/(\r\n|\n|\r)/g, "<br />"), outputsTabString: '', solutions: solutions, snackbarOpen: true, snackbarMessage: responseText });
+    this.setState({ running: false, runsCompleted: 0, log: response.log.replace(/(\r\n|\n|\r)/g, "<br />"), outputsTabString: '', solutions: solutions, snackbarOpen: true, snackbarMessage: responseText});
+    //set the features tab as active
+    this.features_tab_active();
   }
 
   //gets the protected area information in m2 from the marxan run and populates the interest features with the values
   updateProtectedAmount() {
     //iterate through the features and set the protected amount
-    this.state.scenarioFeatures.map((feature) => {
+    this.state.projectFeatures.map((feature) => {
       //get the matching item in the mvbest data
       let mvbestItemIndex = this.runMarxanResponse.mvbest.findIndex(function(item) { return item[0] === feature.id; });
       //get the mvbest data
@@ -880,7 +884,7 @@ class App extends React.Component {
     }
     else {
       //request the data for the specific solution
-      jsonp(MARXAN_ENDPOINT + "loadSolution?user=" + this.state.user + "&scenario=" + this.state.scenario + "&solution=" + solution, { timeout: TIMEOUT }).promise.then(function(response) {
+      jsonp(MARXAN_ENDPOINT + "loadSolution?user=" + this.state.user + "&project=" + this.state.project + "&solution=" + solution, { timeout: TIMEOUT }).promise.then(function(response) {
         if (!this.checkForErrors(response)) {
           this.renderSolution(response.solution, false);
         }
@@ -1216,23 +1220,26 @@ class App extends React.Component {
     });
   }
 
-  //fired when the scenarios tab is selected
-  scenario_tab_active() {
+  //fired when the projects tab is selected
+  project_tab_active() {
+    this.setState({ activeTab: "project" });
     this.pu_tab_inactive();
   }
 
   //fired when the features tab is selected
   features_tab_active() {
+    this.setState({ activeTab: "features" });
     if (this.state.dataAvailable) {
       //render the sum solution map
       this.renderSolution(this.runMarxanResponse.ssoln, true);
-      //hide the planning unit layers
-      this.pu_tab_inactive();
     }
+    //hide the planning unit layers
+    this.pu_tab_inactive();
   }
 
   //fired when the planning unit tab is selected
   pu_tab_active() {
+    this.setState({ activeTab: "planning_units" });
     //show the planning units layer 
     this.showLayer(PLANNING_UNIT_LAYER_NAME);
     //change the opacity on the results layer to make it more transparent
@@ -1286,8 +1293,8 @@ class App extends React.Component {
     let formData = new FormData();
     //add the current user
     formData.append("user", this.state.user);
-    //add the current scenario
-    formData.append("scenario", this.state.scenario);
+    //add the current project
+    formData.append("project", this.state.project);
     //add the planning unit manual exceptions
     if (this.state.planning_units.length > 0) {
       this.state.planning_units.map((item) => {
@@ -1445,13 +1452,13 @@ class App extends React.Component {
     this.map.fitBounds([minLng, minLat, maxLng, maxLat], { padding: { top: 10, bottom: 10, left: 10, right: 10 }, easing: function(num) { return 1; } });
   }
 
-  //ROUTINES FOR CREATING A NEW CASE STUDY
+  //ROUTINES FOR CREATING A NEW PROJECT
 
-  openNewCaseStudyDialog() {
-    this.setState({ newCaseStudyDialogOpen: true });
+  openNewProjectDialog() {
+    this.setState({ newProjectDialogOpen: true });
   }
-  closeNewCaseStudyDialog() {
-    this.setState({ newCaseStudyDialogOpen: false });
+  closeNewProjectDialog() {
+    this.setState({ newProjectDialogOpen: false });
   }
 
   openNewPlanningUnitDialog() {
@@ -1517,7 +1524,7 @@ class App extends React.Component {
 
   pollMapboxForUploadComplete(uploadid) {
     var request = require('request');
-    request("https://api.mapbox.com/uploads/v1/' + MAPBOX_USER + '/" + uploadid + "?access_token=sk.eyJ1IjoiYmxpc2h0ZW4iLCJhIjoiY2piNm1tOGwxMG9lajMzcXBlZDR4aWVjdiJ9.Z1Jq4UAgGpXukvnUReLO1g", this.pollMapboxForUploadCompleteResponse.bind(this));
+    request("https://api.mapbox.com/uploads/v1/" + MAPBOX_USER + "/" + uploadid + "?access_token=sk.eyJ1IjoiYmxpc2h0ZW4iLCJhIjoiY2piNm1tOGwxMG9lajMzcXBlZDR4aWVjdiJ9.Z1Jq4UAgGpXukvnUReLO1g", this.pollMapboxForUploadCompleteResponse.bind(this));
   }
 
   pollMapboxForUploadCompleteResponse(error, response, body) {
@@ -1530,8 +1537,8 @@ class App extends React.Component {
 
   getInterestFeatures() {
     if (this.state.metadata.OLDVERSION === 'True') {
-      //load the interest features as all of the features from the current scenario
-      this.setState({ allFeatures: this.state.scenarioFeatures });
+      //load the interest features as all of the features from the current project
+      this.setState({ allFeatures: this.state.projectFeatures });
     }
     else {
       //load the interest features as all of the interest features from the marxan web database
@@ -1621,7 +1628,7 @@ class App extends React.Component {
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
   //update feature value by finding the object and setting the value for the key - set override to true to overwrite an existing key value
-  //this syncronises the states: allFeatures and scenarioFeatures as you cant detect state changes in object properties, i.e. componentDidUpdate is not called when you updated selected, preprocessed etc.
+  //this syncronises the states: allFeatures and projectFeatures as you cant detect state changes in object properties, i.e. componentDidUpdate is not called when you updated selected, preprocessed etc.
   updateFeature(feature, key, value, override) {
     // console.log("Update feature '" + feature.feature_class_name + "' with " + key + "=" + value);
     let featuresCopy = this.state.allFeatures;
@@ -1630,8 +1637,8 @@ class App extends React.Component {
     var updatedFeature = featuresCopy[index];
     //update the value if either the property doesn't exist (i.e. new value) or it does and override is set to true
     if (updatedFeature && !(updatedFeature.hasOwnProperty(key) && !override)) updatedFeature[key] = value;
-    //update allFeatures and scenarioFeatures with the new value
-    this.setState({ allFeatures: featuresCopy, scenarioFeatures: featuresCopy.filter(function(item) { return item.selected }) });
+    //update allFeatures and projectFeatures with the new value
+    this.setState({ allFeatures: featuresCopy, projectFeatures: featuresCopy.filter(function(item) { return item.selected }) });
   }
 
   //selects a single Conservation feature
@@ -1727,7 +1734,7 @@ class App extends React.Component {
 
   filterWdpaByIucnCategory(iucnCategory) {
     let iucnCategories = this.getIndividualIucnCategories(iucnCategory);
-    this.map.setFilter(WDPA_LAYER_NAME, ['in', 'IUCN_CAT'].concat(iucnCategories));
+    this.map.setFilter(WDPA_LAYER_NAME, ['all', ['in', 'IUCN_CAT'].concat(iucnCategories), ['==', 'PARENT_ISO', this.state.metadata.PLANNING_UNIT_NAME.substr(3, 3).toUpperCase()]]);
   }
 
   getIndividualIucnCategories(iucnCategory) {
@@ -1802,7 +1809,7 @@ class App extends React.Component {
       //do the intersection on the server
       this.setState({ preprocessingProtectedAreas: true });
       return new Promise(function(resolve, reject) {
-        jsonp(MARXAN_ENDPOINT + "getPAIntersections?user=" + this.state.user + "&scenario=" + this.state.scenario + "&planning_grid_name=" + this.state.metadata.PLANNING_UNIT_NAME, { timeout: TIMEOUT }).promise.then(function(response) {
+        jsonp(MARXAN_ENDPOINT + "getPAIntersections?user=" + this.state.user + "&project=" + this.state.project + "&planning_grid_name=" + this.state.metadata.PLANNING_UNIT_NAME, { timeout: TIMEOUT }).promise.then(function(response) {
           //set the local variable
           this.protected_area_intersections = response.info;
           //return the state to normal
@@ -1830,25 +1837,26 @@ class App extends React.Component {
             user={this.state.user}
             userData={this.state.userData}
             loggedIn={this.state.loggedIn}
-            listScenarios={this.listScenarios.bind(this)}
-            scenarios={this.state.scenarios}
-            scenario={this.state.scenario}
+            activeTab={this.state.activeTab}
+            listProjects={this.listProjects.bind(this)}
+            projects={this.state.projects}
+            project={this.state.project}
             metadata={this.state.metadata}
             logout={this.logout.bind(this)}
             runMarxan={this.runMarxan.bind(this)} 
             running={this.state.running} 
             runnable={this.state.runnable}
-            deleteScenario={this.deleteScenario.bind(this)}
-            loadScenario={this.loadScenario.bind(this)}
-            cloneScenario={this.cloneScenario.bind(this)}
-            renameScenario={this.renameScenario.bind(this)}
+            deleteProject={this.deleteProject.bind(this)}
+            loadProject={this.loadProject.bind(this)}
+            cloneProject={this.cloneProject.bind(this)}
+            renameProject={this.renameProject.bind(this)}
             renameDescription={this.renameDescription.bind(this)}
-            startEditingScenarioName={this.startEditingScenarioName.bind(this)}
+            startEditingProjectName={this.startEditingProjectName.bind(this)}
             startEditingDescription={this.startEditingDescription.bind(this)}
-            editingScenarioName={this.state.editingScenarioName}
+            editingProjectName={this.state.editingProjectName}
             editingDescription={this.state.editingDescription}
-            loadingScenarios={this.state.loadingScenarios}
-            loadingScenario={this.state.loadingScenario}
+            loadingProjects={this.state.loadingProjects}
+            loadingProject={this.state.loadingProject}
             saveOptions={this.saveOptions.bind(this)}
             savingOptions={this.state.savingOptions}
             optionsDialogOpen={this.state.optionsDialogOpen}
@@ -1856,10 +1864,10 @@ class App extends React.Component {
             closeOptionsDialog={this.closeOptionsDialog.bind(this)}
             hidePopup={this.hidePopup.bind(this)}
             updateUser={this.updateUser.bind(this)}
-            openNewCaseStudyDialog={this.openNewCaseStudyDialog.bind(this)}
-            scenarioFeatures={this.state.scenarioFeatures}
+            openNewProjectDialog={this.openNewProjectDialog.bind(this)}
+            features={this.state.projectFeatures}
             updateTargetValue={this.updateTargetValue.bind(this)}
-            scenario_tab_active={this.scenario_tab_active.bind(this)}
+            project_tab_active={this.project_tab_active.bind(this)}
             features_tab_active={this.features_tab_active.bind(this)}
             pu_tab_active={this.pu_tab_active.bind(this)}
             startPuEditSession={this.startPuEditSession.bind(this)}
@@ -1906,19 +1914,19 @@ class App extends React.Component {
           <ProcessingPADialog
             preprocessingProtectedAreas={this.state.preprocessingProtectedAreas}
           />
-          <NewCaseStudyDialog
-            open={this.state.newCaseStudyDialogOpen}
-            closeNewCaseStudyDialog={this.closeNewCaseStudyDialog.bind(this)}
+          <NewProjectDialog
+            open={this.state.newProjectDialogOpen}
+            closeNewProjectDialog={this.closeNewProjectDialog.bind(this)}
             getPlanningUnitGrids={this.getPlanningUnitGrids.bind(this)}
             planning_unit_grids={this.state.planning_unit_grids}
             planning_units={this.state.planning_units}
             openNewPlanningUnitDialog={this.openNewPlanningUnitDialog.bind(this)}
             openAllInterestFeaturesDialog={this.openAllInterestFeaturesDialog.bind(this)}
-            scenarioFeatures={this.state.scenarioFeatures}
+            features={this.state.allFeatures} 
             updateTargetValue={this.updateTargetValue.bind(this)}
             openAllCostsDialog={this.openAllCostsDialog.bind(this)}
             selectedCosts={this.state.selectedCosts}
-            createNewScenarioFromWizard={this.createNewScenarioFromWizard.bind(this)}
+            createNewProjectFromWizard={this.createNewProjectFromWizard.bind(this)}
           />
           <NewPlanningUnitDialog 
             open={this.state.NewPlanningUnitDialogOpen} 
@@ -1937,7 +1945,7 @@ class App extends React.Component {
           <AllInterestFeaturesDialog
             open={this.state.AllInterestFeaturesDialogOpen}
             allFeatures={this.state.allFeatures}
-            scenarioFeatures={this.state.scenarioFeatures}
+            projectFeatures={this.state.projectFeatures}
             deleteInterestFeature={this.deleteInterestFeature.bind(this)}
             closeAllInterestFeaturesDialog={this.closeAllInterestFeaturesDialog.bind(this)}
             openNewInterestFeatureDialog={this.openNewInterestFeatureDialog.bind(this)}
@@ -1945,6 +1953,7 @@ class App extends React.Component {
             unselectItem={this.unselectItem.bind(this)}
             selectAll={this.selectAll.bind(this)}
             clearAll={this.clearAll.bind(this)}
+            manageOwnState={false}
           />
           <AllCostsDialog
             open={this.state.AllCostsDialogOpen}
@@ -1976,7 +1985,7 @@ class App extends React.Component {
             closeFilesDialog={this.closeFilesDialog.bind(this)}
             fileUploaded={this.fileUploaded.bind(this)}
             user={this.state.user}
-            scenario={this.state.scenario}
+            project={this.state.project}
             files={this.state.files}
           />
           <ResultsPane

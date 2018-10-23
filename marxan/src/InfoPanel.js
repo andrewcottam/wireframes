@@ -6,9 +6,9 @@ import IconButton from 'material-ui/IconButton';
 import RaisedButton from 'material-ui/RaisedButton';
 import UserMenu from './UserMenu.js';
 import SelectField from 'material-ui/SelectField';
-import SelectInterestFeatures from './newCaseStudySteps/SelectInterestFeatures';
+import SelectFeatures from './newProjectSteps/SelectFeatures';
 import MenuItem from 'material-ui/MenuItem';
-import ScenariosDialog from './ScenariosDialog.js';
+import ProjectsDialog from './ProjectsDialog.js';
 import Menu from 'material-ui/svg-icons/navigation/menu';
 import Texture from 'material-ui/svg-icons/image/texture';
 import Settings from 'material-ui/svg-icons/action/settings';
@@ -17,34 +17,34 @@ import { white } from 'material-ui/styles/colors';
 class InfoPanel extends React.Component {
   constructor(props) {
     super(props);
-    this.state = { scenariosDialogOpen: false, puEditing: false };
+    this.state = { projectsDialogOpen: false, puEditing: false };
     //local variable 
     this.iucnCategories = ['None','IUCN I-II','IUCN I-IV','IUCN I-V'];
   }
   componentDidUpdate(prevProps, prevState, snapshot) {
-    //if the input box for renaming the scenario has been made visible and it has no value, then initialise it with the scenario name and focus it
-    if (prevProps.editingScenarioName === false && this.props.editingScenarioName) {
-      document.getElementById("scenarioName").value = this.props.scenario;
-      document.getElementById("scenarioName").focus();
+    //if the input box for renaming the project has been made visible and it has no value, then initialise it with the project name and focus it
+    if (prevProps.editingProjectName === false && this.props.editingProjectName) {
+      document.getElementById("projectName").value = this.props.project;
+      document.getElementById("projectName").focus();
     }
     //if the input box for renaming the description has been made visible and it has no value, then initialise it with the description and focus it
     if (prevProps.editingDescription === false && this.props.editingDescription) {
       document.getElementById("descriptionEdit").value = this.props.metadata.DESCRIPTION;
       document.getElementById("descriptionEdit").focus();
     }
-    if (prevProps.loadingScenario && this.props.loadingScenario === false) {
-      this.closeScenariosDialog();
+    if (prevProps.loadingProject && this.props.loadingProject === false) {
+      this.closeProjectsDialog();
     }
   }
-  openScenariosDialog() {
-    this.setState({ scenariosDialogOpen: true });
-    this.props.listScenarios();
+  openProjectsDialog() {
+    this.setState({ projectsDialogOpen: true });
+    this.props.listProjects();
   }
-  closeScenariosDialog() {
-    this.setState({ scenariosDialogOpen: false });
+  closeProjectsDialog() {
+    this.setState({ projectsDialogOpen: false });
   }
-  loadScenario(scenario) {
-    this.props.loadScenario(scenario);
+  loadProject(project) {
+    this.props.loadProject(project);
   }
   showUserMenu(e) {
     e.preventDefault();
@@ -61,31 +61,31 @@ class InfoPanel extends React.Component {
 
   onKeyPress(e) {
     if (e.nativeEvent.keyCode === 13 || e.nativeEvent.keyCode === 27) {
-      document.getElementById(e.nativeEvent.target.id).blur(); //call the onBlur event which will call the REST service to rename the scenario
+      document.getElementById(e.nativeEvent.target.id).blur(); //call the onBlur event which will call the REST service to rename the project
     }
   }
 
   onBlur(e) {
-    if (e.nativeEvent.target.id === 'scenarioName') {
-      this.props.renameScenario(e.target.value);
+    if (e.nativeEvent.target.id === 'projectName') {
+      this.props.renameProject(e.target.value);
     }
     else {
       this.props.renameDescription(e.target.value);
     }
   }
 
-  startEditingScenarioName() {
-    if (this.props.scenario) { //a scenario may not be loaded
-      this.props.startEditingScenarioName();
+  startEditingProjectName() {
+    if (this.props.project) { //a project may not be loaded
+      this.props.startEditingProjectName();
     }
   }
   startEditingDescription() {
-    if (this.props.scenario) { //a scenario may not be loaded
+    if (this.props.project) { //a project may not be loaded
       this.props.startEditingDescription();
     }
   }
-  scenario_tab_active() {
-    this.props.scenario_tab_active();
+  project_tab_active() {
+    this.props.project_tab_active();
   }
   features_tab_active() {
     this.props.features_tab_active();
@@ -119,11 +119,11 @@ class InfoPanel extends React.Component {
         <div className={'infoPanel'} style={{display: this.props.loggedIn ? 'block' : 'none'}}>
           <Paper zDepth={2} className="InfoPanelPaper">
             <Paper zDepth={2} className="titleBar">
-              <IconButton title="Click to open scenarios" onClick={this.openScenariosDialog.bind(this)} className="iconButton scenarioButton">
+              <IconButton title="Click to open projects" onClick={this.openProjectsDialog.bind(this)} className="iconButton projectButton">
                 <Menu color={white}/>
               </IconButton>
-              <span onClick={this.startEditingScenarioName.bind(this)} className={'scenarioNameEditBox'} title="Click to rename the scenario">{this.props.scenario}</span>
-              <input id="scenarioName" style={{position:'absolute', 'display': (this.props.editingScenarioName) ? 'block' : 'none',left:'63px',top:'33px',border:'1px lightgray solid'}} className={'scenarioNameEditBox'} onKeyPress={this.onKeyPress.bind(this)} onBlur={this.onBlur.bind(this)}/>
+              <span onClick={this.startEditingProjectName.bind(this)} className={'projectNameEditBox'} title="Click to rename the project">{this.props.project}</span>
+              <input id="projectName" style={{position:'absolute', 'display': (this.props.editingProjectName) ? 'block' : 'none',left:'63px',top:'33px',border:'1px lightgray solid'}} className={'projectNameEditBox'} onKeyPress={this.onKeyPress.bind(this)} onBlur={this.onBlur.bind(this)}/>
               <UserMenu 
                     user={ this.props.user} 
                     userData={this.props.userData}
@@ -134,27 +134,27 @@ class InfoPanel extends React.Component {
                     anchorEl={this.state.anchorEl} 
                     hideUserMenu={this.hideUserMenu.bind(this)} 
                     logout={this.logout.bind(this)}
-                    loadingScenario={this.props.loadingScenario}
-                    loadingScenarios={this.props.loadingScenarios}
-                    listScenarios={this.props.listScenarios}
-                    scenarios={this.props.scenarios}
-                    scenario={this.props.scenario}
-                    deleteScenario={this.props.deleteScenario}
-                    loadScenario={this.props.loadScenario}
-                    cloneScenario={this.props.cloneScenario}
+                    loadingProject={this.props.loadingProject}
+                    loadingProjects={this.props.loadingProjects}
+                    listProjects={this.props.listProjects}
+                    projects={this.props.projects}
+                    project={this.props.project}
+                    deleteProject={this.props.deleteProject}
+                    loadProject={this.props.loadProject}
+                    cloneProject={this.props.cloneProject}
                     saveOptions={this.props.saveOptions}
                     savingOptions={this.props.savingOptions}
                     openOptionsDialog={this.props.openOptionsDialog}
                     closeOptionsDialog={this.props.closeOptionsDialog}
                     optionsDialogOpen={this.props.optionsDialogOpen}
-                    openNewCaseStudyDialog={this.props.openNewCaseStudyDialog}
+                    openNewProjectDialog={this.props.openNewProjectDialog}
                     hidePopup={this.props.hidePopup}
                     updateUser={this.props.updateUser}
-                    openImportWizard={this.props.openImportWizard}
+                    openImportWizard={this.props.openImportWizard} 
               />
             </Paper>
-            <Tabs contentContainerStyle={{'margin':'20px'}} className={'tabs'}>
-              <Tab label="Scenario" onActive={this.scenario_tab_active.bind(this)}>
+            <Tabs contentContainerStyle={{'margin':'20px'}} className={'tabs'} value={this.props.activeTab}>
+              <Tab label="Project" onActive={this.project_tab_active.bind(this)} value="project">
                 <div>
                   <div className={'tabTitle'}>Description</div>
                   <input id="descriptionEdit" style={{'display': (this.props.editingDescription) ? 'block' : 'none'}} className={'descriptionEditBox'} onKeyPress={this.onKeyPress.bind(this)} onBlur={this.onBlur.bind(this)}/>
@@ -163,15 +163,16 @@ class InfoPanel extends React.Component {
                   <div className={'createDate'}>{this.props.metadata.CREATEDATE}</div>
                 </div>
               </Tab>
-              <Tab label="Features" onActive={this.features_tab_active.bind(this)}>
-                <SelectInterestFeatures
-                  scenarioFeatures={this.props.scenarioFeatures}
+              <Tab label="Features" onActive={this.features_tab_active.bind(this)} value="features">
+                <SelectFeatures
+                  features={this.props.features}
                   updateTargetValue={this.props.updateTargetValue}
                   preprocessFeature={this.props.preprocessFeature}
                   openAllInterestFeaturesDialog={this.props.openAllInterestFeaturesDialog}
+                  simple={false}
                 />
               </Tab>
-              <Tab label="Planning units" onActive={this.pu_tab_active.bind(this)}>
+              <Tab label="Planning units" onActive={this.pu_tab_active.bind(this)} value="planning_units">
                 <div>
                   <div className={'tabTitle'}>Planning area</div>
                   <div className={'description'}>{this.props.metadata.pu_alias}</div>
@@ -218,12 +219,12 @@ class InfoPanel extends React.Component {
                 <div style={{position:'absolute',right:'40px'}}>
                   <RaisedButton 
                     label="Run" 
-                    title="Click to run this scenario" 
+                    title="Click to run this project" 
                     secondary={true} 
-                    className="scenariosBtn" 
+                    className="projectsBtn" 
                     style={{height:'24px'}}
                     onClick={this.props.runMarxan} 
-                    disabled={!this.props.runnable || this.props.preprocessingFeature || this.props.running || (this.props.scenarioFeatures.length === 0) || this.state.puEditing} 
+                    disabled={!this.props.runnable || this.props.preprocessingFeature || this.props.running || (this.props.features.length === 0) || this.state.puEditing} 
                   />  
                 </div>
             </Paper>
@@ -233,17 +234,17 @@ class InfoPanel extends React.Component {
             </div>
           </Paper>
         </div>
-          <ScenariosDialog 
-            open={this.state.scenariosDialogOpen} 
-            loadingScenarios={this.props.loadingScenarios}
-            loadingScenario={this.props.loadingScenario}
-            closeScenariosDialog={this.closeScenariosDialog.bind(this)}
-            scenarios={this.props.scenarios}
-            scenario={this.props.scenario}
-            deleteScenario={this.props.deleteScenario}
-            loadScenario={this.loadScenario.bind(this)}
-            cloneScenario={this.props.cloneScenario}
-            openNewCaseStudyDialog={this.props.openNewCaseStudyDialog}
+          <ProjectsDialog 
+            open={this.state.projectsDialogOpen} 
+            loadingProjects={this.props.loadingProjects}
+            loadingProject={this.props.loadingProject}
+            closeProjectsDialog={this.closeProjectsDialog.bind(this)}
+            projects={this.props.projects}
+            project={this.props.project}
+            deleteProject={this.props.deleteProject}
+            loadProject={this.loadProject.bind(this)}
+            cloneProject={this.props.cloneProject}
+            openNewProjectDialog={this.props.openNewProjectDialog}
             openImportWizard={this.props.openImportWizard}
           />
       </React.Fragment>

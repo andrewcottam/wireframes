@@ -69,8 +69,8 @@ class NewUserDialog extends React.Component {
 
     render() {
         const actions = [
-            <RaisedButton label="Close" primary={true} onClick={this.props.closeNewUserDialog}  className="scenariosBtn" disabled={this.props.creatingNewUser}/>,
-            <RaisedButton label="Register" primary={true} onClick={this.createNewUser.bind(this)} className="scenariosBtn" disabled = {!(this.state.user && this.state.password && this.state.name && this.state.email && this.state.mapboxaccesstoken) || this.props.creatingNewUser}/>
+            <RaisedButton label="Close" primary={true} onClick={this.props.closeNewUserDialog}  className="projectsBtn" disabled={this.props.creatingNewUser}/>,
+            <RaisedButton label="Register" primary={true} onClick={this.createNewUser.bind(this)} className="projectsBtn" disabled = {!(this.state.user && this.state.password && this.state.name && this.state.email && this.state.mapboxaccesstoken) || this.props.creatingNewUser}/>
         ];
         let c = <div>
                     <FontAwesome spin name='sync' style={{'display': (this.props.creatingNewUser ? 'inline-block' : 'none')}} className='newUserSpinner'/>
@@ -85,7 +85,9 @@ class NewUserDialog extends React.Component {
                     </span>
                 </div>;
         return (
-            <Dialog title="Register" children={c} actions={actions} open={this.props.open} onRequestClose={this.props.closeNewUserDialog} contentStyle={{width:'380px'}} titleClassName={'dialogTitleStyle'}/>
+            <Dialog 
+            overlayStyle={{display:'none'}} 
+            title="Register" children={c} actions={actions} open={this.props.open} onRequestClose={this.props.closeNewUserDialog} contentStyle={{width:'380px'}} titleClassName={'dialogTitleStyle'}/>
         );
     }
 }

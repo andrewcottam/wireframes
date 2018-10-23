@@ -11,8 +11,8 @@ class ResendPassword extends React.Component {
     }
     render() {
         const actions = [
-            <RaisedButton label="Close" primary={true} onClick={this.props.closeResendPasswordDialog} disabled={this.props.resending} className="scenariosBtn"/>,
-            <RaisedButton onClick={this.props.resendPassword} label= {"Resend"} disabled = {!this.props.email || this.props.resending} primary={true} className="scenariosBtn" type="submit"/>
+            <RaisedButton label="Close" primary={true} onClick={this.props.closeResendPasswordDialog} disabled={this.props.resending} className="projectsBtn"/>,
+            <RaisedButton onClick={this.props.resendPassword} label= {"Resend"} disabled = {!this.props.email || this.props.resending} primary={true} className="projectsBtn" type="submit"/>
         ];
         let c = <div>
                     <div>
@@ -22,7 +22,9 @@ class ResendPassword extends React.Component {
                 </div>;
         return (
             <React.Fragment>
-                <Dialog actions={actions} title="Resend email" modal={true} children={c}  onRequestClose={this.props.closeNewUserDialog} open={this.props.open} contentStyle={{width:'308px'}} titleClassName={'dialogTitleStyle'}/>
+                <Dialog 
+                overlayStyle={{display:'none'}} 
+                actions={actions} title="Resend email" modal={true} children={c}  onRequestClose={this.props.closeNewUserDialog} open={this.props.open} contentStyle={{width:'308px'}} titleClassName={'dialogTitleStyle'}/>
             </React.Fragment>
         );
     }

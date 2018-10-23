@@ -64,7 +64,7 @@ class UserDialog extends React.Component {
                         label="OK" 
                         primary={true} 
                         onClick={this.updateUser.bind(this)} 
-                        className="scenariosBtn" 
+                        className="projectsBtn" 
                         style={{height:'25px'}}
                     />,
                 ]} 
