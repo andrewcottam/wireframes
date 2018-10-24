@@ -185,6 +185,8 @@ class App extends React.Component {
       return true;
     }
     else {
+      //some server responses are warnings and will not stop the function from running as normal
+      if (response.warning) this.setState({ snackbarOpen: true, snackbarMessage: response.warning });
       return false;
     }
   }
@@ -538,7 +540,7 @@ class App extends React.Component {
   }
 
   //REST call to create a new project from the wizard
-  createNewProjectFromWizard(project) {
+  createNewProject(project) {
     this.setState({ loadingProjects: true });
     let formData = new FormData();
     formData.append('user', this.state.user);
@@ -548,9 +550,9 @@ class App extends React.Component {
     var interest_features = [];
     var target_values = [];
     var spf_values = [];
-    this.state.projectFeatures.map((item) => {
+    project.features.map((item) => {
       interest_features.push(item.id);
-      target_values.push(item.target_value);
+      target_values.push(17);
       spf_values.push(40);
     });
     //prepare the data that will populate the spec.dat file
@@ -566,7 +568,7 @@ class App extends React.Component {
       this.setState({ loadingProjects: false });
       if (!this.checkForErrors(response.data)) {
         this.setState({ snackbarOpen: true, snackbarMessage: response.data.info });
-        this.loadProject(response.name);
+        this.loadProject(response.data.name);
       }
       else {
         this.setState({ snackbarOpen: true, snackbarMessage: response.data.error });
@@ -1072,7 +1074,7 @@ class App extends React.Component {
     //error check
     if (!this.state.userData.SHOWPOPUP) return;
     //get the features under the mouse
-    var features = this.map.queryRenderedFeatures(e.point, { layers: [PLANNING_UNIT_LAYER_NAME] });
+    var features = this.map.queryRenderedFeatures(e.point, { layers: [RESULTS_LAYER_NAME] });
     //see if there are any planning unit features under the mouse
     if (features.length) {
       //set the location for the popup
@@ -1926,7 +1928,7 @@ class App extends React.Component {
             updateTargetValue={this.updateTargetValue.bind(this)}
             openAllCostsDialog={this.openAllCostsDialog.bind(this)}
             selectedCosts={this.state.selectedCosts}
-            createNewProjectFromWizard={this.createNewProjectFromWizard.bind(this)}
+            createNewProject={this.createNewProject.bind(this)}
           />
           <NewPlanningUnitDialog 
             open={this.state.NewPlanningUnitDialogOpen} 

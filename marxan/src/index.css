@@ -164,6 +164,11 @@ body {
   height: 300px;
 }
 
+.infoTable {
+  width: 307px;
+  height: 366px;
+}
+
 .rt-tr-group {
   cursor: pointer !important;
 }
