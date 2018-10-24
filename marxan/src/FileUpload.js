@@ -26,7 +26,7 @@ class FileUpload extends React.Component {
     fileUpload(value) {
         this.props.fileUploaded(false, '');
         this.setState({ loading: true });
-        const url = "https://db-server-blishten.c9users.io/marxan/webAPI.py/postFile";
+        const url = "https://db-server-blishten.c9users.io/marxan/webAPI2.py/postFile";
         const formData = new FormData();
         formData.append('value', value);
         formData.append('filename', value['name']);
