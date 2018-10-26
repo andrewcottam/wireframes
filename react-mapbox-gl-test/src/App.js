@@ -20,7 +20,7 @@ class App extends Component {
     this.setState({ center: [e.lngLat.lng, e.lngLat.lat] });
   }
   render() {
-    return (
+    return ( 
       <Map
         style="mapbox://styles/mapbox/streets-v9"
         onMouseMove={(map,e)=>this.onMouseMove(e)}
